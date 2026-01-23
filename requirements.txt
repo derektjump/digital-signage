@@ -2,6 +2,7 @@
 Django>=5.0
 gunicorn
 whitenoise
+Pillow
 
 # Database
 psycopg2-binary
