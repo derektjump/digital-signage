@@ -1,0 +1,154 @@
+{% extends 'signage/base.html' %}
+
+{% block title %}Designs | {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="p-6 md:p-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <div>
+            <h1 class="text-2xl font-semibold text-gray-900" style="font-family: 'Oxanium', sans-serif;">Screen Designs</h1>
+            <p class="text-gray-500 mt-1">Create and manage your signage content</p>
+        </div>
+        <a href="{% url 'signage:screen_design_create' %}"
+           class="mt-4 md:mt-0 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white transition-colors"
+           style="background: #0a0a0c;">
+            <span class="material-symbols-outlined" style="font-size: 1.2rem;">add</span>
+            New Design
+        </a>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(10, 10, 12, 0.05);">
+                    <span class="material-symbols-outlined" style="color: #0a0a0c;">web</span>
+                </div>
+                <div>
+                    <p class="text-2xl font-semibold text-gray-900">{{ total_count }}</p>
+                    <p class="text-sm text-gray-500">Total Designs</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(34, 197, 94, 0.1);">
+                    <span class="material-symbols-outlined" style="color: #22c55e;">check_circle</span>
+                </div>
+                <div>
+                    <p class="text-2xl font-semibold text-gray-900">{{ active_count }}</p>
+                    <p class="text-sm text-gray-500">Active</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(107, 114, 128, 0.1);">
+                    <span class="material-symbols-outlined" style="color: #6b7280;">pause_circle</span>
+                </div>
+                <div>
+                    <p class="text-2xl font-semibold text-gray-900">{{ total_count|add:"-"|add:active_count }}</p>
+                    <p class="text-sm text-gray-500">Inactive</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+        <div class="flex flex-wrap items-center gap-4">
+            <div class="flex items-center gap-2">
+                <span class="text-sm text-gray-500">Filter by:</span>
+                <a href="{% url 'signage:screen_design_list' %}"
+                   class="px-3 py-1 text-sm rounded-lg {% if not request.GET.status %}bg-gray-900 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} transition-colors">
+                    All
+                </a>
+                <a href="{% url 'signage:screen_design_list' %}?status=active"
+                   class="px-3 py-1 text-sm rounded-lg {% if request.GET.status == 'active' %}bg-gray-900 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} transition-colors">
+                    Active
+                </a>
+                <a href="{% url 'signage:screen_design_list' %}?status=inactive"
+                   class="px-3 py-1 text-sm rounded-lg {% if request.GET.status == 'inactive' %}bg-gray-900 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} transition-colors">
+                    Inactive
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Designs Grid -->
+    {% if designs %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for design in designs %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
+            <!-- Preview Area -->
+            <div class="h-40 bg-gray-50 flex items-center justify-center border-b border-gray-100">
+                <div class="w-16 h-16 rounded-full flex items-center justify-center" style="background: rgba(10, 10, 12, 0.05);">
+                    <span class="material-symbols-outlined text-3xl text-gray-300">web</span>
+                </div>
+            </div>
+
+            <!-- Card Content -->
+            <div class="p-5">
+                <div class="flex items-start justify-between mb-3">
+                    <div>
+                        <h3 class="font-medium text-gray-900">{{ design.name }}</h3>
+                        <p class="text-sm text-gray-500">{{ design.slug }}</p>
+                    </div>
+                    <span class="px-2 py-1 text-xs rounded-full {% if design.is_active %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-600{% endif %}">
+                        {% if design.is_active %}Active{% else %}Inactive{% endif %}
+                    </span>
+                </div>
+
+                {% if design.description %}
+                <p class="text-sm text-gray-500 mb-3 line-clamp-2">{{ design.description }}</p>
+                {% endif %}
+
+                {% if design.folder %}
+                <p class="text-sm text-gray-500 mb-3">
+                    <span class="material-symbols-outlined align-middle" style="font-size: 1rem;">folder</span>
+                    {{ design.folder.name }}
+                </p>
+                {% endif %}
+
+                <p class="text-xs text-gray-400 mb-4">
+                    Updated {{ design.updated_at|timesince }} ago
+                </p>
+
+                <!-- Actions -->
+                <div class="flex items-center gap-2">
+                    <a href="{% url 'signage:screen_design_preview' design.slug %}"
+                       class="flex-1 text-center px-3 py-2 text-sm rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
+                        Preview
+                    </a>
+                    <a href="{% url 'signage:screen_design_update' design.slug %}"
+                       class="flex-1 text-center px-3 py-2 text-sm rounded-lg text-white transition-colors"
+                       style="background: #0a0a0c;">
+                        Edit
+                    </a>
+                    <a href="{% url 'signage:screen_design_delete' design.slug %}"
+                       class="px-3 py-2 text-sm rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors">
+                        <span class="material-symbols-outlined" style="font-size: 1.1rem;">delete</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+        <div class="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style="background: rgba(10, 10, 12, 0.05);">
+            <span class="material-symbols-outlined text-3xl" style="color: #6b7280;">web</span>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No Designs Yet</h3>
+        <p class="text-gray-500 mb-6">Create your first screen design to get started.</p>
+        <a href="{% url 'signage:screen_design_create' %}"
+           class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white transition-colors"
+           style="background: #0a0a0c;">
+            <span class="material-symbols-outlined" style="font-size: 1.2rem;">add</span>
+            Create Design
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

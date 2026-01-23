@@ -1,0 +1,319 @@
+{% extends 'signage/base.html' %}
+
+{% block title %}{% if is_new %}Create Playlist{% else %}Edit {{ object.name }}{% endif %} | {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="p-6 md:p-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <div>
+            <h1 class="text-2xl font-semibold text-gray-900" style="font-family: 'Oxanium', sans-serif;">
+                {% if is_new %}Create Playlist{% else %}Edit Playlist{% endif %}
+            </h1>
+            <p class="text-gray-500 mt-1">
+                {% if is_new %}Create a new content playlist for your devices{% else %}Update playlist settings and content{% endif %}
+            </p>
+        </div>
+        <a href="{% url 'signage:playlist_list' %}"
+           class="mt-4 md:mt-0 inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
+            <span class="material-symbols-outlined" style="font-size: 1.2rem;">arrow_back</span>
+            Back to Playlists
+        </a>
+    </div>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- Basic Info Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Playlist Details</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="id_name" class="block text-sm font-medium text-gray-700 mb-1">Playlist Name</label>
+                    <input type="text" name="name" id="id_name" required
+                           value="{% if object %}{{ object.name }}{% endif %}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900 placeholder:text-gray-400"
+                           placeholder="e.g., Store Front Rotation">
+                </div>
+
+                <div class="flex items-center gap-3 pt-6">
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="is_active" id="id_is_active" class="sr-only peer"
+                               {% if object.is_active or is_new %}checked{% endif %}>
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-gray-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900"></div>
+                    </label>
+                    <span class="text-sm font-medium text-gray-700">Active</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Playlist Items Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-medium text-gray-900">Playlist Items</h2>
+                <button type="button" onclick="document.getElementById('addItemModal').classList.remove('hidden')"
+                        class="inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
+                    <span class="material-symbols-outlined" style="font-size: 1rem;">add</span>
+                    Add Item
+                </button>
+            </div>
+
+            <div id="playlistItems" class="space-y-3">
+                {% if playlist_items %}
+                    {% for item in playlist_items %}
+                    <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200" data-item-id="{{ item.id }}">
+                        <div class="flex items-center gap-2 text-gray-400 cursor-move">
+                            <span class="material-symbols-outlined">drag_indicator</span>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(10, 10, 12, 0.05);">
+                            <span class="material-symbols-outlined" style="color: #0a0a0c;">
+                                {% if item.item_type == 'screen' %}web{% else %}image{% endif %}
+                            </span>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-medium text-gray-900">
+                                {% if item.item_type == 'screen' %}{{ item.screen.name }}{% else %}{{ item.media_asset.name }}{% endif %}
+                            </p>
+                            <p class="text-sm text-gray-500">
+                                {{ item.get_item_type_display }} &middot; {{ item.duration }}s duration
+                            </p>
+                        </div>
+                        <button type="button" onclick="removeItem('{{ item.id }}')"
+                                class="text-gray-400 hover:text-red-500 transition-colors">
+                            <span class="material-symbols-outlined">delete</span>
+                        </button>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div id="emptyItemsState" class="text-center py-8 text-gray-500">
+                        <span class="material-symbols-outlined text-4xl text-gray-300 mb-2">playlist_add</span>
+                        <p>No items in this playlist yet.</p>
+                        <p class="text-sm">Click "Add Item" to add screens or media.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex items-center justify-end gap-3">
+            <a href="{% url 'signage:playlist_list' %}"
+               class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
+                Cancel
+            </a>
+            <button type="submit"
+                    class="px-6 py-2 rounded-lg text-white transition-colors"
+                    style="background: #0a0a0c;">
+                {% if is_new %}Create Playlist{% else %}Save Changes{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Add Item Modal -->
+<div id="addItemModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-gray-900">Add Item to Playlist</h2>
+            <button onclick="document.getElementById('addItemModal').classList.add('hidden')"
+                    class="text-gray-400 hover:text-gray-600">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <!-- Item Type Tabs -->
+        <div class="flex border-b border-gray-200 mb-4">
+            <button type="button" onclick="showItemTab('screens')" id="tabScreens"
+                    class="px-4 py-2 text-sm font-medium border-b-2 border-gray-900 text-gray-900">
+                Screen Designs
+            </button>
+            <button type="button" onclick="showItemTab('media')" id="tabMedia"
+                    class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                Media Assets
+            </button>
+        </div>
+
+        <!-- Screens List -->
+        <div id="screensList" class="space-y-2 max-h-64 overflow-y-auto">
+            {% if available_designs %}
+                {% for design in available_designs %}
+                <div class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors"
+                     onclick="selectItem('screen', '{{ design.id }}', '{{ design.name|escapejs }}')">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(10, 10, 12, 0.05);">
+                        <span class="material-symbols-outlined" style="color: #0a0a0c;">web</span>
+                    </div>
+                    <div>
+                        <p class="font-medium text-gray-900">{{ design.name }}</p>
+                        <p class="text-sm text-gray-500">{{ design.slug }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-gray-500 text-center py-4">No active screen designs available.</p>
+            {% endif %}
+        </div>
+
+        <!-- Media List -->
+        <div id="mediaList" class="hidden space-y-2 max-h-64 overflow-y-auto">
+            {% if media_assets %}
+                {% for asset in media_assets %}
+                <div class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors"
+                     onclick="selectItem('media', '{{ asset.id }}', '{{ asset.name|escapejs }}')">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(10, 10, 12, 0.05);">
+                        <span class="material-symbols-outlined" style="color: #0a0a0c;">
+                            {% if asset.asset_type == 'image' %}image{% else %}videocam{% endif %}
+                        </span>
+                    </div>
+                    <div>
+                        <p class="font-medium text-gray-900">{{ asset.name }}</p>
+                        <p class="text-sm text-gray-500">{{ asset.asset_type|title }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-gray-500 text-center py-4">No active media assets available.</p>
+            {% endif %}
+        </div>
+
+        <!-- Duration Setting -->
+        <div id="durationSection" class="hidden mt-4 pt-4 border-t border-gray-200">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <p class="font-medium text-gray-900" id="selectedItemName">Selected Item</p>
+                    <p class="text-sm text-gray-500" id="selectedItemType">Type</p>
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Duration (seconds)</label>
+                <input type="number" id="itemDuration" value="10" min="1" max="3600"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900">
+            </div>
+            <div class="flex gap-3">
+                <button type="button" onclick="cancelItemSelection()"
+                        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+                <button type="button" onclick="confirmAddItem()"
+                        class="flex-1 px-4 py-2 rounded-lg text-white transition-colors"
+                        style="background: #0a0a0c;">
+                    Add to Playlist
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedItemType = null;
+let selectedItemId = null;
+let selectedItemName = null;
+
+function showItemTab(tab) {
+    const screensTab = document.getElementById('tabScreens');
+    const mediaTab = document.getElementById('tabMedia');
+    const screensList = document.getElementById('screensList');
+    const mediaList = document.getElementById('mediaList');
+
+    if (tab === 'screens') {
+        screensTab.classList.add('border-gray-900', 'text-gray-900');
+        screensTab.classList.remove('border-transparent', 'text-gray-500');
+        mediaTab.classList.remove('border-gray-900', 'text-gray-900');
+        mediaTab.classList.add('border-transparent', 'text-gray-500');
+        screensList.classList.remove('hidden');
+        mediaList.classList.add('hidden');
+    } else {
+        mediaTab.classList.add('border-gray-900', 'text-gray-900');
+        mediaTab.classList.remove('border-transparent', 'text-gray-500');
+        screensTab.classList.remove('border-gray-900', 'text-gray-900');
+        screensTab.classList.add('border-transparent', 'text-gray-500');
+        mediaList.classList.remove('hidden');
+        screensList.classList.add('hidden');
+    }
+
+    // Hide duration section when switching tabs
+    document.getElementById('durationSection').classList.add('hidden');
+}
+
+function selectItem(type, id, name) {
+    selectedItemType = type;
+    selectedItemId = id;
+    selectedItemName = name;
+
+    document.getElementById('selectedItemName').textContent = name;
+    document.getElementById('selectedItemType').textContent = type === 'screen' ? 'Screen Design' : 'Media Asset';
+    document.getElementById('durationSection').classList.remove('hidden');
+
+    // Hide the lists
+    document.getElementById('screensList').classList.add('hidden');
+    document.getElementById('mediaList').classList.add('hidden');
+}
+
+function cancelItemSelection() {
+    selectedItemType = null;
+    selectedItemId = null;
+    selectedItemName = null;
+
+    document.getElementById('durationSection').classList.add('hidden');
+
+    // Show the appropriate list based on current tab
+    if (document.getElementById('tabScreens').classList.contains('border-gray-900')) {
+        document.getElementById('screensList').classList.remove('hidden');
+    } else {
+        document.getElementById('mediaList').classList.remove('hidden');
+    }
+}
+
+function confirmAddItem() {
+    const duration = document.getElementById('itemDuration').value;
+
+    // Hide empty state if it exists
+    const emptyState = document.getElementById('emptyItemsState');
+    if (emptyState) {
+        emptyState.remove();
+    }
+
+    // Add item to the list (visual only for now - would need AJAX for persistence)
+    const itemsContainer = document.getElementById('playlistItems');
+    const itemHtml = `
+        <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200 new-item">
+            <div class="flex items-center gap-2 text-gray-400 cursor-move">
+                <span class="material-symbols-outlined">drag_indicator</span>
+            </div>
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(10, 10, 12, 0.05);">
+                <span class="material-symbols-outlined" style="color: #0a0a0c;">
+                    ${selectedItemType === 'screen' ? 'web' : 'image'}
+                </span>
+            </div>
+            <div class="flex-1">
+                <p class="font-medium text-gray-900">${selectedItemName}</p>
+                <p class="text-sm text-gray-500">
+                    ${selectedItemType === 'screen' ? 'Screen Design' : 'Media Asset'} &middot; ${duration}s duration
+                </p>
+            </div>
+            <input type="hidden" name="items[]" value="${selectedItemType}:${selectedItemId}:${duration}">
+            <button type="button" onclick="this.closest('.new-item').remove()"
+                    class="text-gray-400 hover:text-red-500 transition-colors">
+                <span class="material-symbols-outlined">delete</span>
+            </button>
+        </div>
+    `;
+
+    itemsContainer.insertAdjacentHTML('beforeend', itemHtml);
+
+    // Close modal
+    document.getElementById('addItemModal').classList.add('hidden');
+
+    // Reset selection
+    cancelItemSelection();
+}
+
+function removeItem(itemId) {
+    if (confirm('Remove this item from the playlist?')) {
+        const item = document.querySelector(`[data-item-id="${itemId}"]`);
+        if (item) {
+            item.remove();
+        }
+    }
+}
+</script>
+{% endblock %}

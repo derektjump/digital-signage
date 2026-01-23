@@ -1,0 +1,67 @@
+{% load static %}
+
+<button type="button" class="grid-badge"
+        x-data="{ collapsed: false }"
+        x-init="$watch('$store.miniNav', val => collapsed = val)"
+        :class="{ 'grid-badge--collapsed': collapsed }"
+        aria-label="Open The Grid app menu"
+        aria-expanded="false" aria-haspopup="true" tabindex="0">
+
+    <!-- Header: Icon + Title -->
+    <div class="grid-badge__header">
+        <span class="grid-badge__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="3" width="5" height="5" rx="1" fill="currentColor"/>
+                <rect x="10" y="3" width="5" height="5" rx="1" fill="currentColor" fill-opacity="0.7"/>
+                <rect x="17" y="3" width="5" height="5" rx="1" fill="currentColor" fill-opacity="0.5"/>
+                <rect x="3" y="10" width="5" height="5" rx="1" fill="currentColor" fill-opacity="0.7"/>
+                <rect x="10" y="10" width="5" height="5" rx="1" fill="currentColor"/>
+                <rect x="17" y="10" width="5" height="5" rx="1" fill="currentColor" fill-opacity="0.7"/>
+                <rect x="3" y="17" width="5" height="5" rx="1" fill="currentColor" fill-opacity="0.5"/>
+                <rect x="10" y="17" width="5" height="5" rx="1" fill="currentColor" fill-opacity="0.7"/>
+                <rect x="17" y="17" width="5" height="5" rx="1" fill="currentColor"/>
+            </svg>
+        </span>
+        <span class="grid-badge__title">The Grid</span>
+    </div>
+
+    <!-- Connector + App Name -->
+    <div class="grid-badge__app-row">
+        <span class="grid-badge__connector" aria-hidden="true">
+            <span class="grid-badge__connector-dot"></span>
+        </span>
+        <span class="grid-badge__app-name">{{ app_name|default:"Customer Lifecycle" }}</span>
+    </div>
+
+    <!-- Tooltip (collapsed state) -->
+    <span class="grid-badge__tooltip" role="tooltip">The Grid &mdash; Open apps</span>
+
+    <!-- Dropdown Menu -->
+    <nav class="grid-badge__menu" role="menu" aria-label="Grid apps">
+        <div class="grid-badge__menu-header">
+            <a href="#" class="grid-badge__menu-hub-link" role="menuitem">
+                <span class="grid-badge__menu-hub-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+                        <path d="M10 19l-7-7 7-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        <path d="M3 12h18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                </span>
+                <span>Back to The Grid</span>
+            </a>
+        </div>
+
+        <div class="grid-badge__menu-section-title">Switch Apps</div>
+
+        <!-- App Links -->
+        <a href="/" class="grid-badge__menu-item grid-badge__menu-item--current" role="menuitem" aria-current="page">Customer Lifecycle</a>
+        <a href="https://prompted.chat/" class="grid-badge__menu-item" role="menuitem">Prompted</a>
+        <a href="https://the-grid-2-b0fyhhaqcadxahes.canadaeast-01.azurewebsites.net/shopify-manager/" class="grid-badge__menu-item" role="menuitem">Shopify Manager</a>
+        <a href="https://the-grid-v2-bxfue0bhbkacffac.canadaeast-01.azurewebsites.net/digital-signage/" class="grid-badge__menu-item" role="menuitem">Digital Signage</a>
+        <span class="grid-badge__menu-item grid-badge__menu-item--disabled" role="menuitem" aria-disabled="true">
+            Jumplytics <span class="grid-badge__coming-soon">Coming Soon</span>
+        </span>
+        <span class="grid-badge__menu-item grid-badge__menu-item--disabled" role="menuitem" aria-disabled="true">
+            Tree <span class="grid-badge__coming-soon">Coming Soon</span>
+        </span>
+    </nav>
+</button>

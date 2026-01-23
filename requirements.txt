@@ -1,0 +1,17 @@
+# Django Core
+Django>=5.0
+gunicorn
+whitenoise
+
+# Database
+psycopg2-binary
+
+# Authentication
+msal
+
+# Environment
+python-dotenv
+
+# Caching (optional)
+redis
+django-redis

@@ -1,0 +1,299 @@
+/**
+ * Base Styles for Customer Lifecycle
+ * Part of The Grid Design System
+ */
+
+/* CSS Variables - Grid Design System */
+:root {
+    /* Primary Brand Colors */
+    --grid-primary: #01ffff;
+    --grid-primary-glow: rgba(1, 255, 255, 0.15);
+
+    /* Background Colors */
+    --grid-bg-dark: #181818;
+    --grid-bg-darker: #131315;
+    --grid-bg-card: #1e293b;
+    --grid-bg-card-hover: #334155;
+
+    /* Text Colors */
+    --grid-text-primary: #e4e8ec;
+    --grid-text-muted: #8b929a;
+    --grid-text-dark: #23263b;
+
+    /* Border Colors */
+    --grid-border: rgba(255, 255, 255, 0.08);
+    --grid-border-hover: rgba(255, 255, 255, 0.14);
+    --grid-border-solid: #374151;
+
+    /* Button Colors */
+    --grid-button-primary: #2563eb;
+    --grid-button-hover: #60a5fa;
+
+    /* Chromatic Aberration */
+    --grid-chroma-pink: rgba(255, 59, 129, 1);
+    --grid-chroma-cyan: rgba(0, 240, 255, 1);
+    --grid-chroma-purple: rgba(100, 52, 248, 1);
+
+    /* Font Families */
+    --font-primary: 'Onest', sans-serif;
+    --font-display: 'Oxanium', sans-serif;
+
+    /* Font Sizes */
+    --text-xs: 9px;
+    --text-sm: 11px;
+    --text-base: 12px;
+    --text-md: 14px;
+    --text-lg: 16px;
+    --text-xl: 18px;
+    --text-2xl: 24px;
+}
+
+/* Base Reset */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-primary);
+    background: #0a0a0b;
+    color: var(--grid-text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Main Content Background */
+main {
+    background: linear-gradient(180deg, #0a0a0b 0%, #111113 100%);
+    min-height: 100vh;
+}
+
+/* Card Components */
+.card {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid var(--grid-border);
+    border-radius: 8px;
+    padding: 1rem;
+    transition: all 150ms ease;
+}
+
+.card:hover {
+    background: rgba(51, 65, 85, 0.8);
+    border-color: var(--grid-border-hover);
+}
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: var(--text-md);
+    cursor: pointer;
+    transition: all 150ms ease;
+    border: none;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background: var(--grid-button-primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #3b82f6;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--grid-text-primary);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-cyan {
+    background: transparent;
+    color: var(--grid-primary);
+    border: 1px solid var(--grid-primary);
+}
+
+.btn-cyan:hover {
+    background: var(--grid-primary-glow);
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    color: var(--grid-text-primary);
+    margin: 0;
+}
+
+h1 { font-size: var(--text-2xl); font-weight: 700; }
+h2 { font-size: var(--text-xl); font-weight: 600; }
+h3 { font-size: var(--text-lg); font-weight: 600; }
+
+/* Links */
+a {
+    color: var(--grid-primary);
+    text-decoration: none;
+    transition: opacity 150ms ease;
+}
+
+a:hover {
+    opacity: 0.8;
+}
+
+/* Utility Classes */
+.text-muted { color: var(--grid-text-muted); }
+.text-primary { color: var(--grid-text-primary); }
+.text-cyan { color: var(--grid-primary); }
+
+.font-display { font-family: var(--font-display); }
+.font-primary { font-family: var(--font-primary); }
+
+/* Glow Effect */
+.glow-cyan {
+    box-shadow: 0 0 20px var(--grid-primary-glow);
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--grid-bg-darker);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--grid-border-solid);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #4b5563;
+}
+
+/* Page Container */
+.page-container {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Page Header */
+.page-header {
+    margin-bottom: 2rem;
+}
+
+.page-header h1 {
+    color: var(--grid-primary);
+    margin-bottom: 0.5rem;
+}
+
+.page-header p {
+    color: var(--grid-text-muted);
+    font-size: var(--text-md);
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: var(--grid-bg-card);
+    border: 1px solid var(--grid-border);
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.stat-card__label {
+    font-size: var(--text-sm);
+    color: var(--grid-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.stat-card__value {
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    color: var(--grid-primary);
+}
+
+/* Data Table */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--grid-border);
+}
+
+.data-table th {
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--grid-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.data-table td {
+    font-size: var(--text-md);
+}
+
+.data-table tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* Status Badges */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-family: var(--font-display);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.badge-success {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.badge-warning {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.badge-danger {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.badge-info {
+    background: rgba(1, 255, 255, 0.15);
+    color: var(--grid-primary);
+}

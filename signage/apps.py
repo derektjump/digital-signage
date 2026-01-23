@@ -1,0 +1,11 @@
+"""
+App configuration for Digital Signage.
+"""
+
+from django.apps import AppConfig
+
+
+class SignageConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'signage'
+    verbose_name = 'Digital Signage'

@@ -1,0 +1,897 @@
+{% extends 'signage/base.html' %}
+
+{% block title %}Media Library | {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="p-6 md:p-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <div>
+            <h1 class="text-2xl font-semibold text-gray-900" style="font-family: 'Oxanium', sans-serif;">Media Library</h1>
+            <p class="text-gray-500 mt-1">Upload and manage images and videos</p>
+        </div>
+        <div class="mt-4 md:mt-0 flex items-center gap-3">
+            <button onclick="document.getElementById('folderModal').classList.remove('hidden')"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
+                <span class="material-symbols-outlined" style="font-size: 1.2rem;">create_new_folder</span>
+                New Folder
+            </button>
+            <button onclick="document.getElementById('uploadModal').classList.remove('hidden')"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white transition-colors"
+                    style="background: #0a0a0c;">
+                <span class="material-symbols-outlined" style="font-size: 1.2rem;">upload</span>
+                Upload Media
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(10, 10, 12, 0.05);">
+                    <span class="material-symbols-outlined" style="color: #0a0a0c;">perm_media</span>
+                </div>
+                <div>
+                    <p class="text-2xl font-semibold text-gray-900">{{ total_count }}</p>
+                    <p class="text-sm text-gray-500">Total Assets</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(59, 130, 246, 0.1);">
+                    <span class="material-symbols-outlined" style="color: #3b82f6;">image</span>
+                </div>
+                <div>
+                    <p class="text-2xl font-semibold text-gray-900">{{ image_count }}</p>
+                    <p class="text-sm text-gray-500">Images</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(168, 85, 247, 0.1);">
+                    <span class="material-symbols-outlined" style="color: #a855f7;">videocam</span>
+                </div>
+                <div>
+                    <p class="text-2xl font-semibold text-gray-900">{{ video_count }}</p>
+                    <p class="text-sm text-gray-500">Videos</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+        <div class="flex flex-wrap items-center gap-4">
+            <!-- Search -->
+            <div class="flex items-center gap-2">
+                <span class="text-sm text-gray-500">Search:</span>
+                <div class="relative">
+                    <input type="text" id="mediaSearch" placeholder="Search media..."
+                           class="pl-8 pr-3 py-1 text-sm rounded-lg border border-gray-200 focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900 placeholder:text-gray-400 w-48"
+                           oninput="filterMedia()">
+                    <span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" style="font-size: 1rem;">search</span>
+                </div>
+            </div>
+
+            <!-- Type Filter -->
+            <div class="flex items-center gap-2">
+                <span class="text-sm text-gray-500">Type:</span>
+                <button onclick="setTypeFilter('')" id="filterAll"
+                   class="px-3 py-1 text-sm rounded-lg bg-gray-900 text-white transition-colors">
+                    All
+                </button>
+                <button onclick="setTypeFilter('image')" id="filterImage"
+                   class="px-3 py-1 text-sm rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">
+                    Images
+                </button>
+                <button onclick="setTypeFilter('video')" id="filterVideo"
+                   class="px-3 py-1 text-sm rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">
+                    Videos
+                </button>
+            </div>
+
+            <!-- Folder Filter - Custom Dropdown -->
+            {% if folders %}
+            <div class="flex items-center gap-2">
+                <span class="text-sm text-gray-500">Folder:</span>
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open" @click.away="open = false"
+                            class="px-3 py-1 text-sm rounded-lg border border-gray-200 text-gray-900 bg-white hover:bg-gray-50 transition-colors flex items-center gap-2 min-w-[140px] justify-between">
+                        <span id="folderFilterText">All Folders</span>
+                        <span class="material-symbols-outlined text-gray-400" style="font-size: 1rem;" :class="open ? 'rotate-180' : ''">expand_more</span>
+                    </button>
+                    <div x-show="open" x-transition
+                         class="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[160px] py-1">
+                        <button onclick="setFolderFilter('', 'All Folders')"
+                                class="w-full px-3 py-2 text-sm text-left text-gray-700 hover:bg-gray-900 hover:text-white transition-colors">
+                            All Folders
+                        </button>
+                        {% for folder in folders %}
+                        <button onclick="setFolderFilter('{{ folder.id }}', '{{ folder.name }}')"
+                                class="w-full px-3 py-2 text-sm text-left text-gray-700 hover:bg-gray-900 hover:text-white transition-colors">
+                            {{ folder.name }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Media Grid -->
+    {% if media_assets %}
+    <div id="mediaGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {% for asset in media_assets %}
+        <div class="media-item bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+             data-name="{{ asset.name|lower|escapejs }}"
+             data-type="{{ asset.asset_type }}"
+             data-folder="{% if asset.folder %}{{ asset.folder.id }}{% endif %}"
+             data-media-id="{{ asset.id }}"
+             data-media-name="{{ asset.name|escapejs }}"
+             data-media-type="{{ asset.asset_type }}"
+             data-media-file="{% if asset.file %}{{ asset.file.url }}{% endif %}"
+             data-media-thumbnail="{% if asset.thumbnail %}{{ asset.thumbnail.url }}{% endif %}"
+             data-media-size="{{ asset.file_size|filesizeformat|default:'0 bytes' }}"
+             data-media-slug="{{ asset.slug }}"
+             onclick="openMediaDetailFromElement(this)">
+            <div class="aspect-video relative bg-gray-100">
+                {% if asset.asset_type == 'image' %}
+                    {% if asset.thumbnail %}
+                    <img src="{{ asset.thumbnail.url }}" alt="{{ asset.name }}" class="w-full h-full object-cover">
+                    {% elif asset.file %}
+                    <img src="{{ asset.file.url }}" alt="{{ asset.name }}" class="w-full h-full object-cover">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center">
+                        <span class="material-symbols-outlined text-4xl text-gray-300">image</span>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    {% if asset.thumbnail %}
+                    <img src="{{ asset.thumbnail.url }}" alt="{{ asset.name }}" class="w-full h-full object-cover">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center bg-purple-50">
+                        <span class="material-symbols-outlined text-4xl text-purple-300">videocam</span>
+                    </div>
+                    {% endif %}
+                    <div class="absolute bottom-2 right-2 px-2 py-0.5 bg-black/70 rounded text-white text-xs">
+                        {% if asset.duration_seconds %}{{ asset.duration_seconds|floatformat:0 }}s{% else %}Video{% endif %}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="p-3">
+                <h3 class="font-medium text-gray-900 text-sm truncate" title="{{ asset.name }}">{{ asset.name }}</h3>
+                <p class="text-xs text-gray-500 mt-1">
+                    {% if asset.folder %}{{ asset.folder.name }}{% else %}Uncategorized{% endif %}
+                    {% if asset.file_size %}
+                    &middot; {{ asset.file_size|filesizeformat }}
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <!-- No Results State (shown when filters return no results) -->
+    <div id="noResultsState" class="hidden bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+        <div class="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style="background: rgba(10, 10, 12, 0.05);">
+            <span class="material-symbols-outlined text-3xl" style="color: #6b7280;">search_off</span>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No Results Found</h3>
+        <p class="text-gray-500 mb-6">Try adjusting your search or filters.</p>
+        <button onclick="clearFilters()"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
+            <span class="material-symbols-outlined" style="font-size: 1.2rem;">filter_alt_off</span>
+            Clear Filters
+        </button>
+    </div>
+    {% else %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+        <div class="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style="background: rgba(10, 10, 12, 0.05);">
+            <span class="material-symbols-outlined text-3xl" style="color: #6b7280;">perm_media</span>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No Media Yet</h3>
+        <p class="text-gray-500 mb-6">Upload images and videos to use in your signage displays.</p>
+        <button onclick="document.getElementById('uploadModal').classList.remove('hidden')"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white transition-colors"
+                style="background: #0a0a0c;">
+            <span class="material-symbols-outlined" style="font-size: 1.2rem;">upload</span>
+            Upload Media
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Upload Modal -->
+<div id="uploadModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-gray-900">Upload Media</h2>
+            <button onclick="closeUploadModal()" class="text-gray-400 hover:text-gray-600">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <!-- Drag & Drop Area -->
+        <div id="dropZone"
+             class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center mb-4 transition-colors cursor-pointer hover:border-gray-400 hover:bg-gray-50"
+             onclick="document.getElementById('fileInput').click()">
+            <div class="mb-3">
+                <span class="material-symbols-outlined text-4xl text-gray-400">cloud_upload</span>
+            </div>
+            <p class="text-gray-600 mb-1">
+                Drag & drop files here or <span class="text-gray-900 font-medium hover:underline">click to browse</span>
+            </p>
+            <p class="text-gray-400 text-sm">JPG, PNG, GIF, WebP, MP4, WebM (max 100MB)</p>
+            <input type="file" id="fileInput" multiple accept="image/*,video/*" class="hidden" onchange="handleFileSelect(this.files)">
+        </div>
+
+        <!-- Selected Files List -->
+        <div id="fileList" class="hidden mb-4">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-gray-500">Selected files:</span>
+                <button onclick="clearFiles()" class="text-xs text-red-500 hover:text-red-600">Clear all</button>
+            </div>
+            <div id="fileListContent" class="max-h-32 overflow-y-auto space-y-2"></div>
+        </div>
+
+        <!-- Folder Selection -->
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Folder (Optional)</label>
+            <select id="uploadFolder" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-700">
+                <option value="">No folder (Uncategorized)</option>
+                {% for folder in folders %}
+                <option value="{{ folder.id }}">{{ folder.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex gap-3">
+            <button type="button" onclick="closeUploadModal()"
+                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                Cancel
+            </button>
+            <button id="uploadBtn" onclick="uploadFiles()" disabled
+                    class="flex-1 px-4 py-2 rounded-lg text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    style="background: #0a0a0c;">
+                Upload
+            </button>
+        </div>
+
+        <!-- Progress -->
+        <div id="uploadProgress" class="hidden mt-4">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-gray-500">Uploading...</span>
+                <span id="progressPercent" class="text-sm text-gray-500">0%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div id="progressBar" class="bg-gray-900 h-2 rounded-full transition-all" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="uploadError" class="hidden mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"></div>
+        <div id="uploadSuccess" class="hidden mt-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm"></div>
+    </div>
+</div>
+
+<!-- Create Folder Modal -->
+<div id="folderModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-gray-900">Create Folder</h2>
+            <button onclick="document.getElementById('folderModal').classList.add('hidden')"
+                    class="text-gray-400 hover:text-gray-600">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form id="folderForm" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Folder Name</label>
+                <input type="text" name="name" id="folderName" required
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900 placeholder:text-gray-400"
+                       placeholder="e.g., Black Friday Promos">
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button type="button" onclick="document.getElementById('folderModal').classList.add('hidden')"
+                        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="flex-1 px-4 py-2 rounded-lg text-white transition-colors"
+                        style="background: #0a0a0c;">
+                    Create
+                </button>
+            </div>
+        </form>
+        <div id="folderError" class="hidden mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"></div>
+        <div id="folderSuccess" class="hidden mt-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm"></div>
+    </div>
+</div>
+
+<!-- Media Detail Modal -->
+<div id="mediaDetailModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-xl mx-4 p-6 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+            <h2 id="mediaDetailTitle" class="text-lg font-semibold text-gray-900">Media Details</h2>
+            <button onclick="closeMediaDetail()" class="text-gray-400 hover:text-gray-600">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <!-- Preview Area -->
+        <div id="mediaPreviewContainer" class="mb-4 rounded-lg overflow-hidden bg-gray-100 cursor-pointer" onclick="viewMediaFullScreen()">
+            <img id="mediaPreviewImage" src="" alt="" class="w-full max-h-64 object-contain hidden">
+            <video id="mediaPreviewVideo" src="" class="w-full max-h-64 hidden" controls></video>
+            <div id="mediaPreviewPlaceholder" class="w-full h-48 flex items-center justify-center">
+                <span class="material-symbols-outlined text-5xl text-gray-300">image</span>
+            </div>
+            <div class="text-center py-2 text-xs text-gray-400">Click to view full size</div>
+        </div>
+
+        <!-- Media Info -->
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+                <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Type</p>
+                <p id="mediaDetailType" class="text-sm text-gray-900">Image</p>
+            </div>
+            <div>
+                <p class="text-xs text-gray-400 uppercase tracking-wide mb-1">Size</p>
+                <p id="mediaDetailSize" class="text-sm text-gray-900">0 KB</p>
+            </div>
+        </div>
+
+        <!-- Edit Form -->
+        <div class="space-y-4">
+            <div>
+                <label class="block text-xs text-gray-400 uppercase tracking-wide mb-1">Name</label>
+                <input type="text" id="mediaDetailName"
+                       class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 focus:ring-2 focus:ring-gray-500 focus:border-gray-500">
+            </div>
+            <div>
+                <label class="block text-xs text-gray-400 uppercase tracking-wide mb-1">Folder</label>
+                <select id="mediaDetailFolder"
+                        class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 focus:ring-2 focus:ring-gray-500 focus:border-gray-500">
+                    <option value="">Uncategorized</option>
+                    {% for folder in folders %}
+                    <option value="{{ folder.id }}">{{ folder.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex gap-3 mt-6">
+            <button onclick="saveMediaChanges()"
+                    class="flex-1 px-4 py-2 rounded-lg text-white transition-colors"
+                    style="background: #0a0a0c;">
+                Save Changes
+            </button>
+            <button onclick="confirmDeleteMedia()"
+                    class="px-4 py-2 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 transition-colors">
+                Delete
+            </button>
+        </div>
+
+        <!-- Messages -->
+        <div id="mediaDetailError" class="hidden mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"></div>
+        <div id="mediaDetailSuccess" class="hidden mt-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm"></div>
+    </div>
+</div>
+
+<!-- Full Screen Media Viewer -->
+<div id="fullScreenViewer" class="hidden fixed inset-0 z-[60] bg-black flex items-center justify-center">
+    <button onclick="closeFullScreenViewer()" class="absolute top-4 right-4 text-white hover:text-gray-300 z-10">
+        <span class="material-symbols-outlined text-3xl">close</span>
+    </button>
+    <img id="fullScreenImage" src="" alt="" class="max-w-full max-h-full object-contain hidden">
+    <video id="fullScreenVideo" src="" class="max-w-full max-h-full hidden" controls autoplay></video>
+</div>
+
+<script>
+// Filter state
+let currentTypeFilter = '';
+let currentFolderFilter = '';
+let currentSearchQuery = '';
+
+function setTypeFilter(type) {
+    currentTypeFilter = type;
+
+    // Update button styles
+    document.getElementById('filterAll').className = type === ''
+        ? 'px-3 py-1 text-sm rounded-lg bg-gray-900 text-white transition-colors'
+        : 'px-3 py-1 text-sm rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors';
+    document.getElementById('filterImage').className = type === 'image'
+        ? 'px-3 py-1 text-sm rounded-lg bg-gray-900 text-white transition-colors'
+        : 'px-3 py-1 text-sm rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors';
+    document.getElementById('filterVideo').className = type === 'video'
+        ? 'px-3 py-1 text-sm rounded-lg bg-gray-900 text-white transition-colors'
+        : 'px-3 py-1 text-sm rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors';
+
+    filterMedia();
+}
+
+function setFolderFilter(folderId, folderName) {
+    currentFolderFilter = folderId;
+    document.getElementById('folderFilterText').textContent = folderName;
+    filterMedia();
+}
+
+function filterMedia() {
+    const searchInput = document.getElementById('mediaSearch');
+    currentSearchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const items = document.querySelectorAll('.media-item');
+    let visibleCount = 0;
+
+    items.forEach(item => {
+        const name = (item.dataset.name || '').toLowerCase().trim();
+        const type = (item.dataset.type || '').toLowerCase().trim();
+        const folder = (item.dataset.folder || '').trim();
+
+        const matchesSearch = !currentSearchQuery || name.includes(currentSearchQuery);
+        const matchesType = !currentTypeFilter || type === currentTypeFilter;
+        const matchesFolder = !currentFolderFilter || folder === currentFolderFilter;
+
+        if (matchesSearch && matchesType && matchesFolder) {
+            item.style.display = '';
+            visibleCount++;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+
+    // Show/hide empty state
+    const emptyState = document.getElementById('noResultsState');
+    const mediaGrid = document.getElementById('mediaGrid');
+    if (emptyState) {
+        if (visibleCount === 0 && items.length > 0) {
+            emptyState.classList.remove('hidden');
+            mediaGrid.classList.add('hidden');
+        } else {
+            emptyState.classList.add('hidden');
+            mediaGrid.classList.remove('hidden');
+        }
+    }
+}
+
+function clearFilters() {
+    currentTypeFilter = '';
+    currentFolderFilter = '';
+    currentSearchQuery = '';
+
+    // Reset search input
+    document.getElementById('mediaSearch').value = '';
+
+    // Reset type filter buttons
+    setTypeFilter('');
+
+    // Reset folder filter text
+    const folderText = document.getElementById('folderFilterText');
+    if (folderText) {
+        folderText.textContent = 'All Folders';
+    }
+
+    filterMedia();
+}
+
+let selectedFiles = [];
+
+// Drag and drop handlers
+const dropZone = document.getElementById('dropZone');
+
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('border-gray-400', 'bg-gray-50');
+});
+
+dropZone.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('border-gray-400', 'bg-gray-50');
+});
+
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('border-gray-400', 'bg-gray-50');
+    handleFileSelect(e.dataTransfer.files);
+});
+
+function handleFileSelect(files) {
+    selectedFiles = Array.from(files);
+    updateFileList();
+}
+
+function updateFileList() {
+    const fileList = document.getElementById('fileList');
+    const fileListContent = document.getElementById('fileListContent');
+    const uploadBtn = document.getElementById('uploadBtn');
+
+    if (selectedFiles.length === 0) {
+        fileList.classList.add('hidden');
+        uploadBtn.disabled = true;
+        return;
+    }
+
+    fileList.classList.remove('hidden');
+    uploadBtn.disabled = false;
+
+    fileListContent.innerHTML = selectedFiles.map((file, index) => `
+        <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+            <div class="flex items-center gap-2 min-w-0">
+                <span class="material-symbols-outlined text-gray-400" style="font-size: 1rem;">
+                    ${file.type.startsWith('video/') ? 'videocam' : 'image'}
+                </span>
+                <span class="text-sm text-gray-700 truncate">${file.name}</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-500">${formatFileSize(file.size)}</span>
+                <button onclick="removeFile(${index})" class="text-gray-400 hover:text-red-500">
+                    <span class="material-symbols-outlined" style="font-size: 1rem;">close</span>
+                </button>
+            </div>
+        </div>
+    `).join('');
+
+    document.getElementById('uploadBtn').textContent = `Upload ${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''}`;
+}
+
+function removeFile(index) {
+    selectedFiles.splice(index, 1);
+    updateFileList();
+}
+
+function clearFiles() {
+    selectedFiles = [];
+    document.getElementById('fileInput').value = '';
+    updateFileList();
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function closeUploadModal() {
+    document.getElementById('uploadModal').classList.add('hidden');
+    clearFiles();
+    document.getElementById('uploadError').classList.add('hidden');
+    document.getElementById('uploadSuccess').classList.add('hidden');
+    document.getElementById('uploadProgress').classList.add('hidden');
+}
+
+async function uploadFiles() {
+    if (selectedFiles.length === 0) {
+        console.log('No files selected');
+        return;
+    }
+
+    console.log('Uploading files:', selectedFiles.length);
+
+    const formData = new FormData();
+    for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i];
+        console.log('Appending file:', file.name, file.size, file.type);
+        formData.append('files', file, file.name);
+    }
+
+    const folder = document.getElementById('uploadFolder').value;
+    if (folder) formData.append('folder', folder);
+
+    const errorDiv = document.getElementById('uploadError');
+    const successDiv = document.getElementById('uploadSuccess');
+    const progressDiv = document.getElementById('uploadProgress');
+    const uploadBtn = document.getElementById('uploadBtn');
+
+    errorDiv.classList.add('hidden');
+    successDiv.classList.add('hidden');
+    progressDiv.classList.remove('hidden');
+    uploadBtn.disabled = true;
+
+    try {
+        const xhr = new XMLHttpRequest();
+
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                const percent = Math.round((e.loaded / e.total) * 100);
+                document.getElementById('progressBar').style.width = percent + '%';
+                document.getElementById('progressPercent').textContent = percent + '%';
+            }
+        });
+
+        xhr.onload = function() {
+            progressDiv.classList.add('hidden');
+            uploadBtn.disabled = false;
+            console.log('Response status:', xhr.status);
+            console.log('Response text:', xhr.responseText);
+
+            try {
+                const data = JSON.parse(xhr.responseText);
+                if (data.success) {
+                    successDiv.textContent = `Successfully uploaded ${data.uploaded_count} file(s)!`;
+                    successDiv.classList.remove('hidden');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    errorDiv.textContent = data.error || 'Failed to upload files';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (e) {
+                errorDiv.textContent = 'Upload failed: ' + xhr.responseText;
+                errorDiv.classList.remove('hidden');
+            }
+        };
+
+        xhr.onerror = function() {
+            progressDiv.classList.add('hidden');
+            uploadBtn.disabled = false;
+            errorDiv.textContent = 'Network error. Please try again.';
+            errorDiv.classList.remove('hidden');
+        };
+
+        xhr.open('POST', '{% url "signage:upload_media" %}');
+        xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+        xhr.send(formData);
+    } catch (err) {
+        console.error('Upload error:', err);
+        progressDiv.classList.add('hidden');
+        uploadBtn.disabled = false;
+        errorDiv.textContent = 'An error occurred: ' + err.message;
+        errorDiv.classList.remove('hidden');
+    }
+}
+
+// Create folder form
+document.getElementById('folderForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const name = document.getElementById('folderName').value;
+    const errorDiv = document.getElementById('folderError');
+    const successDiv = document.getElementById('folderSuccess');
+
+    errorDiv.classList.add('hidden');
+    successDiv.classList.add('hidden');
+
+    try {
+        const response = await fetch('{% url "signage:create_folder" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ name })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            successDiv.textContent = 'Folder created successfully!';
+            successDiv.classList.remove('hidden');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            errorDiv.textContent = data.error || 'Failed to create folder';
+            errorDiv.classList.remove('hidden');
+        }
+    } catch (err) {
+        errorDiv.textContent = 'An error occurred. Please try again.';
+        errorDiv.classList.remove('hidden');
+    }
+});
+
+// Media Detail Modal
+let currentMediaId = null;
+let currentMediaType = null;
+let currentMediaUrl = null;
+let currentMediaSlug = null;
+
+function openMediaDetailFromElement(element) {
+    const id = element.dataset.mediaId;
+    const name = element.dataset.mediaName;
+    const type = element.dataset.mediaType;
+    const fileUrl = element.dataset.mediaFile;
+    const thumbnailUrl = element.dataset.mediaThumbnail;
+    const size = element.dataset.mediaSize;
+    const folderId = element.dataset.folder;
+    const slug = element.dataset.mediaSlug;
+    openMediaDetail(id, name, type, fileUrl, thumbnailUrl, size, folderId, slug);
+}
+
+function openMediaDetail(id, name, type, fileUrl, thumbnailUrl, size, folderId, slug) {
+    currentMediaId = id;
+    currentMediaType = type;
+    currentMediaUrl = fileUrl;
+    currentMediaSlug = slug;
+
+    // Set title and info
+    document.getElementById('mediaDetailTitle').textContent = name;
+    document.getElementById('mediaDetailName').value = name;
+    document.getElementById('mediaDetailType').textContent = type.charAt(0).toUpperCase() + type.slice(1);
+    document.getElementById('mediaDetailSize').textContent = size;
+    document.getElementById('mediaDetailFolder').value = folderId || '';
+
+    // Set preview
+    const previewImage = document.getElementById('mediaPreviewImage');
+    const previewVideo = document.getElementById('mediaPreviewVideo');
+    const previewPlaceholder = document.getElementById('mediaPreviewPlaceholder');
+
+    previewImage.classList.add('hidden');
+    previewVideo.classList.add('hidden');
+    previewPlaceholder.classList.add('hidden');
+
+    if (type === 'image') {
+        const imgUrl = fileUrl || thumbnailUrl;
+        if (imgUrl) {
+            previewImage.src = imgUrl;
+            previewImage.classList.remove('hidden');
+        } else {
+            previewPlaceholder.classList.remove('hidden');
+        }
+    } else if (type === 'video') {
+        if (fileUrl) {
+            previewVideo.src = fileUrl;
+            previewVideo.classList.remove('hidden');
+        } else if (thumbnailUrl) {
+            previewImage.src = thumbnailUrl;
+            previewImage.classList.remove('hidden');
+        } else {
+            previewPlaceholder.classList.remove('hidden');
+        }
+    }
+
+    // Clear messages
+    document.getElementById('mediaDetailError').classList.add('hidden');
+    document.getElementById('mediaDetailSuccess').classList.add('hidden');
+
+    // Show modal
+    document.getElementById('mediaDetailModal').classList.remove('hidden');
+}
+
+function closeMediaDetail() {
+    document.getElementById('mediaDetailModal').classList.add('hidden');
+    // Stop video if playing
+    const previewVideo = document.getElementById('mediaPreviewVideo');
+    previewVideo.pause();
+    previewVideo.src = '';
+    currentMediaId = null;
+}
+
+function viewMediaFullScreen() {
+    if (!currentMediaUrl) return;
+
+    const fullScreenImage = document.getElementById('fullScreenImage');
+    const fullScreenVideo = document.getElementById('fullScreenVideo');
+
+    fullScreenImage.classList.add('hidden');
+    fullScreenVideo.classList.add('hidden');
+
+    if (currentMediaType === 'image') {
+        fullScreenImage.src = currentMediaUrl;
+        fullScreenImage.classList.remove('hidden');
+    } else if (currentMediaType === 'video') {
+        fullScreenVideo.src = currentMediaUrl;
+        fullScreenVideo.classList.remove('hidden');
+    }
+
+    document.getElementById('fullScreenViewer').classList.remove('hidden');
+}
+
+function closeFullScreenViewer() {
+    document.getElementById('fullScreenViewer').classList.add('hidden');
+    const fullScreenVideo = document.getElementById('fullScreenVideo');
+    fullScreenVideo.pause();
+    fullScreenVideo.src = '';
+}
+
+async function saveMediaChanges() {
+    if (!currentMediaId) return;
+
+    const name = document.getElementById('mediaDetailName').value.trim();
+    const folderId = document.getElementById('mediaDetailFolder').value;
+    const errorDiv = document.getElementById('mediaDetailError');
+    const successDiv = document.getElementById('mediaDetailSuccess');
+
+    errorDiv.classList.add('hidden');
+    successDiv.classList.add('hidden');
+
+    if (!name) {
+        errorDiv.textContent = 'Name is required';
+        errorDiv.classList.remove('hidden');
+        return;
+    }
+
+    try {
+        const response = await fetch(`{% url 'signage:update_media' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', currentMediaId), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ name, folder_id: folderId || null })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            successDiv.textContent = 'Changes saved successfully!';
+            successDiv.classList.remove('hidden');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            errorDiv.textContent = data.error || 'Failed to save changes';
+            errorDiv.classList.remove('hidden');
+        }
+    } catch (err) {
+        errorDiv.textContent = 'An error occurred. Please try again.';
+        errorDiv.classList.remove('hidden');
+    }
+}
+
+function confirmDeleteMedia() {
+    if (!currentMediaId) return;
+
+    if (confirm('Are you sure you want to delete this media? This action cannot be undone.')) {
+        deleteMedia(currentMediaId);
+    }
+}
+
+async function deleteMedia(mediaId) {
+    const errorDiv = document.getElementById('mediaDetailError');
+
+    try {
+        const response = await fetch(`{% url 'signage:delete_media' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', mediaId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            location.reload();
+        } else {
+            errorDiv.textContent = data.error || 'Failed to delete media';
+            errorDiv.classList.remove('hidden');
+        }
+    } catch (err) {
+        errorDiv.textContent = 'An error occurred. Please try again.';
+        errorDiv.classList.remove('hidden');
+    }
+}
+
+// Close modals on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        if (!document.getElementById('fullScreenViewer').classList.contains('hidden')) {
+            closeFullScreenViewer();
+        } else if (!document.getElementById('mediaDetailModal').classList.contains('hidden')) {
+            closeMediaDetail();
+        }
+    }
+});
+
+// Close full screen viewer on click outside
+document.getElementById('fullScreenViewer').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeFullScreenViewer();
+    }
+});
+
+// Initialize on page load - ensure all items visible
+document.addEventListener('DOMContentLoaded', function() {
+    const items = document.querySelectorAll('.media-item');
+    console.log('Media items found:', items.length);
+    items.forEach((item, index) => {
+        console.log('Item ' + index + ':', {
+            name: item.dataset.name,
+            type: item.dataset.type,
+            folder: item.dataset.folder,
+            display: item.style.display
+        });
+        // Ensure item is visible on load
+        item.style.display = '';
+    });
+});
+</script>
+{% endblock %}

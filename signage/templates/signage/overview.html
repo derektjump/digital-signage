@@ -1,0 +1,222 @@
+{% extends 'signage/base.html' %}
+
+{% block title %}Dashboard | {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="p-6 md:p-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <div>
+            <h1 class="text-2xl font-semibold text-gray-900" style="font-family: 'Oxanium', sans-serif;">Dashboard</h1>
+            <p class="text-gray-500 mt-1">Manage your screens, devices, and playlists</p>
+        </div>
+        <a href="{% url 'signage:screen_design_create' %}"
+           class="mt-4 md:mt-0 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white transition-colors"
+           style="background: #0a0a0c;">
+            <span class="material-symbols-outlined" style="font-size: 1.2rem;">add</span>
+            New Design
+        </a>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(10, 10, 12, 0.05);">
+                    <span class="material-symbols-outlined" style="color: #0a0a0c;">web</span>
+                </div>
+                <div>
+                    <p class="text-2xl font-semibold text-gray-900">{{ stats.total_designs }}</p>
+                    <p class="text-sm text-gray-500">Active Designs</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(34, 197, 94, 0.1);">
+                    <span class="material-symbols-outlined" style="color: #22c55e;">tv</span>
+                </div>
+                <div>
+                    <p class="text-2xl font-semibold text-gray-900">{{ stats.devices_online }}</p>
+                    <p class="text-sm text-gray-500">Devices Online</p>
+                </div>
+            </div>
+            <p class="text-xs text-gray-400 mt-2">
+                <span class="text-amber-500">{{ stats.devices_recent }} recent</span> &middot;
+                <span class="text-red-500">{{ stats.devices_offline }} offline</span>
+            </p>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(168, 85, 247, 0.1);">
+                    <span class="material-symbols-outlined" style="color: #a855f7;">playlist_play</span>
+                </div>
+                <div>
+                    <p class="text-2xl font-semibold text-gray-900">{{ stats.total_playlists }}</p>
+                    <p class="text-sm text-gray-500">Active Playlists</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(59, 130, 246, 0.1);">
+                    <span class="material-symbols-outlined" style="color: #3b82f6;">perm_media</span>
+                </div>
+                <div>
+                    <p class="text-2xl font-semibold text-gray-900">{{ media_stats.total }}</p>
+                    <p class="text-sm text-gray-500">Media Assets</p>
+                </div>
+            </div>
+            <p class="text-xs text-gray-400 mt-2">{{ media_stats.images }} images &middot; {{ media_stats.videos }} videos</p>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-8">
+        <div class="flex flex-wrap items-center gap-3">
+            <span class="text-sm text-gray-500">Quick actions:</span>
+            <a href="{% url 'signage:screen_design_create' %}"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white transition-colors text-sm"
+               style="background: #0a0a0c;">
+                <span class="material-symbols-outlined" style="font-size: 1.1rem;">add</span>
+                New Design
+            </a>
+            <a href="{% url 'signage:playlist_create' %}"
+               class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm">
+                <span class="material-symbols-outlined" style="font-size: 1.1rem;">playlist_add</span>
+                New Playlist
+            </a>
+            <a href="{% url 'signage:screen_design_list' %}"
+               class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm">
+                <span class="material-symbols-outlined" style="font-size: 1.1rem;">view_list</span>
+                View All Designs
+            </a>
+        </div>
+    </div>
+
+    <!-- Two-Column Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Recent Designs -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-900" style="font-family: 'Oxanium', sans-serif;">Recent Designs</h2>
+                <a href="{% url 'signage:screen_design_list' %}" class="text-sm text-gray-500 hover:text-gray-700">View all</a>
+            </div>
+
+            {% if designs %}
+            <div class="space-y-3">
+                {% for design in designs %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: rgba(10, 10, 12, 0.05);">
+                            <span class="material-symbols-outlined text-gray-500" style="font-size: 1.1rem;">web</span>
+                        </div>
+                        <div>
+                            <div class="font-medium text-gray-900">{{ design.name }}</div>
+                            <div class="text-xs text-gray-500">{{ design.slug }}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <a href="{% url 'signage:screen_design_preview' design.slug %}" class="p-2 text-gray-400 hover:text-gray-600 transition-colors" title="Preview">
+                            <span class="material-symbols-outlined" style="font-size: 1.1rem;">visibility</span>
+                        </a>
+                        <a href="{% url 'signage:screen_design_update' design.slug %}" class="p-2 text-gray-400 hover:text-gray-600 transition-colors" title="Edit">
+                            <span class="material-symbols-outlined" style="font-size: 1.1rem;">edit</span>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8">
+                <div class="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center" style="background: rgba(10, 10, 12, 0.05);">
+                    <span class="material-symbols-outlined text-xl text-gray-400">web</span>
+                </div>
+                <p class="text-gray-500 mb-2">No designs yet</p>
+                <a href="{% url 'signage:screen_design_create' %}" class="text-sm text-gray-600 hover:text-gray-900">Create your first design</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Device Status -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-900" style="font-family: 'Oxanium', sans-serif;">Device Status</h2>
+                <a href="{% url 'signage:device_list' %}" class="text-sm text-gray-500 hover:text-gray-700">View all</a>
+            </div>
+
+            {% if devices %}
+            <div class="space-y-3">
+                {% for device in devices %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <span class="flex items-center gap-1.5 px-2 py-1 text-xs rounded-full {% if device.status == 'online' %}bg-green-100 text-green-700{% elif device.status == 'recent' %}bg-amber-100 text-amber-700{% else %}bg-gray-100 text-gray-600{% endif %}">
+                            <span class="w-1.5 h-1.5 rounded-full {% if device.status == 'online' %}bg-green-500{% elif device.status == 'recent' %}bg-amber-500{% else %}bg-gray-400{% endif %}"></span>
+                            {{ device.status|title }}
+                        </span>
+                        <div>
+                            <div class="font-medium text-gray-900">{{ device.name|default:"Unnamed Device" }}</div>
+                            <div class="text-xs text-gray-500">
+                                {% if device.assigned_playlist %}
+                                    {{ device.assigned_playlist.name }}
+                                {% elif device.assigned_screen %}
+                                    {{ device.assigned_screen.name }}
+                                {% else %}
+                                    No content assigned
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <a href="{% url 'signage:device_detail' device.pk %}" class="p-2 text-gray-400 hover:text-gray-600 transition-colors" title="Configure">
+                        <span class="material-symbols-outlined" style="font-size: 1.1rem;">settings</span>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8">
+                <div class="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center" style="background: rgba(10, 10, 12, 0.05);">
+                    <span class="material-symbols-outlined text-xl text-gray-400">tv</span>
+                </div>
+                <p class="text-gray-500 mb-2">No devices registered</p>
+                <p class="text-sm text-gray-400">Devices will appear here when they register</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Playlists Section -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-gray-900" style="font-family: 'Oxanium', sans-serif;">Active Playlists</h2>
+            <a href="{% url 'signage:playlist_list' %}" class="text-sm text-gray-500 hover:text-gray-700">View all</a>
+        </div>
+
+        {% if playlists %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for playlist in playlists %}
+            <div class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: rgba(168, 85, 247, 0.1);">
+                        <span class="material-symbols-outlined" style="color: #a855f7; font-size: 1.1rem;">playlist_play</span>
+                    </div>
+                    <span class="text-xs text-gray-500">{{ playlist.items.count }} items</span>
+                </div>
+                <div class="font-medium text-gray-900 mb-1">{{ playlist.name }}</div>
+                <div class="text-xs text-gray-500 mb-3">{{ playlist.device_count }} devices using this</div>
+                <a href="{% url 'signage:playlist_update' playlist.pk %}" class="text-sm text-gray-600 hover:text-gray-900">Edit</a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-8">
+            <div class="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center" style="background: rgba(168, 85, 247, 0.1);">
+                <span class="material-symbols-outlined text-xl" style="color: #a855f7;">playlist_play</span>
+            </div>
+            <p class="text-gray-500 mb-2">No playlists yet</p>
+            <a href="{% url 'signage:playlist_create' %}" class="text-sm text-gray-600 hover:text-gray-900">Create your first playlist</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

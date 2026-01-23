@@ -1,0 +1,210 @@
+{% extends 'signage/base.html' %}
+
+{% block title %}{% if is_new %}New Design{% else %}Edit {{ object.name }}{% endif %} | {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="p-6 md:p-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <div>
+            <h1 class="text-2xl font-semibold text-gray-900" style="font-family: 'Oxanium', sans-serif;">
+                {% if is_new %}New Screen Design{% else %}Edit Design{% endif %}
+            </h1>
+            <p class="text-gray-500 mt-1">
+                {% if is_new %}Create a new screen design template{% else %}Update design settings and code{% endif %}
+            </p>
+        </div>
+        <div class="mt-4 md:mt-0 flex items-center gap-3">
+            {% if not is_new %}
+            <a href="{% url 'signage:screen_design_preview' object.slug %}" target="_blank"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
+                <span class="material-symbols-outlined" style="font-size: 1.2rem;">visibility</span>
+                Preview
+            </a>
+            {% endif %}
+            <a href="{% url 'signage:screen_design_list' %}"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
+                <span class="material-symbols-outlined" style="font-size: 1.2rem;">arrow_back</span>
+                Back to Designs
+            </a>
+        </div>
+    </div>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- Basic Info Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Design Details</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="id_name" class="block text-sm font-medium text-gray-700 mb-1">Design Name</label>
+                    <input type="text" name="name" id="id_name" required
+                           value="{% if object %}{{ object.name }}{% endif %}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900 placeholder:text-gray-400"
+                           placeholder="e.g., Sales Dashboard Q1">
+                </div>
+
+                <div>
+                    <label for="id_slug" class="block text-sm font-medium text-gray-700 mb-1">URL Slug</label>
+                    <input type="text" name="slug" id="id_slug"
+                           value="{% if object %}{{ object.slug }}{% endif %}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900 placeholder:text-gray-400"
+                           placeholder="auto-generated-from-name">
+                    <p class="text-xs text-gray-400 mt-1">Leave blank to auto-generate from name</p>
+                </div>
+
+                <div>
+                    <label for="id_folder" class="block text-sm font-medium text-gray-700 mb-1">Folder (Optional)</label>
+                    <select name="folder" id="id_folder"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900">
+                        <option value="">No Folder</option>
+                        {% for folder in design_folders %}
+                        <option value="{{ folder.id }}" {% if object.folder.id == folder.id %}selected{% endif %}>
+                            {{ folder.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-3 pt-6">
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="is_active" id="id_is_active" class="sr-only peer"
+                               {% if object.is_active or is_new %}checked{% endif %}>
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-gray-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900"></div>
+                    </label>
+                    <span class="text-sm font-medium text-gray-700">Active</span>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label for="id_description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea name="description" id="id_description" rows="2"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900 placeholder:text-gray-400"
+                              placeholder="What does this screen design display?">{% if object %}{{ object.description }}{% endif %}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Editor Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Design Code</h2>
+
+            <!-- Code Tabs -->
+            <div class="border-b border-gray-200 mb-4">
+                <div class="flex gap-1">
+                    <button type="button" onclick="showCodeTab('html')" id="tabHtml"
+                            class="px-4 py-2 text-sm font-medium border-b-2 border-gray-900 text-gray-900 bg-gray-50 rounded-t-lg">
+                        HTML
+                    </button>
+                    <button type="button" onclick="showCodeTab('css')" id="tabCss"
+                            class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 rounded-t-lg">
+                        CSS
+                    </button>
+                    <button type="button" onclick="showCodeTab('js')" id="tabJs"
+                            class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 rounded-t-lg">
+                        JavaScript
+                    </button>
+                </div>
+            </div>
+
+            <!-- HTML Editor -->
+            <div id="htmlEditor" class="code-editor">
+                <textarea name="html_code" id="id_html_code" rows="20"
+                          class="w-full px-4 py-3 font-mono text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900 bg-gray-50"
+                          placeholder="<!-- Your HTML code here -->">{% if object %}{{ object.html_code }}{% endif %}</textarea>
+            </div>
+
+            <!-- CSS Editor -->
+            <div id="cssEditor" class="code-editor hidden">
+                <textarea name="css_code" id="id_css_code" rows="20"
+                          class="w-full px-4 py-3 font-mono text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900 bg-gray-50"
+                          placeholder="/* Your CSS code here */">{% if object %}{{ object.css_code }}{% endif %}</textarea>
+            </div>
+
+            <!-- JavaScript Editor -->
+            <div id="jsEditor" class="code-editor hidden">
+                <textarea name="js_code" id="id_js_code" rows="20"
+                          class="w-full px-4 py-3 font-mono text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900 bg-gray-50"
+                          placeholder="// Your JavaScript code here">{% if object %}{{ object.js_code }}{% endif %}</textarea>
+            </div>
+        </div>
+
+        <!-- Notes Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Internal Notes</h2>
+            <textarea name="notes" id="id_notes" rows="4"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900 placeholder:text-gray-400"
+                      placeholder="Add any internal notes, usage instructions, or documentation...">{% if object %}{{ object.notes }}{% endif %}</textarea>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex items-center justify-end gap-3">
+            <a href="{% url 'signage:screen_design_list' %}"
+               class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
+                Cancel
+            </a>
+            <button type="submit"
+                    class="px-6 py-2 rounded-lg text-white transition-colors"
+                    style="background: #0a0a0c;">
+                {% if is_new %}Create Design{% else %}Save Changes{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+function showCodeTab(tab) {
+    // Update tab buttons
+    const tabs = ['html', 'css', 'js'];
+    tabs.forEach(t => {
+        const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+        const editor = document.getElementById(t + 'Editor');
+
+        if (t === tab) {
+            btn.classList.add('border-gray-900', 'text-gray-900', 'bg-gray-50');
+            btn.classList.remove('border-transparent', 'text-gray-500');
+            editor.classList.remove('hidden');
+        } else {
+            btn.classList.remove('border-gray-900', 'text-gray-900', 'bg-gray-50');
+            btn.classList.add('border-transparent', 'text-gray-500');
+            editor.classList.add('hidden');
+        }
+    });
+}
+
+// Auto-generate slug from name
+document.getElementById('id_name').addEventListener('input', function() {
+    const slugField = document.getElementById('id_slug');
+    if (!slugField.value || slugField.dataset.autoGenerated === 'true') {
+        slugField.value = this.value
+            .toLowerCase()
+            .replace(/[^\w\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .trim();
+        slugField.dataset.autoGenerated = 'true';
+    }
+});
+
+// Mark slug as manually edited
+document.getElementById('id_slug').addEventListener('input', function() {
+    if (this.value) {
+        this.dataset.autoGenerated = 'false';
+    }
+});
+
+// Tab key support for code editors
+document.querySelectorAll('.code-editor textarea').forEach(textarea => {
+    textarea.addEventListener('keydown', function(e) {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const start = this.selectionStart;
+            const end = this.selectionEnd;
+            this.value = this.value.substring(0, start) + '    ' + this.value.substring(end);
+            this.selectionStart = this.selectionEnd = start + 4;
+        }
+    });
+});
+</script>
+{% endblock %}

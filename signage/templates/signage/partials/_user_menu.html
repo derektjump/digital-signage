@@ -1,0 +1,84 @@
+{% if user.is_authenticated %}
+<div x-data="{ open: false }" class="relative">
+    <button @click="open = !open"
+            type="button"
+            aria-label="Open settings"
+            class="flex items-center w-full px-2 py-2 rounded-lg transition-colors"
+            :class="miniNav ? 'flex-col justify-center' : 'space-x-3'"
+            style="background: none; border: none; outline: none; cursor: pointer;">
+
+        <!-- Avatar Container - Double Circle Design -->
+        <span class="flex items-center justify-center"
+              :class="miniNav ? 'mx-auto' : ''"
+              style="width: 38px; height: 38px; min-width: 38px; min-height: 38px;">
+
+            <!-- Outer Ring (gray border, transparent fill) -->
+            <span class="flex items-center justify-center rounded-full border border-gray-500"
+                  style="width: 38px; height: 38px;">
+
+                <!-- Inner Circle (cyan fill with initial) -->
+                <span class="flex items-center justify-center rounded-full"
+                      style="width: 28px; height: 28px; min-width: 28px; min-height: 28px;
+                             font-size: 14px; font-weight: 300; color: #131315;
+                             font-family: 'Oxanium', sans-serif; background: #01ffff;">
+                    {{ user.first_name|slice:":1"|upper|default:user.username|slice:":1"|upper }}
+                </span>
+
+            </span>
+        </span>
+
+        <!-- Name + Arrow (hidden when collapsed) -->
+        <span x-show="!miniNav && showNavText" x-cloak
+              x-transition:enter="transition-opacity duration-300"
+              x-transition:enter-start="opacity-0"
+              x-transition:enter-end="opacity-100"
+              class="flex items-center space-x-2">
+
+            <!-- Display Name (NOT email) -->
+            <span class="truncate font-medium text-white"
+                  style="max-width: 120px; font-size: 14px; font-weight: 300;
+                         font-family: 'Oxanium', sans-serif;">
+                {{ user.get_full_name|default:user.username }}
+            </span>
+
+            <!-- Dropdown Arrow -->
+            <span class="material-symbols-outlined align-middle text-white"
+                  style="font-size: 1.2rem;">
+                keyboard_arrow_down
+            </span>
+        </span>
+
+    </button>
+
+    <!-- Dropdown -->
+    <div x-show="open"
+         @click.outside="open = false"
+         x-transition:enter="transition ease-out duration-100"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-75"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         class="absolute bottom-full left-0 mb-2 w-48 rounded-lg py-1"
+         style="background: rgba(20, 20, 22, 0.97); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 1px rgba(255, 255, 255, 0.1), 0 0 20px rgba(1, 255, 255, 0.15);">
+        <a href="#" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-white/5">
+            <span class="material-symbols-outlined" style="font-size: 1.1rem;">person</span>
+            Profile
+        </a>
+        <a href="#" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-white/5">
+            <span class="material-symbols-outlined" style="font-size: 1.1rem;">settings</span>
+            Settings
+        </a>
+        <hr class="my-1 border-white/10">
+        <a href="{% url 'signage:auth_logout' %}" class="flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-white/5">
+            <span class="material-symbols-outlined" style="font-size: 1.1rem;">logout</span>
+            Sign Out
+        </a>
+    </div>
+</div>
+{% else %}
+<a href="{% url 'signage:auth_login' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 transition-colors">
+    <span class="material-symbols-outlined" style="color: #01ffff;">login</span>
+    <span class="text-white text-sm" style="font-family: 'Onest';">Sign In</span>
+</a>
+{% endif %}

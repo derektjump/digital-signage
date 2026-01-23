@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ design.name }} | Digital Signage</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+        }
+        #content {
+            width: 100%;
+            height: 100%;
+        }
+        /* User CSS will be injected here */
+        {{ design.css_code|safe }}
+    </style>
+</head>
+<body>
+    <div id="content">
+        <!-- Design HTML content - using autoescape off to prevent Django from escaping user template syntax -->
+        {% autoescape off %}{{ design.html_code }}{% endautoescape %}
+    </div>
+
+    <script>
+        // Global signage data API
+        window.signageData = null;
+
+        // Fetch sales data from API
+        async function fetchSalesData() {
+            try {
+                const response = await fetch('/api/data/sales/');
+                const data = await response.json();
+                if (data.success) {
+                    window.signageData = data.sales;
+                    // Dispatch event for custom scripts
+                    window.dispatchEvent(new CustomEvent('signageDataLoaded', { detail: data.sales }));
+                    // Process template variables
+                    processTemplate();
+                }
+            } catch (error) {
+                console.error('Error fetching sales data:', error);
+            }
+        }
+
+        // Get nested value from object using dot notation
+        function getNestedValue(obj, path) {
+            return path.split('.').reduce((current, key) => {
+                return current && current[key] !== undefined ? current[key] : '';
+            }, obj);
+        }
+
+        // Process template variables in the content
+        function processTemplate() {
+            if (!window.signageData) return;
+
+            const content = document.getElementById('content');
+            let html = content.innerHTML;
+
+            // Replace {{variable}} patterns
+            html = html.replace(/\{\{(\w+(?:\.\w+)*)\}\}/g, (match, path) => {
+                // Check if it's a sales data variable
+                if (path.startsWith('sales.')) {
+                    return getNestedValue(window.signageData, path.replace('sales.', ''));
+                }
+                return match;
+            });
+
+            // Process loops: {{#each array}}...{{/each}}
+            html = processLoops(html);
+
+            content.innerHTML = html;
+        }
+
+        // Process {{#each}} loops
+        function processLoops(html) {
+            const loopRegex = /\{\{#each\s+([\w.]+)\}\}([\s\S]*?)\{\{\/each\}\}/g;
+
+            return html.replace(loopRegex, (match, arrayPath, template) => {
+                let array = null;
+
+                if (arrayPath.startsWith('sales.')) {
+                    array = getNestedValue(window.signageData, arrayPath.replace('sales.', ''));
+                }
+
+                if (!Array.isArray(array)) return '';
+
+                return array.map((item, index) => {
+                    let itemHtml = template;
+                    // Replace {{this.property}} with item values
+                    itemHtml = itemHtml.replace(/\{\{this\.(\w+)\}\}/g, (m, prop) => {
+                        return item[prop] !== undefined ? item[prop] : '';
+                    });
+                    // Replace {{@index}} with the current index
+                    itemHtml = itemHtml.replace(/\{\{@index\}\}/g, index);
+                    return itemHtml;
+                }).join('');
+            });
+        }
+
+        // Initial data fetch
+        fetchSalesData();
+
+        // Refresh data every 5 minutes
+        setInterval(fetchSalesData, 5 * 60 * 1000);
+
+        // Execute user JavaScript
+        try {
+            {{ design.js_code|safe }}
+        } catch (e) {
+            console.error('Error in design JavaScript:', e);
+        }
+    </script>
+</body>
+</html>
