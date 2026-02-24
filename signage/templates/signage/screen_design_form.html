@@ -1,6 +1,77 @@
 {% extends 'signage/base.html' %}
+{% load static %}
 
 {% block title %}{% if is_new %}New Design{% else %}Edit {{ object.name }}{% endif %} | {{ app_name }}{% endblock %}
+
+{% block extra_css %}
+<!-- CodeMirror CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/theme/dracula.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/hint/show-hint.min.css">
+<style>
+    /* CodeMirror customizations */
+    .CodeMirror {
+        height: 500px;
+        font-size: 14px;
+        border-radius: 0.5rem;
+        border: 1px solid #d1d5db;
+    }
+    .CodeMirror-focused {
+        border-color: #6b7280;
+        box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.2);
+    }
+
+    /* Data picker sidebar styles */
+    .data-picker-sidebar {
+        width: 380px;
+        min-width: 380px;
+        background: #1a1a1c;
+        border-radius: 0.5rem;
+        height: 560px;
+        overflow-y: auto;
+        flex-shrink: 0;
+    }
+
+    .data-picker-sidebar::-webkit-scrollbar {
+        width: 8px;
+    }
+    .data-picker-sidebar::-webkit-scrollbar-track {
+        background: #2a2a2c;
+    }
+    .data-picker-sidebar::-webkit-scrollbar-thumb {
+        background: #4a4a4c;
+        border-radius: 4px;
+    }
+
+    .data-picker-category {
+        border-bottom: 1px solid #374151;
+    }
+
+    .data-picker-field {
+        border: 1px solid transparent;
+    }
+    .data-picker-field:hover {
+        border-color: #4a4a4c;
+        background: #2a2a2c;
+    }
+
+    /* Autocomplete hint styles */
+    .CodeMirror-hints {
+        background: #1a1a1c;
+        border: 1px solid #374151;
+        border-radius: 4px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+    .CodeMirror-hint {
+        color: #e5e7eb;
+        padding: 4px 8px;
+    }
+    .CodeMirror-hint-active {
+        background: #374151;
+        color: #22d3ee;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="p-6 md:p-8">
@@ -16,10 +87,26 @@
         </div>
         <div class="mt-4 md:mt-0 flex items-center gap-3">
             {% if not is_new %}
+            <a href="{% url 'signage:visual_builder_update' object.slug %}"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-purple-200 text-purple-700 hover:bg-purple-50 transition-colors">
+                <span class="material-symbols-outlined" style="font-size: 1.2rem;">dashboard_customize</span>
+                Visual Builder
+            </a>
+            <a href="{% url 'signage:save_as_template' object.slug %}"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
+                <span class="material-symbols-outlined" style="font-size: 1.2rem;">bookmark_add</span>
+                Save as Template
+            </a>
             <a href="{% url 'signage:screen_design_preview' object.slug %}" target="_blank"
                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
                 <span class="material-symbols-outlined" style="font-size: 1.2rem;">visibility</span>
                 Preview
+            </a>
+            {% else %}
+            <a href="{% url 'signage:visual_builder_create' %}"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-purple-200 text-purple-700 hover:bg-purple-50 transition-colors">
+                <span class="material-symbols-outlined" style="font-size: 1.2rem;">dashboard_customize</span>
+                Visual Builder
             </a>
             {% endif %}
             <a href="{% url 'signage:screen_design_list' %}"
@@ -29,6 +116,26 @@
             </a>
         </div>
     </div>
+
+    {% if is_new %}
+    <!-- Start from Template Banner -->
+    <div class="mb-6 bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl p-4 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-lg flex items-center justify-center" style="background: rgba(255,255,255,0.1);">
+                <span class="material-symbols-outlined text-white" style="font-size: 1.5rem;">auto_awesome</span>
+            </div>
+            <div>
+                <p class="text-white font-medium">Start from a Template?</p>
+                <p class="text-gray-400 text-sm">Choose from pre-built designs to get started faster</p>
+            </div>
+        </div>
+        <a href="{% url 'signage:template_gallery' %}"
+           class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-gray-900 hover:bg-gray-100 transition-colors text-sm font-medium">
+            <span class="material-symbols-outlined" style="font-size: 1.2rem;">grid_view</span>
+            Browse Templates
+        </a>
+    </div>
+    {% endif %}
 
     <form method="post" class="space-y-6">
         {% csrf_token %}
@@ -86,47 +193,133 @@
             </div>
         </div>
 
-        <!-- Code Editor Card -->
+        <!-- Data Context Card (Optional Filters) -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 class="text-lg font-medium text-gray-900 mb-4">Design Code</h2>
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-lg font-medium text-gray-900">Data Context</h2>
+                    <p class="text-sm text-gray-500 mt-1">Optionally filter the data displayed on this screen</p>
+                </div>
+                <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Optional</span>
+            </div>
 
-            <!-- Code Tabs -->
-            <div class="border-b border-gray-200 mb-4">
-                <div class="flex gap-1">
-                    <button type="button" onclick="showCodeTab('html')" id="tabHtml"
-                            class="px-4 py-2 text-sm font-medium border-b-2 border-gray-900 text-gray-900 bg-gray-50 rounded-t-lg">
-                        HTML
-                    </button>
-                    <button type="button" onclick="showCodeTab('css')" id="tabCss"
-                            class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 rounded-t-lg">
-                        CSS
-                    </button>
-                    <button type="button" onclick="showCodeTab('js')" id="tabJs"
-                            class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 rounded-t-lg">
-                        JavaScript
-                    </button>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="id_store_filter_id" class="block text-sm font-medium text-gray-700 mb-1">
+                        Store Filter
+                    </label>
+                    <select name="store_filter_id" id="id_store_filter_id"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900">
+                        <option value="">All Stores (Default)</option>
+                        {% for store in available_stores %}
+                        <option value="{{ store.store_id }}" {% if object.store_filter_id == store.store_id %}selected{% endif %}>
+                            {{ store.store_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <p class="text-xs text-gray-400 mt-1">Show data for a specific store only</p>
+                </div>
+
+                <div>
+                    <label for="id_date_filter_mode" class="block text-sm font-medium text-gray-700 mb-1">
+                        Date Mode
+                    </label>
+                    <select name="date_filter_mode" id="id_date_filter_mode"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900">
+                        <option value="current" {% if not object.date_filter_mode or object.date_filter_mode == 'current' %}selected{% endif %}>
+                            Current Period (Default)
+                        </option>
+                        <option value="yesterday" {% if object.date_filter_mode == 'yesterday' %}selected{% endif %}>
+                            Yesterday
+                        </option>
+                        <option value="last_week" {% if object.date_filter_mode == 'last_week' %}selected{% endif %}>
+                            Last Week
+                        </option>
+                    </select>
+                    <p class="text-xs text-gray-400 mt-1">Date context for displayed data</p>
                 </div>
             </div>
+        </div>
 
-            <!-- HTML Editor -->
-            <div id="htmlEditor" class="code-editor">
-                <textarea name="html_code" id="id_html_code" rows="20"
-                          class="w-full px-4 py-3 font-mono text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900 bg-gray-50"
-                          placeholder="<!-- Your HTML code here -->">{% if object %}{{ object.html_code }}{% endif %}</textarea>
+        <!-- Code Editor Card with Data Picker -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-medium text-gray-900">Design Code</h2>
+                <button type="button" id="toggleDataPicker"
+                        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors text-sm">
+                    <span class="material-symbols-outlined" style="font-size: 1.1rem;">data_object</span>
+                    Data Variables
+                </button>
             </div>
 
-            <!-- CSS Editor -->
-            <div id="cssEditor" class="code-editor hidden">
-                <textarea name="css_code" id="id_css_code" rows="20"
-                          class="w-full px-4 py-3 font-mono text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900 bg-gray-50"
-                          placeholder="/* Your CSS code here */">{% if object %}{{ object.css_code }}{% endif %}</textarea>
-            </div>
+            <div class="flex gap-4">
+                <!-- Code Editor Area -->
+                <div class="flex-1 min-w-0">
+                    <!-- Code Tabs -->
+                    <div class="border-b border-gray-200 mb-4">
+                        <div class="flex gap-1">
+                            <button type="button" id="tabHtml"
+                                    class="px-4 py-2 text-sm font-medium border-b-2 border-gray-900 text-gray-900 bg-gray-50 rounded-t-lg transition-colors">
+                                HTML
+                            </button>
+                            <button type="button" id="tabCss"
+                                    class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 rounded-t-lg transition-colors">
+                                CSS
+                            </button>
+                            <button type="button" id="tabJs"
+                                    class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 rounded-t-lg transition-colors">
+                                JavaScript
+                            </button>
+                        </div>
+                    </div>
 
-            <!-- JavaScript Editor -->
-            <div id="jsEditor" class="code-editor hidden">
-                <textarea name="js_code" id="id_js_code" rows="20"
-                          class="w-full px-4 py-3 font-mono text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900 bg-gray-50"
-                          placeholder="// Your JavaScript code here">{% if object %}{{ object.js_code }}{% endif %}</textarea>
+                    <!-- HTML Editor -->
+                    <div id="htmlEditor" class="code-editor">
+                        <textarea name="html_code" id="id_html_code">{% if object %}{{ object.html_code }}{% endif %}</textarea>
+                    </div>
+
+                    <!-- CSS Editor -->
+                    <div id="cssEditor" class="code-editor hidden">
+                        <textarea name="css_code" id="id_css_code">{% if object %}{{ object.css_code }}{% endif %}</textarea>
+                    </div>
+
+                    <!-- JavaScript Editor -->
+                    <div id="jsEditor" class="code-editor hidden">
+                        <textarea name="js_code" id="id_js_code">{% if object %}{{ object.js_code }}{% endif %}</textarea>
+                    </div>
+
+                    <!-- Help text -->
+                    <p class="text-xs text-gray-500 mt-3">
+                        <span class="font-medium">Tip:</span> Use <code class="bg-gray-100 px-1 rounded">{'{'}{'{'}variable{'}'}{'}'}</code> syntax to insert dynamic data.
+                        Press <kbd class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">Ctrl+Space</kbd> for autocomplete.
+                    </p>
+                </div>
+
+                <!-- Data Picker Sidebar -->
+                <div id="dataPickerSidebar" class="data-picker-sidebar hidden">
+                    <!-- Header -->
+                    <div class="p-3 border-b border-gray-700 bg-gray-900 sticky top-0">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-white font-medium text-sm">Data Variables</h3>
+                            <button type="button" id="closeDataPicker" class="text-gray-400 hover:text-white">
+                                <span class="material-symbols-outlined" style="font-size: 1.2rem;">close</span>
+                            </button>
+                        </div>
+                        <input type="text" id="dataPickerSearch"
+                               placeholder="Search variables..."
+                               class="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder:text-gray-500 text-sm focus:outline-none focus:border-gray-500">
+                    </div>
+
+                    <!-- Instructions -->
+                    <div class="p-3 bg-gray-800 border-b border-gray-700">
+                        <p class="text-gray-400 text-xs">
+                            Click a variable to insert it at cursor position. Arrays include a loop template.
+                        </p>
+                    </div>
+
+                    <!-- Categories (populated by JavaScript) -->
+                    <div id="dataPickerCategories"></div>
+                </div>
             </div>
         </div>
 
@@ -152,27 +345,24 @@
         </div>
     </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- CodeMirror JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/htmlmixed/htmlmixed.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/hint/show-hint.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/addon/edit/closetag.min.js"></script>
+
+<!-- Screen Builder JS -->
+<script src="{% static 'signage/js/screen-builder.js' %}"></script>
 
 <script>
-function showCodeTab(tab) {
-    // Update tab buttons
-    const tabs = ['html', 'css', 'js'];
-    tabs.forEach(t => {
-        const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
-        const editor = document.getElementById(t + 'Editor');
-
-        if (t === tab) {
-            btn.classList.add('border-gray-900', 'text-gray-900', 'bg-gray-50');
-            btn.classList.remove('border-transparent', 'text-gray-500');
-            editor.classList.remove('hidden');
-        } else {
-            btn.classList.remove('border-gray-900', 'text-gray-900', 'bg-gray-50');
-            btn.classList.add('border-transparent', 'text-gray-500');
-            editor.classList.add('hidden');
-        }
-    });
-}
-
 // Auto-generate slug from name
 document.getElementById('id_name').addEventListener('input', function() {
     const slugField = document.getElementById('id_slug');
@@ -194,17 +384,9 @@ document.getElementById('id_slug').addEventListener('input', function() {
     }
 });
 
-// Tab key support for code editors
-document.querySelectorAll('.code-editor textarea').forEach(textarea => {
-    textarea.addEventListener('keydown', function(e) {
-        if (e.key === 'Tab') {
-            e.preventDefault();
-            const start = this.selectionStart;
-            const end = this.selectionEnd;
-            this.value = this.value.substring(0, start) + '    ' + this.value.substring(end);
-            this.selectionStart = this.selectionEnd = start + 4;
-        }
-    });
+// Close data picker button
+document.getElementById('closeDataPicker')?.addEventListener('click', function() {
+    document.getElementById('dataPickerSidebar').classList.add('hidden');
 });
 </script>
 {% endblock %}

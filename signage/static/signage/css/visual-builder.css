@@ -1,0 +1,822 @@
+/* Visual Builder Styles - Light Theme */
+
+/* Container */
+.visual-builder-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: #eaeff4;
+    color: #1f2937;
+    overflow: hidden;
+}
+
+/* Header */
+.vb-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    z-index: 100;
+}
+
+.vb-header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.vb-back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: #f3f4f6;
+    color: #6b7280;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.vb-back-btn:hover {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.vb-title-section {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.vb-title-input {
+    background: transparent;
+    border: 1px solid transparent;
+    color: #1f2937;
+    font-size: 1.1rem;
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    min-width: 200px;
+}
+
+.vb-title-input:hover {
+    background: #f3f4f6;
+}
+
+.vb-title-input:focus {
+    outline: none;
+    background: #fff;
+    border-color: #d1d5db;
+}
+
+.vb-mode-badge {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    background: rgba(100, 52, 248, 0.1);
+    color: #7c3aed;
+    border-radius: 4px;
+}
+
+.vb-header-center {
+    display: flex;
+    align-items: center;
+}
+
+.vb-mode-toggle {
+    display: flex;
+    background: #f3f4f6;
+    border-radius: 8px;
+    padding: 3px;
+}
+
+.vb-mode-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    background: transparent;
+    color: #6b7280;
+    font-size: 0.875rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.vb-mode-btn:hover {
+    color: #374151;
+    background: #e5e7eb;
+}
+
+.vb-mode-btn.active {
+    background: #fff;
+    color: #1f2937;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.vb-mode-btn .material-symbols-outlined {
+    font-size: 1.1rem;
+}
+
+.vb-header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.vb-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.vb-btn .material-symbols-outlined {
+    font-size: 1.1rem;
+}
+
+.vb-btn-secondary {
+    background: #fff;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+.vb-btn-secondary:hover {
+    background: #f3f4f6;
+}
+
+.vb-btn-primary {
+    background: #0a0a0c;
+    color: #fff;
+}
+
+.vb-btn-primary:hover {
+    background: #1f2937;
+}
+
+/* Main Area */
+.vb-main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Panels */
+.vb-panel {
+    background: #fff;
+    border-right: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.vb-panel-left {
+    width: 280px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.vb-panel-right {
+    width: 280px;
+    border-right: none;
+    border-left: 1px solid #e5e7eb;
+}
+
+.vb-panel-section {
+    display: flex;
+    flex-direction: column;
+    border-bottom: 1px solid #e5e7eb;
+    overflow: hidden;
+}
+
+.vb-panel-section:first-child {
+    flex: 0 0 auto;
+    max-height: 50%;
+    overflow-y: auto;
+}
+
+.vb-panel-section:last-child {
+    border-bottom: none;
+    flex: 1;
+    overflow: hidden;
+}
+
+.vb-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6b7280;
+    background: #f9fafb;
+}
+
+.vb-panel-header .material-symbols-outlined {
+    font-size: 1rem;
+}
+
+/* Blocks Container */
+.vb-blocks-container {
+    padding: 0.5rem;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 150px;
+}
+
+/* GrapesJS Block Overrides */
+.gjs-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 0.5rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: grab;
+    transition: all 0.2s;
+    min-height: 70px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.gjs-block:hover {
+    background: #f3f4f6;
+    border-color: #7c3aed;
+    box-shadow: 0 2px 4px rgba(124, 58, 237, 0.1);
+}
+
+.gjs-block-label {
+    font-size: 0.75rem;
+    color: #4b5563;
+    margin-top: 0.5rem;
+    text-align: center;
+}
+
+.gjs-block svg {
+    width: 24px;
+    height: 24px;
+    fill: #7c3aed;
+}
+
+/* Search Box */
+.vb-search-box {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    margin: 0.5rem 0.75rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+}
+
+.vb-search-box .material-symbols-outlined {
+    font-size: 1rem;
+    color: #9ca3af;
+}
+
+.vb-search-box input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #1f2937;
+    font-size: 0.8rem;
+}
+
+.vb-search-box input::placeholder {
+    color: #9ca3af;
+}
+
+.vb-search-box input:focus {
+    outline: none;
+}
+
+/* Data Fields */
+.vb-data-fields {
+    padding: 0 0.75rem 0.75rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.vb-data-category {
+    margin-bottom: 0.5rem;
+}
+
+.vb-data-category-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.vb-data-category-header:hover {
+    background: #f3f4f6;
+}
+
+.vb-data-category-header .material-symbols-outlined {
+    font-size: 1rem;
+    color: #7c3aed;
+}
+
+.vb-data-category-name {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #374151;
+}
+
+.vb-data-field {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.5rem 0.4rem 1.5rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.vb-data-field:hover {
+    background: rgba(124, 58, 237, 0.1);
+}
+
+.vb-data-field-name {
+    flex: 1;
+    font-size: 0.75rem;
+    color: #4b5563;
+}
+
+.vb-data-field-type {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 3px;
+    background: rgba(124, 58, 237, 0.15);
+    color: #7c3aed;
+}
+
+.vb-data-field-type.array {
+    background: rgba(59, 130, 246, 0.15);
+    color: #2563eb;
+}
+
+/* Canvas Area */
+.vb-canvas-area {
+    flex: 1;
+    background: #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#gjs-editor {
+    flex: 1;
+    overflow: hidden;
+}
+
+/* GrapesJS Overrides */
+.gjs-cv-canvas {
+    background: #d1d5db;
+}
+
+.gjs-frame-wrapper {
+    background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+}
+
+.gjs-frame {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Traits Container */
+.vb-traits-container {
+    padding: 0.75rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.vb-no-selection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    text-align: center;
+    color: #6b7280;
+}
+
+.vb-no-selection .material-symbols-outlined {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+    opacity: 0.5;
+}
+
+.vb-no-selection p {
+    font-size: 0.8rem;
+}
+
+/* GrapesJS Trait Overrides */
+.gjs-trt-trait {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.gjs-trt-trait:last-child {
+    border-bottom: none;
+}
+
+.gjs-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+}
+
+.gjs-field {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    padding: 0.4rem 0.5rem;
+    color: #1f2937;
+    font-size: 0.8rem;
+}
+
+.gjs-field:focus-within {
+    border-color: #7c3aed;
+}
+
+.gjs-field input,
+.gjs-field select {
+    background: transparent;
+    border: none;
+    color: #1f2937;
+    width: 100%;
+}
+
+.gjs-field input:focus,
+.gjs-field select:focus {
+    outline: none;
+}
+
+/* Styles Container */
+.vb-styles-container {
+    padding: 0.75rem;
+    overflow-y: auto;
+}
+
+/* Layers Container */
+.vb-layers-container {
+    padding: 0.75rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Modal */
+.vb-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.vb-modal-content {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.vb-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.vb-modal-header h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.vb-modal-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #f3f4f6;
+    border-radius: 6px;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.vb-modal-close:hover {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.vb-modal-body {
+    padding: 1rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.vb-picker-fields {
+    margin-top: 0.75rem;
+}
+
+.vb-picker-field {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.vb-picker-field:hover {
+    background: rgba(124, 58, 237, 0.1);
+}
+
+.vb-picker-field-info {
+    flex: 1;
+}
+
+.vb-picker-field-name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+}
+
+.vb-picker-field-path {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-family: monospace;
+}
+
+/* Alpine.js cloak */
+[x-cloak] {
+    display: none !important;
+}
+
+/* Scrollbar styling */
+.vb-panel ::-webkit-scrollbar {
+    width: 6px;
+}
+
+.vb-panel ::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.vb-panel ::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+}
+
+.vb-panel ::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* Additional GrapesJS Light Theme Overrides */
+.gjs-one-bg {
+    background-color: #fff !important;
+}
+
+.gjs-two-color {
+    color: #1f2937 !important;
+}
+
+.gjs-three-bg {
+    background-color: #f3f4f6 !important;
+}
+
+.gjs-four-color,
+.gjs-four-color-h:hover {
+    color: #7c3aed !important;
+}
+
+/* Block manager styling */
+.gjs-blocks-c {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+    padding: 0.5rem !important;
+}
+
+.gjs-block-category {
+    background: transparent !important;
+    width: 100% !important;
+    grid-column: span 2 !important;
+}
+
+.gjs-block-categories {
+    display: contents !important;
+}
+
+.gjs-block-category .gjs-title {
+    background: #f3f4f6 !important;
+    color: #6b7280 !important;
+    font-size: 0.7rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    padding: 0.5rem 0.75rem !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    margin-bottom: 0.5rem !important;
+    border-radius: 4px !important;
+}
+
+.gjs-block-category .gjs-blocks-c {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+    padding: 0 !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.gjs-block {
+    width: 100% !important;
+    min-height: 70px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0.5rem !important;
+    background: #f9fafb !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    cursor: grab !important;
+    transition: all 0.2s !important;
+}
+
+.gjs-block:hover {
+    background: #f3f4f6 !important;
+    border-color: #7c3aed !important;
+    box-shadow: 0 2px 4px rgba(124, 58, 237, 0.1) !important;
+}
+
+.gjs-block__media {
+    margin-bottom: 0.25rem !important;
+}
+
+.gjs-block-label {
+    font-size: 0.7rem !important;
+    color: #4b5563 !important;
+    text-align: center !important;
+    font-weight: 500 !important;
+}
+
+/* Toolbar and popups */
+.gjs-toolbar {
+    background: #fff !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 6px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+.gjs-toolbar-item {
+    color: #374151 !important;
+}
+
+.gjs-toolbar-item:hover {
+    background: #f3f4f6 !important;
+}
+
+/* Component highlighting */
+.gjs-selected {
+    outline: 2px solid #7c3aed !important;
+    outline-offset: -2px;
+}
+
+.gjs-hovered {
+    outline: 1px dashed #a78bfa !important;
+}
+
+/* Ensure GrapesJS panels render properly */
+.gjs-pn-panel {
+    position: relative !important;
+}
+
+.gjs-pn-views-container,
+.gjs-pn-views {
+    height: auto !important;
+}
+
+/* Style manager */
+#styles-container .gjs-sm-sector {
+    background: transparent !important;
+    border-bottom: 1px solid #e5e7eb !important;
+}
+
+#styles-container .gjs-sm-sector-title {
+    background: #f3f4f6 !important;
+    color: #374151 !important;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+}
+
+#styles-container .gjs-sm-properties {
+    padding: 0.5rem !important;
+}
+
+#styles-container .gjs-sm-property {
+    margin-bottom: 0.5rem !important;
+}
+
+#styles-container .gjs-sm-label {
+    color: #6b7280 !important;
+    font-size: 0.7rem !important;
+}
+
+#styles-container .gjs-field {
+    background: #f9fafb !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 4px !important;
+}
+
+/* Layer manager */
+#layers-container .gjs-layer {
+    background: transparent !important;
+    border-bottom: 1px solid #e5e7eb !important;
+}
+
+#layers-container .gjs-layer-name {
+    color: #374151 !important;
+    font-size: 0.8rem !important;
+}
+
+#layers-container .gjs-layer-caret {
+    color: #6b7280 !important;
+}
+
+#layers-container .gjs-layer.gjs-selected {
+    background: rgba(124, 58, 237, 0.1) !important;
+}
+
+/* Trait manager */
+#traits-container .gjs-trt-traits {
+    padding: 0.5rem !important;
+}
+
+#traits-container .gjs-trt-trait {
+    margin-bottom: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+    border-bottom: 1px solid #e5e7eb !important;
+}
+
+#traits-container .gjs-trt-trait:last-child {
+    border-bottom: none !important;
+}
+
+#traits-container .gjs-trt-trait__wrp-title {
+    color: #374151 !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    margin-bottom: 0.25rem !important;
+}
+
+/* Fix GrapesJS editor background */
+.gjs-editor {
+    background: transparent !important;
+}
+
+.gjs-editor-cont {
+    background: transparent !important;
+}
+
+/* Canvas wrapper */
+.gjs-cv-canvas {
+    top: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+}

@@ -1,0 +1,198 @@
+{% extends 'signage/base.html' %}
+
+{% block title %}Save as Template | {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="p-6 md:p-8 max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <a href="{% url 'signage:screen_design_update' design.slug %}" class="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700 mb-4">
+            <span class="material-symbols-outlined" style="font-size: 1.2rem;">arrow_back</span>
+            Back to Design
+        </a>
+        <h1 class="text-2xl font-semibold text-gray-900" style="font-family: 'Oxanium', sans-serif;">Save as Template</h1>
+        <p class="text-gray-500 mt-1">Create a reusable template from "{{ design.name }}"</p>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Main Form -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Template Details -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h2 class="text-lg font-medium text-gray-900 mb-4">Template Details</h2>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Template Name *</label>
+                            <input type="text" id="name" name="name" required
+                                   value="{{ design.name }} Template"
+                                   class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200">
+                        </div>
+
+                        <div>
+                            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea id="description" name="description" rows="3"
+                                      class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200">{{ design.description }}</textarea>
+                        </div>
+
+                        <div>
+                            <label for="template_type" class="block text-sm font-medium text-gray-700 mb-1">Template Type</label>
+                            <select id="template_type" name="template_type"
+                                    class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200">
+                                {% for type_value, type_label in template_types %}
+                                <option value="{{ type_value }}">{{ type_label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Branding Configuration -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-medium text-gray-900">Branding Configuration</h2>
+                        <span class="text-xs text-gray-400">Optional</span>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-4">Set default branding colors that will be applied when using this template.</p>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="primary_color" class="block text-sm font-medium text-gray-700 mb-1">Primary Color</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" id="primary_color" name="primary_color" value="#6434f8"
+                                       class="w-10 h-10 rounded border border-gray-200 cursor-pointer">
+                                <input type="text" id="primary_color_text" value="#6434f8"
+                                       class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                       onchange="document.getElementById('primary_color').value = this.value">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="secondary_color" class="block text-sm font-medium text-gray-700 mb-1">Secondary Color</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" id="secondary_color" name="secondary_color" value="#00f0ff"
+                                       class="w-10 h-10 rounded border border-gray-200 cursor-pointer">
+                                <input type="text" id="secondary_color_text" value="#00f0ff"
+                                       class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                       onchange="document.getElementById('secondary_color').value = this.value">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="accent_color" class="block text-sm font-medium text-gray-700 mb-1">Accent Color</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" id="accent_color" name="accent_color" value="#ff5959"
+                                       class="w-10 h-10 rounded border border-gray-200 cursor-pointer">
+                                <input type="text" id="accent_color_text" value="#ff5959"
+                                       class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                       onchange="document.getElementById('accent_color').value = this.value">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="background_color" class="block text-sm font-medium text-gray-700 mb-1">Background Color</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" id="background_color" name="background_color" value="#0a0a0f"
+                                       class="w-10 h-10 rounded border border-gray-200 cursor-pointer">
+                                <input type="text" id="background_color_text" value="#0a0a0f"
+                                       class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                       onchange="document.getElementById('background_color').value = this.value">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="text_color" class="block text-sm font-medium text-gray-700 mb-1">Text Color</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" id="text_color" name="text_color" value="#ffffff"
+                                       class="w-10 h-10 rounded border border-gray-200 cursor-pointer">
+                                <input type="text" id="text_color_text" value="#ffffff"
+                                       class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                       onchange="document.getElementById('text_color').value = this.value">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <label for="heading_font" class="block text-sm font-medium text-gray-700 mb-1">Heading Font</label>
+                            <select id="heading_font" name="heading_font"
+                                    class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-200">
+                                <option value="">Default</option>
+                                <option value="Suisse Intl, Inter, sans-serif">Suisse Intl</option>
+                                <option value="Roboto, sans-serif">Roboto</option>
+                                <option value="Open Sans, sans-serif">Open Sans</option>
+                                <option value="Montserrat, sans-serif">Montserrat</option>
+                                <option value="Oxanium, sans-serif">Oxanium</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="body_font" class="block text-sm font-medium text-gray-700 mb-1">Body Font</label>
+                            <select id="body_font" name="body_font"
+                                    class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-200">
+                                <option value="">Default</option>
+                                <option value="Suisse Intl Mono, Roboto Mono, monospace">Suisse Intl Mono</option>
+                                <option value="Roboto Mono, monospace">Roboto Mono</option>
+                                <option value="Source Code Pro, monospace">Source Code Pro</option>
+                                <option value="Inter, sans-serif">Inter</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                <!-- Source Design Info -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-sm font-medium text-gray-900 mb-4">Source Design</h3>
+                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                        <div class="w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-3" style="background: rgba(10, 10, 12, 0.1);">
+                            <span class="material-symbols-outlined text-gray-400">web</span>
+                        </div>
+                        <p class="text-center font-medium text-gray-900">{{ design.name }}</p>
+                        <p class="text-center text-xs text-gray-500">{{ design.slug }}</p>
+                    </div>
+                    <div class="text-sm text-gray-500 space-y-1">
+                        <p><strong>HTML:</strong> {{ design.html_code|length }} chars</p>
+                        <p><strong>CSS:</strong> {{ design.css_code|length }} chars</p>
+                        <p><strong>JS:</strong> {{ design.js_code|length }} chars</p>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <button type="submit"
+                            class="w-full px-4 py-3 rounded-lg text-white font-medium transition-colors"
+                            style="background: #0a0a0c;">
+                        Save as Template
+                    </button>
+                    <a href="{% url 'signage:screen_design_update' design.slug %}"
+                       class="block w-full text-center px-4 py-3 mt-3 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Sync color inputs with text fields
+    document.querySelectorAll('input[type="color"]').forEach(colorInput => {
+        const textId = colorInput.id + '_text';
+        const textInput = document.getElementById(textId);
+        if (textInput) {
+            colorInput.addEventListener('input', () => {
+                textInput.value = colorInput.value;
+            });
+            textInput.addEventListener('input', () => {
+                colorInput.value = textInput.value;
+            });
+        }
+    });
+</script>
+{% endblock %}

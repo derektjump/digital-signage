@@ -119,21 +119,8 @@
 
         <div class="flex flex-col h-full relative z-10">
 
-            <!-- Logo Section -->
-            <div class="flex flex-col items-stretch w-full">
-                <div class="py-6 pb-3 px-4 flex flex-row items-center justify-center gap-2">
-                    <!-- Logo Placeholder -->
-                    <div x-show="!miniNav" class="flex items-center justify-center w-full h-12 rounded bg-white/5 border border-white/10">
-                        <span class="text-white/40 text-sm" style="font-family: 'Oxanium', sans-serif;">Digital Signage</span>
-                    </div>
-                    <div x-show="miniNav" class="flex items-center justify-center w-10 h-10 rounded bg-white/5 border border-white/10">
-                        <span class="text-white/40 text-xs">DS</span>
-                    </div>
-                </div>
-            </div>
-
             <!-- Grid App Badge -->
-            <div class="px-4 mt-2" :class="miniNav ? 'px-3 flex justify-center' : 'px-4'">
+            <div class="px-4 pt-5" :class="miniNav ? 'px-3 flex justify-center' : 'px-4'">
                 {% include 'signage/partials/_grid_badge.html' %}
             </div>
 
@@ -155,10 +142,17 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{% url 'signage:screen_design_list' %}" class="main-nav-link flex items-center px-3 py-2 rounded-lg transition-colors text-white {% if 'design' in request.resolver_match.url_name %}nav-active{% endif %}"
+                    <a href="{% url 'signage:screen_design_list' %}" class="main-nav-link flex items-center px-3 py-2 rounded-lg transition-colors text-white {% if 'design' in request.resolver_match.url_name and 'template' not in request.resolver_match.url_name %}nav-active{% endif %}"
                        :class="miniNav ? 'flex-col justify-center' : ''">
                         <span class="material-symbols-outlined ultra-thin-icon text-slate-300" :class="miniNav ? 'text-2xl mb-1' : 'mr-3 text-xl'">web</span>
                         <span x-show="!miniNav && showNavText" x-transition:enter="transition-opacity duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="nav-text-light" style="font-family: 'Oxanium', sans-serif !important; font-weight: 200 !important; font-size: 14px; letter-spacing: 0.05em; line-height: 1.5;">Designs</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'signage:template_gallery' %}" class="main-nav-link flex items-center px-3 py-2 rounded-lg transition-colors text-white {% if 'template' in request.resolver_match.url_name %}nav-active{% endif %}"
+                       :class="miniNav ? 'flex-col justify-center' : ''">
+                        <span class="material-symbols-outlined ultra-thin-icon text-slate-300" :class="miniNav ? 'text-2xl mb-1' : 'mr-3 text-xl'">auto_awesome</span>
+                        <span x-show="!miniNav && showNavText" x-transition:enter="transition-opacity duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="nav-text-light" style="font-family: 'Oxanium', sans-serif !important; font-weight: 200 !important; font-size: 14px; letter-spacing: 0.05em; line-height: 1.5;">Templates</span>
                     </a>
                 </li>
                 <li>
@@ -180,6 +174,13 @@
                        :class="miniNav ? 'flex-col justify-center' : ''">
                         <span class="material-symbols-outlined ultra-thin-icon text-slate-300" :class="miniNav ? 'text-2xl mb-1' : 'mr-3 text-xl'">perm_media</span>
                         <span x-show="!miniNav && showNavText" x-transition:enter="transition-opacity duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="nav-text-light" style="font-family: 'Oxanium', sans-serif !important; font-weight: 200 !important; font-size: 14px; letter-spacing: 0.05em; line-height: 1.5;">Media Library</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'signage:firetv_download' %}" class="main-nav-link flex items-center px-3 py-2 rounded-lg transition-colors text-white {% if 'firetv' in request.resolver_match.url_name %}nav-active{% endif %}"
+                       :class="miniNav ? 'flex-col justify-center' : ''">
+                        <span class="material-symbols-outlined ultra-thin-icon text-slate-300" :class="miniNav ? 'text-2xl mb-1' : 'mr-3 text-xl'">cast</span>
+                        <span x-show="!miniNav && showNavText" x-transition:enter="transition-opacity duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="nav-text-light" style="font-family: 'Oxanium', sans-serif !important; font-weight: 200 !important; font-size: 14px; letter-spacing: 0.05em; line-height: 1.5;">Fire TV App</span>
                     </a>
                 </li>
                 <li>

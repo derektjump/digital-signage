@@ -29,6 +29,26 @@ urlpatterns = [
     path('designs/<slug:slug>/edit/', views.ScreenDesignUpdateView.as_view(), name='screen_design_update'),
     path('designs/<slug:slug>/delete/', views.ScreenDesignDeleteView.as_view(), name='screen_design_delete'),
     path('designs/<slug:slug>/preview/', views.ScreenDesignPreviewView.as_view(), name='screen_design_preview'),
+    path('designs/<slug:slug>/save-as-template/', views.save_as_template, name='save_as_template'),
+
+    # =========================================================================
+    # VISUAL BUILDER
+    # =========================================================================
+    path('designs/new/visual/', views.visual_builder_create, name='visual_builder_create'),
+    path('designs/<slug:slug>/visual/', views.visual_builder_update, name='visual_builder_update'),
+    path('api/visual-builder/save/', views.visual_builder_create_save, name='visual_builder_create_save'),
+    path('api/visual-builder/<slug:slug>/save/', views.visual_builder_save, name='visual_builder_save'),
+    path('api/components/', views.get_component_registry_api, name='component_registry_api'),
+
+    # =========================================================================
+    # TEMPLATES
+    # =========================================================================
+    path('templates/', views.template_gallery, name='template_gallery'),
+    path('templates/<slug:slug>/', views.template_detail, name='template_detail'),
+    path('templates/<slug:slug>/preview/', views.template_preview, name='template_preview'),
+    path('templates/<slug:slug>/use/', views.create_from_template, name='create_from_template'),
+    path('templates/<slug:slug>/edit/', views.template_edit, name='template_edit'),
+    path('templates/<slug:slug>/delete/', views.template_delete, name='template_delete'),
 
     # =========================================================================
     # PLAYLISTS
@@ -74,6 +94,7 @@ urlpatterns = [
     # =========================================================================
     path('api/data/sales/', views.get_sales_data_api, name='get_sales_data_api'),
     path('api/data/variables/', views.get_data_variables_api, name='get_data_variables_api'),
+    path('api/data/registry/', views.get_data_registry_api, name='get_data_registry_api'),
     path('api/data/sales/clear-cache/', views.clear_sales_cache_api, name='clear_sales_cache_api'),
 
     # =========================================================================
@@ -98,6 +119,13 @@ urlpatterns = [
     # =========================================================================
     path('ajax/design-folders/create/', views.create_design_folder, name='create_design_folder'),
     path('ajax/designs/<uuid:design_id>/update-folder/', views.update_design_folder, name='update_design_folder'),
+
+    # =========================================================================
+    # FIRE TV APP DOWNLOAD
+    # =========================================================================
+    path('firetv/', views.firetv_download, name='firetv_download'),
+    path('firetv/download/', views.firetv_apk_download, name='firetv_apk_download'),
+    path('firetv/upload/', views.firetv_upload_apk, name='firetv_upload_apk'),
 
     # =========================================================================
     # DEPRECATED ROUTES (kept for backward compatibility)

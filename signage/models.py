@@ -217,6 +217,26 @@ class ScreenDesign(models.Model):
         help_text="Folder this design belongs to"
     )
 
+    # Data Filter Context (optional)
+    store_filter_id = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="Optional store_id to filter data to a specific store"
+    )
+
+    DATE_FILTER_CHOICES = [
+        ('current', 'Current Period'),
+        ('yesterday', 'Yesterday'),
+        ('last_week', 'Last Week'),
+    ]
+
+    date_filter_mode = models.CharField(
+        max_length=20,
+        choices=DATE_FILTER_CHOICES,
+        default='current',
+        help_text="Date context for data displayed on this screen"
+    )
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -244,6 +264,181 @@ class ScreenDesign(models.Model):
         """Get the preview URL for this screen design."""
         from django.urls import reverse
         return reverse('signage:screen_design_preview', kwargs={'slug': self.slug})
+
+
+class ScreenTemplate(models.Model):
+    """
+    Reusable template for screen designs with custom branding.
+
+    Templates are standalone copies of screen design code that can be
+    used as starting points for new designs. Each template can have
+    its own branding configuration (colors, fonts, logo).
+    """
+
+    class TemplateType(models.TextChoices):
+        LEADERBOARD = 'leaderboard', 'Leaderboard'
+        KPI_DASHBOARD = 'kpi_dashboard', 'KPI Dashboard'
+        ANNOUNCEMENT = 'announcement', 'Announcement'
+        CUSTOM = 'custom', 'Custom'
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        help_text="Unique identifier for this template"
+    )
+
+    name = models.CharField(
+        max_length=200,
+        help_text="Descriptive name for this template"
+    )
+
+    slug = models.SlugField(
+        max_length=200,
+        unique=True,
+        db_index=True,
+        help_text="URL-safe identifier for this template"
+    )
+
+    description = models.TextField(
+        blank=True,
+        help_text="Description of what this template is for"
+    )
+
+    template_type = models.CharField(
+        max_length=20,
+        choices=TemplateType.choices,
+        default=TemplateType.CUSTOM,
+        help_text="Category of template"
+    )
+
+    # Code content (copied from source design)
+    html_code = models.TextField(
+        blank=True,
+        help_text="HTML code for the template"
+    )
+
+    css_code = models.TextField(
+        blank=True,
+        help_text="CSS code for the template"
+    )
+
+    js_code = models.TextField(
+        blank=True,
+        help_text="JavaScript code for the template"
+    )
+
+    # Branding configuration
+    branding_config = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Branding settings (colors, fonts, logo URL)"
+    )
+
+    thumbnail = models.ImageField(
+        upload_to='template_thumbnails/',
+        blank=True,
+        null=True,
+        help_text="Preview image for this template"
+    )
+
+    # Metadata
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Whether this template is available for use"
+    )
+
+    is_featured = models.BooleanField(
+        default=False,
+        help_text="Feature this template prominently in the gallery"
+    )
+
+    usage_count = models.PositiveIntegerField(
+        default=0,
+        help_text="Number of designs created from this template"
+    )
+
+    source_design = models.ForeignKey(
+        ScreenDesign,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='derived_templates',
+        help_text="Original design this template was created from"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Screen Template"
+        verbose_name_plural = "Screen Templates"
+        ordering = ['-is_featured', '-usage_count', '-created_at']
+        indexes = [
+            models.Index(fields=['template_type', 'is_active']),
+            models.Index(fields=['-usage_count']),
+        ]
+
+    def __str__(self):
+        return f"{self.name} ({self.get_template_type_display()})"
+
+    def save(self, *args, **kwargs):
+        """Auto-generate slug from name if not provided."""
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+    def get_preview_url(self):
+        """Get the preview URL for this template."""
+        from django.urls import reverse
+        return reverse('signage:template_preview', kwargs={'slug': self.slug})
+
+    def get_branding_css_variables(self):
+        """
+        Convert branding_config to CSS custom properties.
+
+        Returns a string of CSS variable declarations that can be
+        injected into the :root selector.
+        """
+        config = self.branding_config or {}
+        css_vars = []
+
+        # Map config keys to CSS variables
+        mappings = {
+            'primary_color': '--brand-primary',
+            'secondary_color': '--brand-secondary',
+            'accent_color': '--brand-accent',
+            'background_color': '--brand-bg',
+            'text_color': '--brand-text',
+            'heading_font': '--brand-heading-font',
+            'body_font': '--brand-body-font',
+        }
+
+        for key, css_var in mappings.items():
+            if key in config and config[key]:
+                css_vars.append(f'    {css_var}: {config[key]};')
+
+        # Handle logo URL separately (needs url() wrapper)
+        if config.get('logo_url'):
+            css_vars.append(f'    --brand-logo-url: url("{config["logo_url"]}");')
+
+        return '\n'.join(css_vars)
+
+    def get_branding_css_block(self):
+        """
+        Get a complete CSS block with branding variables.
+
+        Returns CSS that can be prepended to the template's CSS code.
+        """
+        css_vars = self.get_branding_css_variables()
+        if css_vars:
+            return f"""/* Branding Variables (from template) */
+:root {{
+{css_vars}
+}}
+
+"""
+        return ''
 
 
 # =============================================================================

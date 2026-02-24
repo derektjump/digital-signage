@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Grid Signage - Fire TV App</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #0a0a0b;
+            color: #e4e8ec;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .card {
+            background: #111216;
+            border: 1px solid #1f2937;
+            border-radius: 16px;
+            padding: 3rem;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #6434f8;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #00f0ff;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+            letter-spacing: 0.05em;
+        }
+
+        .tv-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.8;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .version-info {
+            color: #9ca3af;
+            font-size: 0.85rem;
+            margin-bottom: 2rem;
+        }
+
+        .download-btn {
+            display: inline-block;
+            background: #6434f8;
+            color: white;
+            text-decoration: none;
+            padding: 1rem 3rem;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            transition: background 0.2s, transform 0.1s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .download-btn:hover,
+        .download-btn:focus {
+            background: #5228d4;
+            transform: scale(1.02);
+            outline: 2px solid #00f0ff;
+        }
+
+        .download-btn:active {
+            transform: scale(0.98);
+        }
+
+        .download-btn.disabled {
+            background: #374151;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .file-size {
+            color: #9ca3af;
+            font-size: 0.8rem;
+            margin-top: 0.75rem;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid #1f2937;
+            margin: 2rem 0;
+        }
+
+        .steps {
+            text-align: left;
+        }
+
+        .steps h2 {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #00f0ff;
+            margin-bottom: 1rem;
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .step-num {
+            background: #6434f8;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .step-text {
+            color: #d1d5db;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            padding-top: 2px;
+        }
+
+        .step-text strong {
+            color: #e4e8ec;
+        }
+
+        .not-available {
+            background: #1a1d24;
+            border: 1px dashed #374151;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .not-available p {
+            color: #9ca3af;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* Fire TV remote focus styles */
+        a:focus, button:focus {
+            outline: 3px solid #00f0ff;
+            outline-offset: 2px;
+        }
+
+        /* Upload section (only visible to logged-in admins) */
+        .upload-section {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #1f2937;
+        }
+
+        .upload-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .upload-btn {
+            background: #1f2937;
+            color: #d1d5db;
+            border: 1px dashed #374151;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .upload-btn:hover {
+            background: #374151;
+        }
+
+        .upload-status {
+            font-size: 0.85rem;
+            color: #9ca3af;
+        }
+
+        .upload-status.success { color: #34d399; }
+        .upload-status.error { color: #f87171; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="logo">THE GRID</div>
+    <div class="subtitle">Digital Signage</div>
+
+    <div class="tv-icon">&#128250;</div>
+
+    <h1>Fire TV App</h1>
+    <p class="version-info">Install The Grid Signage on your Fire TV Stick</p>
+
+    {% if apk_available %}
+        <a href="{% url 'signage:firetv_apk_download' %}" class="download-btn">
+            Download & Install
+        </a>
+        <p class="file-size">{{ apk_filename }} &middot; {{ apk_size }}</p>
+    {% else %}
+        <div class="not-available">
+            <p>
+                <strong>APK not yet uploaded.</strong><br>
+                Build the APK from the <code>firetv_app/</code> folder and upload it below, or drop it into
+                <code>media/signage/apk/the-grid-signage.apk</code> on the server.
+            </p>
+        </div>
+        <span class="download-btn disabled">Download Not Available</span>
+    {% endif %}
+
+    <hr class="divider">
+
+    <div class="steps">
+        <h2>Setup Instructions</h2>
+
+        <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-text">
+                On your Fire TV, go to <strong>Settings > My Fire TV > Developer Options</strong>
+                and enable <strong>"Install unknown apps"</strong> for the Downloader app (or Silk Browser).
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-text">
+                Open the <strong>Downloader</strong> app (free from Amazon App Store) and enter this page's URL.
+                Or use the <strong>Silk Browser</strong> to navigate here.
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-text">
+                Tap <strong>"Download & Install"</strong> above. When prompted, tap <strong>Install</strong>.
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-text">
+                Launch the app. It will display a <strong>registration code</strong> (e.g. ABC123).
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-num">5</div>
+            <div class="step-text">
+                In the admin panel, go to <strong>Devices</strong> and enter the code to register.
+                Then assign content &mdash; it appears on the TV within seconds.
+            </div>
+        </div>
+    </div>
+
+    {% if user.is_authenticated %}
+    <div class="upload-section">
+        <div class="upload-form" id="uploadForm">
+            <p style="color: #9ca3af; font-size: 0.85rem;">Admin: Upload a new APK build</p>
+            <label class="upload-btn" for="apkFileInput">
+                Choose APK File...
+            </label>
+            <input type="file" id="apkFileInput" accept=".apk" style="display: none;"
+                   onchange="uploadApk(this)">
+            <p class="upload-status" id="uploadStatus"></p>
+        </div>
+    </div>
+
+    <script>
+    function uploadApk(input) {
+        if (!input.files.length) return;
+
+        const file = input.files[0];
+        const status = document.getElementById('uploadStatus');
+        status.className = 'upload-status';
+        status.textContent = 'Uploading ' + file.name + '...';
+
+        const formData = new FormData();
+        formData.append('apk_file', file);
+
+        fetch('{% url "signage:firetv_upload_apk" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+            }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                status.className = 'upload-status success';
+                status.textContent = 'Uploaded successfully! (' + data.size + ')';
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                status.className = 'upload-status error';
+                status.textContent = 'Error: ' + data.error;
+            }
+        })
+        .catch(err => {
+            status.className = 'upload-status error';
+            status.textContent = 'Upload failed: ' + err.message;
+        });
+    }
+    </script>
+    {% endif %}
+</div>
+
+</body>
+</html>

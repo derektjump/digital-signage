@@ -4,7 +4,7 @@ Admin configuration for Digital Signage application.
 
 from django.contrib import admin
 from .models import (
-    UserSession, ScreenDesign, DesignFolder, Screen,
+    UserSession, ScreenDesign, DesignFolder, Screen, ScreenTemplate,
     Playlist, PlaylistItem, Device, DeviceGroup,
     MediaFolder, MediaAsset, SalesData, KPI, DataSource
 )
@@ -55,6 +55,39 @@ class ScreenDesignAdmin(admin.ModelAdmin):
         }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(ScreenTemplate)
+class ScreenTemplateAdmin(admin.ModelAdmin):
+    list_display = ('name', 'template_type', 'is_active', 'is_featured', 'usage_count', 'created_at')
+    list_filter = ('template_type', 'is_active', 'is_featured', 'created_at')
+    search_fields = ('name', 'slug', 'description')
+    prepopulated_fields = {'slug': ('name',)}
+    readonly_fields = ('id', 'usage_count', 'created_at', 'updated_at')
+    fieldsets = (
+        (None, {
+            'fields': ('name', 'slug', 'description', 'template_type', 'is_active', 'is_featured')
+        }),
+        ('Thumbnail', {
+            'fields': ('thumbnail',),
+        }),
+        ('Code', {
+            'fields': ('html_code', 'css_code', 'js_code'),
+            'classes': ('collapse',)
+        }),
+        ('Branding', {
+            'fields': ('branding_config',),
+            'classes': ('collapse',)
+        }),
+        ('Source', {
+            'fields': ('source_design',),
+            'classes': ('collapse',)
+        }),
+        ('Statistics', {
+            'fields': ('id', 'usage_count', 'created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )

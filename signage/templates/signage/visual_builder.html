@@ -1,0 +1,178 @@
+{% extends 'signage/base.html' %}
+{% load static %}
+
+{% block title %}{% if is_new %}Visual Builder{% else %}Edit Design - Visual{% endif %} | {{ app_name }}{% endblock %}
+
+{% block extra_css %}
+<!-- GrapesJS CSS -->
+<link rel="stylesheet" href="https://unpkg.com/grapesjs@0.21.10/dist/css/grapes.min.css">
+<link rel="stylesheet" href="{% static 'signage/css/visual-builder.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="visual-builder-container" x-data="visualBuilder()" x-init="init()">
+    <!-- Header -->
+    <div class="vb-header">
+        <div class="vb-header-left">
+            <a href="{% url 'signage:screen_design_list' %}" class="vb-back-btn">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </a>
+            <div class="vb-title-section">
+                <input type="text" x-model="designName" placeholder="Untitled Design" class="vb-title-input">
+                <span class="vb-mode-badge">Visual Builder</span>
+            </div>
+        </div>
+        <div class="vb-header-center">
+            <div class="vb-mode-toggle">
+                <a href="{% if design %}{% url 'signage:screen_design_update' design.slug %}{% else %}{% url 'signage:screen_design_create' %}{% endif %}"
+                   class="vb-mode-btn">
+                    <span class="material-symbols-outlined">code</span>
+                    Code
+                </a>
+                <button class="vb-mode-btn active">
+                    <span class="material-symbols-outlined">dashboard_customize</span>
+                    Visual
+                </button>
+                <button class="vb-mode-btn" @click="openPreview()">
+                    <span class="material-symbols-outlined">visibility</span>
+                    Preview
+                </button>
+            </div>
+        </div>
+        <div class="vb-header-right">
+            <button class="vb-btn vb-btn-secondary" @click="exportToCode()">
+                <span class="material-symbols-outlined">download</span>
+                Export to Code
+            </button>
+            <button class="vb-btn vb-btn-primary" @click="saveDesign()">
+                <span class="material-symbols-outlined">save</span>
+                Save
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Editor Area -->
+    <div class="vb-main">
+        <!-- Left Panel - Components & Data -->
+        <div class="vb-panel vb-panel-left">
+            <!-- Components Section -->
+            <div class="vb-panel-section">
+                <div class="vb-panel-header">
+                    <span class="material-symbols-outlined">widgets</span>
+                    Components
+                </div>
+                <div id="blocks-container" class="vb-blocks-container"></div>
+            </div>
+
+            <!-- Data Fields Section -->
+            <div class="vb-panel-section">
+                <div class="vb-panel-header">
+                    <span class="material-symbols-outlined">database</span>
+                    Data Fields
+                </div>
+                <div class="vb-search-box">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="text" placeholder="Search data fields..." x-model="dataSearch" @input="filterDataFields()">
+                </div>
+                <div id="data-fields-container" class="vb-data-fields">
+                    <!-- Data fields rendered by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Canvas Area -->
+        <div class="vb-canvas-area">
+            <div id="gjs-editor"></div>
+        </div>
+
+        <!-- Right Panel - Properties -->
+        <div class="vb-panel vb-panel-right">
+            <div class="vb-panel-section">
+                <div class="vb-panel-header">
+                    <span class="material-symbols-outlined">tune</span>
+                    Properties
+                </div>
+                <div id="traits-container" class="vb-traits-container">
+                    <div class="vb-no-selection">
+                        <span class="material-symbols-outlined">touch_app</span>
+                        <p>Select a component to edit its properties</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="vb-panel-section">
+                <div class="vb-panel-header">
+                    <span class="material-symbols-outlined">palette</span>
+                    Styles
+                </div>
+                <div id="styles-container" class="vb-styles-container"></div>
+            </div>
+
+            <div class="vb-panel-section">
+                <div class="vb-panel-header">
+                    <span class="material-symbols-outlined">layers</span>
+                    Layers
+                </div>
+                <div id="layers-container" class="vb-layers-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Picker Modal -->
+    <div class="vb-modal" x-show="showDataPicker" x-cloak @click.self="closeDataPicker()">
+        <div class="vb-modal-content">
+            <div class="vb-modal-header">
+                <h3>Select Data Field</h3>
+                <button class="vb-modal-close" @click="closeDataPicker()">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="vb-modal-body">
+                <div class="vb-search-box">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="text" placeholder="Search fields..." x-model="pickerSearch" @input="filterPickerFields()">
+                </div>
+                <div class="vb-picker-fields" id="picker-fields-container">
+                    <!-- Fields rendered by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden form for saving -->
+    <form id="save-form" method="post" style="display: none;">
+        {% csrf_token %}
+        <input type="hidden" name="name" x-model="designName">
+        <input type="hidden" name="slug" x-model="designSlug">
+        <input type="hidden" name="html_code" id="html-code-input">
+        <input type="hidden" name="css_code" id="css-code-input">
+        <input type="hidden" name="js_code" id="js-code-input">
+        <input type="hidden" name="visual_builder_data" id="visual-data-input">
+    </form>
+</div>
+
+<!-- Pass data to JavaScript -->
+<script>
+window.VISUAL_BUILDER_CONFIG = {
+    isNew: {{ is_new|yesno:"true,false" }},
+    designSlug: "{% if design %}{{ design.slug }}{% endif %}",
+    designName: "{% if design %}{{ design.name }}{% else %}Untitled Design{% endif %}",
+    htmlCode: `{% if design %}{{ design.html_code|escapejs }}{% endif %}`,
+    cssCode: `{% if design %}{{ design.css_code|escapejs }}{% endif %}`,
+    jsCode: `{% if design %}{{ design.js_code|escapejs }}{% endif %}`,
+    visualBuilderData: {% if design and design.visual_builder_data %}{{ design.visual_builder_data|safe }}{% else %}null{% endif %},
+    componentRegistry: {{ component_registry_json|safe }},
+    dataRegistry: {{ data_registry_json|safe }},
+    csrfToken: "{{ csrf_token }}",
+    saveUrl: "{% if design %}{% url 'signage:visual_builder_save' design.slug %}{% else %}{% url 'signage:visual_builder_create_save' %}{% endif %}",
+    previewUrl: "{% if design %}{% url 'signage:screen_design_preview' design.slug %}{% else %}#{% endif %}",
+};
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<!-- GrapesJS -->
+<script src="https://unpkg.com/grapesjs@0.21.10/dist/grapes.min.js"></script>
+<!-- Visual Builder JS -->
+<script src="{% static 'signage/js/visual-builder/index.js' %}"></script>
+{% endblock %}

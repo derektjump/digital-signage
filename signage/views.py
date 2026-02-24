@@ -40,7 +40,7 @@ from django.views.generic import ListView, UpdateView, CreateView, DeleteView, T
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render, redirect
-from django.http import Http404, JsonResponse, HttpResponse
+from django.http import Http404, JsonResponse, HttpResponse, FileResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
@@ -49,9 +49,12 @@ from django.conf import settings
 from django.utils.text import slugify
 from django.core.cache import cache
 from datetime import timedelta
+from django.db.models import Q, F
+from django.contrib import messages
+from pathlib import Path
 from .models import (
     ScreenDesign, Screen, SalesData, KPI, Device, DeviceGroup, Playlist, PlaylistItem,
-    MediaFolder, MediaAsset, DesignFolder, generate_registration_code
+    MediaFolder, MediaAsset, DesignFolder, ScreenTemplate, generate_registration_code
 )
 from .data_services import get_sales_data, clear_sales_cache, get_available_data_variables
 import json
@@ -168,7 +171,8 @@ class ScreenDesignUpdateView(LoginRequiredMixin, UpdateView):
 
     model = ScreenDesign
     template_name = 'signage/screen_design_form.html'
-    fields = ['name', 'slug', 'description', 'folder', 'html_code', 'css_code', 'js_code', 'notes', 'is_active']
+    fields = ['name', 'slug', 'description', 'folder', 'html_code', 'css_code', 'js_code', 'notes', 'is_active',
+              'store_filter_id', 'date_filter_mode']
     slug_field = 'slug'
     slug_url_kwarg = 'slug'
 
@@ -183,6 +187,16 @@ class ScreenDesignUpdateView(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['is_new'] = self.object is None
         context['design_folders'] = DesignFolder.objects.all().order_by('name')
+
+        # Get available stores for the filter dropdown
+        try:
+            from .models import SalesBoardSummary
+            context['available_stores'] = SalesBoardSummary.objects.using('data_connect').values(
+                'store_id', 'store_name'
+            ).distinct().order_by('store_name')
+        except Exception:
+            context['available_stores'] = []
+
         return context
 
     def form_valid(self, form):
@@ -235,6 +249,307 @@ class ScreenDesignDeleteView(LoginRequiredMixin, DeleteView):
         context['device_count'] = Device.objects.filter(assigned_screen=design).count()
         context['playlist_count'] = PlaylistItem.objects.filter(screen=design).count()
         return context
+
+
+# ============================================================================
+# TEMPLATE LIBRARY
+# ============================================================================
+
+@login_required
+def template_gallery(request):
+    """
+    Display gallery of available templates with filtering by type.
+    """
+    template_type = request.GET.get('type', '')
+    search_query = request.GET.get('search', '')
+
+    templates = ScreenTemplate.objects.filter(is_active=True)
+
+    if template_type:
+        templates = templates.filter(template_type=template_type)
+
+    if search_query:
+        templates = templates.filter(
+            Q(name__icontains=search_query) |
+            Q(description__icontains=search_query)
+        )
+
+    context = {
+        'templates': templates,
+        'featured_templates': ScreenTemplate.objects.filter(is_active=True, is_featured=True)[:4],
+        'template_types': ScreenTemplate.TemplateType.choices,
+        'selected_type': template_type,
+        'search_query': search_query,
+        'total_templates': templates.count(),
+    }
+
+    return render(request, 'signage/template_gallery.html', context)
+
+
+@login_required
+def template_detail(request, slug):
+    """View template details."""
+    template = get_object_or_404(ScreenTemplate, slug=slug, is_active=True)
+    context = {
+        'template': template,
+    }
+    return render(request, 'signage/template_detail.html', context)
+
+
+def template_preview(request, slug):
+    """
+    Preview a template with optional branding customization.
+    This is a public endpoint (no login required) for iframe embedding.
+    """
+    template = get_object_or_404(ScreenTemplate, slug=slug)
+
+    # Get branding overrides from query params (for live preview)
+    branding_overrides = {}
+    for key in ['primary_color', 'secondary_color', 'accent_color',
+                'background_color', 'text_color', 'heading_font', 'body_font']:
+        if request.GET.get(key):
+            branding_overrides[key] = request.GET.get(key)
+
+    # Merge with template's default branding
+    effective_branding = {**template.branding_config, **branding_overrides}
+
+    # Generate branding CSS
+    branding_css = ''
+    if effective_branding:
+        css_vars = []
+        mappings = {
+            'primary_color': '--brand-primary',
+            'secondary_color': '--brand-secondary',
+            'accent_color': '--brand-accent',
+            'background_color': '--brand-bg',
+            'text_color': '--brand-text',
+            'heading_font': '--brand-heading-font',
+            'body_font': '--brand-body-font',
+        }
+        for key, css_var in mappings.items():
+            if key in effective_branding and effective_branding[key]:
+                css_vars.append(f'    {css_var}: {effective_branding[key]};')
+        if css_vars:
+            branding_css = ':root {\n' + '\n'.join(css_vars) + '\n}\n'
+
+    context = {
+        'template': template,
+        'branding_config': effective_branding,
+        'branding_css': branding_css,
+    }
+
+    return render(request, 'signage/template_preview.html', context)
+
+
+@login_required
+def save_as_template(request, slug):
+    """
+    Save an existing screen design as a reusable template.
+    """
+    design = get_object_or_404(ScreenDesign, slug=slug)
+
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        description = request.POST.get('description', '').strip()
+        template_type = request.POST.get('template_type', 'custom')
+
+        if not name:
+            messages.error(request, 'Template name is required.')
+            return redirect('signage:save_as_template', slug=slug)
+
+        # Generate slug
+        template_slug = slugify(name)
+        base_slug = template_slug
+        counter = 1
+        while ScreenTemplate.objects.filter(slug=template_slug).exists():
+            template_slug = f"{base_slug}-{counter}"
+            counter += 1
+
+        # Parse branding config from form
+        branding_config = {}
+        for key in ['primary_color', 'secondary_color', 'accent_color',
+                    'background_color', 'text_color', 'heading_font', 'body_font']:
+            value = request.POST.get(key, '').strip()
+            if value:
+                branding_config[key] = value
+
+        # Create template
+        template = ScreenTemplate.objects.create(
+            name=name,
+            slug=template_slug,
+            description=description,
+            template_type=template_type,
+            html_code=design.html_code,
+            css_code=design.css_code,
+            js_code=design.js_code,
+            branding_config=branding_config,
+            source_design=design,
+        )
+
+        messages.success(request, f'Template "{template.name}" created successfully!')
+        return redirect('signage:template_gallery')
+
+    # GET request - show form
+    context = {
+        'design': design,
+        'template_types': ScreenTemplate.TemplateType.choices,
+    }
+    return render(request, 'signage/save_as_template.html', context)
+
+
+@login_required
+def create_from_template(request, slug):
+    """
+    Create a new screen design from a template.
+    """
+    template = get_object_or_404(ScreenTemplate, slug=slug, is_active=True)
+
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        description = request.POST.get('description', '').strip()
+        folder_id = request.POST.get('folder', '').strip()
+
+        if not name:
+            messages.error(request, 'Design name is required.')
+            return redirect('signage:create_from_template', slug=slug)
+
+        # Generate slug for the new design
+        design_slug = slugify(name)
+        base_slug = design_slug
+        counter = 1
+        while ScreenDesign.objects.filter(slug=design_slug).exists():
+            design_slug = f"{base_slug}-{counter}"
+            counter += 1
+
+        # Parse branding config from form and generate CSS
+        branding_config = {}
+        for key in ['primary_color', 'secondary_color', 'accent_color',
+                    'background_color', 'text_color', 'heading_font', 'body_font']:
+            value = request.POST.get(key, '').strip()
+            if value:
+                branding_config[key] = value
+
+        # Generate branding CSS block
+        css_code = template.css_code or ''
+        if branding_config:
+            css_vars = []
+            mappings = {
+                'primary_color': '--brand-primary',
+                'secondary_color': '--brand-secondary',
+                'accent_color': '--brand-accent',
+                'background_color': '--brand-bg',
+                'text_color': '--brand-text',
+                'heading_font': '--brand-heading-font',
+                'body_font': '--brand-body-font',
+            }
+            for key, css_var in mappings.items():
+                if key in branding_config and branding_config[key]:
+                    css_vars.append(f'    {css_var}: {branding_config[key]};')
+            if css_vars:
+                branding_css = '/* Branding Variables (from template) */\n:root {\n' + '\n'.join(css_vars) + '\n}\n\n'
+                css_code = branding_css + css_code
+
+        # Get folder if specified
+        folder = None
+        if folder_id:
+            try:
+                folder = DesignFolder.objects.get(id=folder_id)
+            except DesignFolder.DoesNotExist:
+                pass
+
+        # Create new design
+        design = ScreenDesign.objects.create(
+            name=name,
+            slug=design_slug,
+            description=description,
+            html_code=template.html_code,
+            css_code=css_code,
+            js_code=template.js_code,
+            folder=folder,
+        )
+
+        # Increment template usage count
+        ScreenTemplate.objects.filter(id=template.id).update(usage_count=F('usage_count') + 1)
+
+        messages.success(request, f'Design "{design.name}" created from template!')
+        return redirect('signage:screen_design_update', slug=design.slug)
+
+    # GET request - show form
+    context = {
+        'template': template,
+        'design_folders': DesignFolder.objects.all().order_by('name'),
+    }
+    return render(request, 'signage/create_from_template.html', context)
+
+
+@login_required
+def template_edit(request, slug):
+    """
+    Edit an existing template.
+    """
+    template = get_object_or_404(ScreenTemplate, slug=slug)
+
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        description = request.POST.get('description', '').strip()
+        template_type = request.POST.get('template_type', 'custom')
+
+        if not name:
+            messages.error(request, 'Template name is required.')
+            return redirect('signage:template_edit', slug=slug)
+
+        # Update template
+        template.name = name
+        template.description = description
+        template.template_type = template_type
+
+        # Parse branding config from form
+        branding_config = {}
+        for key in ['primary_color', 'secondary_color', 'accent_color',
+                    'background_color', 'text_color', 'heading_font', 'body_font']:
+            value = request.POST.get(key, '').strip()
+            if value:
+                branding_config[key] = value
+
+        template.branding_config = branding_config
+        template.is_featured = request.POST.get('is_featured') == 'on'
+        template.is_active = request.POST.get('is_active') == 'on'
+
+        # Handle thumbnail upload
+        if 'thumbnail' in request.FILES:
+            template.thumbnail = request.FILES['thumbnail']
+
+        template.save()
+
+        messages.success(request, f'Template "{template.name}" updated successfully!')
+        return redirect('signage:template_gallery')
+
+    # GET request - show form
+    context = {
+        'template': template,
+        'template_types': ScreenTemplate.TemplateType.choices,
+    }
+    return render(request, 'signage/template_edit.html', context)
+
+
+@login_required
+def template_delete(request, slug):
+    """
+    Delete a template with confirmation.
+    """
+    template = get_object_or_404(ScreenTemplate, slug=slug)
+
+    if request.method == 'POST':
+        name = template.name
+        template.delete()
+        messages.success(request, f'Template "{name}" deleted successfully!')
+        return redirect('signage:template_gallery')
+
+    # GET request - show confirmation
+    context = {
+        'template': template,
+    }
+    return render(request, 'signage/template_confirm_delete.html', context)
 
 
 # ============================================================================
@@ -834,6 +1149,241 @@ def clear_sales_cache_api(request):
     """Clear sales data cache."""
     clear_sales_cache()
     return JsonResponse({'success': True, 'message': 'Cache cleared'})
+
+
+@login_required
+def get_data_registry_api(request):
+    """
+    Get data field registry for the visual data picker.
+
+    Returns the complete catalog of available data fields with
+    descriptions, examples, and type information for the screen builder.
+    """
+    from .data_registry import DataFieldRegistry
+    registry = DataFieldRegistry()
+    return JsonResponse({
+        'success': True,
+        'registry': registry.to_json()
+    })
+
+
+# ============================================================================
+# VISUAL BUILDER
+# ============================================================================
+
+@login_required
+def visual_builder_create(request):
+    """
+    Visual Builder for creating new screen designs.
+    """
+    from .component_registry import get_component_registry_json
+    from .data_registry import DataFieldRegistry
+
+    registry = DataFieldRegistry()
+
+    context = {
+        'is_new': True,
+        'design': None,
+        'component_registry_json': get_component_registry_json(),
+        'data_registry_json': json.dumps(registry.to_json()),
+    }
+    return render(request, 'signage/visual_builder.html', context)
+
+
+@login_required
+def visual_builder_update(request, slug):
+    """
+    Visual Builder for editing existing screen designs.
+    """
+    from .component_registry import get_component_registry_json
+    from .data_registry import DataFieldRegistry
+
+    design = get_object_or_404(ScreenDesign, slug=slug)
+    registry = DataFieldRegistry()
+
+    context = {
+        'is_new': False,
+        'design': design,
+        'component_registry_json': get_component_registry_json(),
+        'data_registry_json': json.dumps(registry.to_json()),
+    }
+    return render(request, 'signage/visual_builder.html', context)
+
+
+@login_required
+@csrf_exempt
+@require_http_methods(["POST"])
+def visual_builder_create_save(request):
+    """
+    Save a new design from Visual Builder.
+    """
+    try:
+        name = request.POST.get('name', 'Untitled Design').strip()
+        html_code = request.POST.get('html_code', '')
+        css_code = request.POST.get('css_code', '')
+        js_code = request.POST.get('js_code', '')
+        visual_data = request.POST.get('visual_builder_data', '')
+
+        # Generate slug
+        base_slug = slugify(name) or 'design'
+        slug = base_slug
+        counter = 1
+        while ScreenDesign.objects.filter(slug=slug).exists():
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+
+        # Create design
+        design = ScreenDesign.objects.create(
+            name=name,
+            slug=slug,
+            html_code=html_code,
+            css_code=css_code,
+            js_code=js_code,
+            is_active=True,
+        )
+
+        # Store visual builder data if model supports it
+        if hasattr(design, 'visual_builder_data') and visual_data:
+            try:
+                design.visual_builder_data = json.loads(visual_data)
+                design.save()
+            except json.JSONDecodeError:
+                pass
+
+        return JsonResponse({
+            'success': True,
+            'slug': design.slug,
+            'redirect': reverse('signage:visual_builder_update', args=[design.slug])
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+@csrf_exempt
+@require_http_methods(["POST"])
+def visual_builder_save(request, slug):
+    """
+    Save an existing design from Visual Builder.
+    """
+    try:
+        design = get_object_or_404(ScreenDesign, slug=slug)
+
+        name = request.POST.get('name', design.name).strip()
+        html_code = request.POST.get('html_code', design.html_code)
+        css_code = request.POST.get('css_code', design.css_code)
+        js_code = request.POST.get('js_code', design.js_code)
+        visual_data = request.POST.get('visual_builder_data', '')
+
+        design.name = name
+        design.html_code = html_code
+        design.css_code = css_code
+        design.js_code = js_code
+
+        # Store visual builder data if model supports it
+        if hasattr(design, 'visual_builder_data') and visual_data:
+            try:
+                design.visual_builder_data = json.loads(visual_data)
+            except json.JSONDecodeError:
+                pass
+
+        design.save()
+
+        return JsonResponse({
+            'success': True,
+            'slug': design.slug,
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+def get_component_registry_api(request):
+    """
+    Get component registry for Visual Builder.
+    """
+    from .component_registry import get_component_registry
+    return JsonResponse({
+        'success': True,
+        'components': get_component_registry()
+    })
+
+
+# ============================================================================
+# FIRE TV APP DOWNLOAD
+# ============================================================================
+
+APK_FILENAME = 'the-grid-signage.apk'
+
+
+def firetv_download(request):
+    """
+    Fire TV app download landing page.
+
+    Public page (no auth) so Fire TV's Downloader app can access it.
+    Shows install instructions and a download button.
+    """
+    apk_path = Path(settings.MEDIA_ROOT) / 'signage' / 'apk' / APK_FILENAME
+    apk_available = apk_path.exists()
+    apk_size = None
+    if apk_available:
+        size_bytes = apk_path.stat().st_size
+        apk_size = f"{size_bytes / (1024 * 1024):.1f} MB"
+
+    context = {
+        'apk_available': apk_available,
+        'apk_size': apk_size,
+        'apk_filename': APK_FILENAME,
+    }
+    return render(request, 'signage/firetv_download.html', context)
+
+
+def firetv_apk_download(request):
+    """
+    Serve the Fire TV APK file for download.
+
+    Returns the APK as a file download with proper content type.
+    """
+    apk_path = Path(settings.MEDIA_ROOT) / 'signage' / 'apk' / APK_FILENAME
+    if not apk_path.exists():
+        raise Http404("APK file not found. Build and upload the APK first.")
+
+    return FileResponse(
+        open(apk_path, 'rb'),
+        content_type='application/vnd.android.package-archive',
+        as_attachment=True,
+        filename=APK_FILENAME,
+    )
+
+
+@login_required
+@csrf_exempt
+@require_http_methods(["POST"])
+def firetv_upload_apk(request):
+    """
+    Upload a new APK file via the admin interface.
+    """
+    if 'apk_file' not in request.FILES:
+        return JsonResponse({'success': False, 'error': 'No APK file provided'}, status=400)
+
+    apk_file = request.FILES['apk_file']
+    if not apk_file.name.endswith('.apk'):
+        return JsonResponse({'success': False, 'error': 'File must be an .apk file'}, status=400)
+
+    apk_dir = Path(settings.MEDIA_ROOT) / 'signage' / 'apk'
+    apk_dir.mkdir(parents=True, exist_ok=True)
+    apk_path = apk_dir / APK_FILENAME
+
+    with open(apk_path, 'wb') as f:
+        for chunk in apk_file.chunks():
+            f.write(chunk)
+
+    return JsonResponse({
+        'success': True,
+        'size': f"{apk_path.stat().st_size / (1024 * 1024):.1f} MB",
+    })
 
 
 # ============================================================================

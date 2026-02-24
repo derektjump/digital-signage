@@ -1,0 +1,194 @@
+{% extends 'signage/base.html' %}
+
+{% block title %}Edit Template | {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="p-6 md:p-8 max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <a href="{% url 'signage:template_gallery' %}" class="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700 mb-4">
+            <span class="material-symbols-outlined" style="font-size: 1.2rem;">arrow_back</span>
+            Back to Templates
+        </a>
+        <h1 class="text-2xl font-semibold text-gray-900" style="font-family: 'Oxanium', sans-serif;">Edit Template</h1>
+        <p class="text-gray-500 mt-1">Update template details and branding configuration</p>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- Basic Information -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined" style="color: #6b7280;">info</span>
+                Basic Information
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Template Name *</label>
+                    <input type="text" name="name" value="{{ template.name }}" required
+                           class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Template Type</label>
+                    <select name="template_type"
+                            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200">
+                        {% for value, label in template_types %}
+                        <option value="{{ value }}" {% if template.template_type == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea name="description" rows="3"
+                              class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200">{{ template.description }}</textarea>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Thumbnail</label>
+                    {% if template.thumbnail %}
+                    <div class="mb-2">
+                        <img src="{{ template.thumbnail.url }}" alt="Current thumbnail" class="h-20 rounded border border-gray-200">
+                        <p class="text-xs text-gray-500 mt-1">Current thumbnail</p>
+                    </div>
+                    {% endif %}
+                    <input type="file" name="thumbnail" accept="image/*"
+                           class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200">
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="is_featured" {% if template.is_featured %}checked{% endif %}
+                               class="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-gray-200">
+                        <span class="text-sm text-gray-700">Featured Template</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="is_active" {% if template.is_active %}checked{% endif %}
+                               class="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-gray-200">
+                        <span class="text-sm text-gray-700">Active</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Branding Configuration -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined" style="color: #6b7280;">palette</span>
+                Branding Configuration
+            </h2>
+            <p class="text-sm text-gray-500 mb-4">These colors will be available as CSS custom properties (e.g., <code class="bg-gray-100 px-1 rounded">var(--brand-primary)</code>)</p>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Primary Color</label>
+                    <div class="flex items-center gap-2">
+                        <input type="color" name="primary_color" value="{{ template.branding_config.primary_color|default:'#6434f8' }}"
+                               class="w-10 h-10 rounded border border-gray-200 cursor-pointer">
+                        <input type="text" name="primary_color_text" value="{{ template.branding_config.primary_color|default:'#6434f8' }}"
+                               class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                               pattern="^#[0-9A-Fa-f]{6}$">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Secondary Color</label>
+                    <div class="flex items-center gap-2">
+                        <input type="color" name="secondary_color" value="{{ template.branding_config.secondary_color|default:'#00f0ff' }}"
+                               class="w-10 h-10 rounded border border-gray-200 cursor-pointer">
+                        <input type="text" name="secondary_color_text" value="{{ template.branding_config.secondary_color|default:'#00f0ff' }}"
+                               class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                               pattern="^#[0-9A-Fa-f]{6}$">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Accent Color</label>
+                    <div class="flex items-center gap-2">
+                        <input type="color" name="accent_color" value="{{ template.branding_config.accent_color|default:'#ff5959' }}"
+                               class="w-10 h-10 rounded border border-gray-200 cursor-pointer">
+                        <input type="text" name="accent_color_text" value="{{ template.branding_config.accent_color|default:'#ff5959' }}"
+                               class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                               pattern="^#[0-9A-Fa-f]{6}$">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Background Color</label>
+                    <div class="flex items-center gap-2">
+                        <input type="color" name="background_color" value="{{ template.branding_config.background_color|default:'#0a0a0f' }}"
+                               class="w-10 h-10 rounded border border-gray-200 cursor-pointer">
+                        <input type="text" name="background_color_text" value="{{ template.branding_config.background_color|default:'#0a0a0f' }}"
+                               class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                               pattern="^#[0-9A-Fa-f]{6}$">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Text Color</label>
+                    <div class="flex items-center gap-2">
+                        <input type="color" name="text_color" value="{{ template.branding_config.text_color|default:'#ffffff' }}"
+                               class="w-10 h-10 rounded border border-gray-200 cursor-pointer">
+                        <input type="text" name="text_color_text" value="{{ template.branding_config.text_color|default:'#ffffff' }}"
+                               class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                               pattern="^#[0-9A-Fa-f]{6}$">
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Heading Font</label>
+                    <input type="text" name="heading_font" value="{{ template.branding_config.heading_font|default:'Suisse Intl, Inter, sans-serif' }}"
+                           class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Body Font</label>
+                    <input type="text" name="body_font" value="{{ template.branding_config.body_font|default:'Suisse Intl Mono, Roboto Mono, monospace' }}"
+                           class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-200">
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center justify-between">
+            <a href="{% url 'signage:template_delete' template.slug %}"
+               class="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors">
+                <span class="material-symbols-outlined" style="font-size: 1.1rem;">delete</span>
+                Delete Template
+            </a>
+            <div class="flex items-center gap-3">
+                <a href="{% url 'signage:template_gallery' %}"
+                   class="px-4 py-2 text-sm rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg text-white transition-colors"
+                        style="background: #0a0a0c;">
+                    <span class="material-symbols-outlined" style="font-size: 1.1rem;">save</span>
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+// Sync color picker with text input
+document.querySelectorAll('input[type="color"]').forEach(picker => {
+    const textInput = picker.nextElementSibling;
+    picker.addEventListener('input', () => {
+        textInput.value = picker.value;
+    });
+    textInput.addEventListener('input', () => {
+        if (/^#[0-9A-Fa-f]{6}$/.test(textInput.value)) {
+            picker.value = textInput.value;
+        }
+    });
+});
+</script>
+{% endblock %}
