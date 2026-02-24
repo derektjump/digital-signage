@@ -1316,6 +1316,59 @@ def get_component_registry_api(request):
 # ============================================================================
 
 APK_FILENAME = 'the-grid-signage.apk'
+APK_BLOB_NAME = 'apk/the-grid-signage.apk'
+
+
+def _get_blob_client():
+    """Get Azure Blob Storage client, or None if not configured."""
+    account_name = getattr(settings, 'AZURE_STORAGE_ACCOUNT_NAME', '')
+    account_key = getattr(settings, 'AZURE_STORAGE_ACCOUNT_KEY', '')
+    container = getattr(settings, 'AZURE_STORAGE_CONTAINER', 'digital-signage')
+
+    if not account_name or not account_key:
+        return None
+
+    from azure.storage.blob import BlobServiceClient
+    connection_string = (
+        f"DefaultEndpointsProtocol=https;"
+        f"AccountName={account_name};"
+        f"AccountKey={account_key};"
+        f"EndpointSuffix=core.windows.net"
+    )
+    service = BlobServiceClient.from_connection_string(connection_string)
+    container_client = service.get_container_client(container)
+
+    # Ensure container exists
+    try:
+        container_client.get_container_properties()
+    except Exception:
+        container_client.create_container(public_access='blob')
+
+    return container_client.get_blob_client(APK_BLOB_NAME)
+
+
+def _get_apk_info():
+    """
+    Check APK availability. Returns (available, size_str, download_url).
+    Uses Azure Blob Storage in production, local file in development.
+    """
+    blob_client = _get_blob_client()
+
+    if blob_client:
+        # Azure Blob Storage
+        try:
+            props = blob_client.get_blob_properties()
+            size_str = f"{props.size / (1024 * 1024):.1f} MB"
+            return True, size_str, blob_client.url
+        except Exception:
+            return False, None, None
+    else:
+        # Local file fallback (development)
+        apk_path = Path(settings.MEDIA_ROOT) / 'signage' / 'apk' / APK_FILENAME
+        if apk_path.exists():
+            size_str = f"{apk_path.stat().st_size / (1024 * 1024):.1f} MB"
+            return True, size_str, None
+        return False, None, None
 
 
 def firetv_download(request):
@@ -1325,17 +1378,13 @@ def firetv_download(request):
     Public page (no auth) so Fire TV's Downloader app can access it.
     Shows install instructions and a download button.
     """
-    apk_path = Path(settings.MEDIA_ROOT) / 'signage' / 'apk' / APK_FILENAME
-    apk_available = apk_path.exists()
-    apk_size = None
-    if apk_available:
-        size_bytes = apk_path.stat().st_size
-        apk_size = f"{size_bytes / (1024 * 1024):.1f} MB"
+    apk_available, apk_size, blob_url = _get_apk_info()
 
     context = {
         'apk_available': apk_available,
         'apk_size': apk_size,
         'apk_filename': APK_FILENAME,
+        'blob_url': blob_url,
     }
     return render(request, 'signage/firetv_download.html', context)
 
@@ -1344,18 +1393,30 @@ def firetv_apk_download(request):
     """
     Serve the Fire TV APK file for download.
 
-    Returns the APK as a file download with proper content type.
+    Redirects to Azure Blob URL in production, serves local file in development.
     """
-    apk_path = Path(settings.MEDIA_ROOT) / 'signage' / 'apk' / APK_FILENAME
-    if not apk_path.exists():
-        raise Http404("APK file not found. Build and upload the APK first.")
+    blob_client = _get_blob_client()
 
-    return FileResponse(
-        open(apk_path, 'rb'),
-        content_type='application/vnd.android.package-archive',
-        as_attachment=True,
-        filename=APK_FILENAME,
-    )
+    if blob_client:
+        # Redirect to Azure Blob Storage URL
+        try:
+            blob_client.get_blob_properties()
+            from django.shortcuts import redirect as redir
+            return redir(blob_client.url)
+        except Exception:
+            raise Http404("APK file not found in Azure Blob Storage.")
+    else:
+        # Local file fallback
+        apk_path = Path(settings.MEDIA_ROOT) / 'signage' / 'apk' / APK_FILENAME
+        if not apk_path.exists():
+            raise Http404("APK file not found. Build and upload the APK first.")
+
+        return FileResponse(
+            open(apk_path, 'rb'),
+            content_type='application/vnd.android.package-archive',
+            as_attachment=True,
+            filename=APK_FILENAME,
+        )
 
 
 @login_required
@@ -1364,6 +1425,7 @@ def firetv_apk_download(request):
 def firetv_upload_apk(request):
     """
     Upload a new APK file via the admin interface.
+    Uploads to Azure Blob Storage in production, local file in development.
     """
     if 'apk_file' not in request.FILES:
         return JsonResponse({'success': False, 'error': 'No APK file provided'}, status=400)
@@ -1372,18 +1434,33 @@ def firetv_upload_apk(request):
     if not apk_file.name.endswith('.apk'):
         return JsonResponse({'success': False, 'error': 'File must be an .apk file'}, status=400)
 
-    apk_dir = Path(settings.MEDIA_ROOT) / 'signage' / 'apk'
-    apk_dir.mkdir(parents=True, exist_ok=True)
-    apk_path = apk_dir / APK_FILENAME
+    blob_client = _get_blob_client()
 
-    with open(apk_path, 'wb') as f:
-        for chunk in apk_file.chunks():
-            f.write(chunk)
+    if blob_client:
+        # Upload to Azure Blob Storage
+        from azure.storage.blob import ContentSettings
+        blob_client.upload_blob(
+            apk_file.read(),
+            overwrite=True,
+            content_settings=ContentSettings(
+                content_type='application/vnd.android.package-archive'
+            ),
+        )
+        props = blob_client.get_blob_properties()
+        size_str = f"{props.size / (1024 * 1024):.1f} MB"
+    else:
+        # Local file fallback
+        apk_dir = Path(settings.MEDIA_ROOT) / 'signage' / 'apk'
+        apk_dir.mkdir(parents=True, exist_ok=True)
+        apk_path = apk_dir / APK_FILENAME
 
-    return JsonResponse({
-        'success': True,
-        'size': f"{apk_path.stat().st_size / (1024 * 1024):.1f} MB",
-    })
+        with open(apk_path, 'wb') as f:
+            for chunk in apk_file.chunks():
+                f.write(chunk)
+
+        size_str = f"{apk_path.stat().st_size / (1024 * 1024):.1f} MB"
+
+    return JsonResponse({'success': True, 'size': size_str})
 
 
 # ============================================================================

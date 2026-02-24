@@ -220,7 +220,7 @@
     <p class="version-info">Install The Grid Signage on your Fire TV Stick</p>
 
     {% if apk_available %}
-        <a href="{% url 'signage:firetv_apk_download' %}" class="download-btn">
+        <a href="{% if blob_url %}{{ blob_url }}{% else %}{% url 'signage:firetv_apk_download' %}{% endif %}" class="download-btn">
             Download & Install
         </a>
         <p class="file-size">{{ apk_filename }} &middot; {{ apk_size }}</p>

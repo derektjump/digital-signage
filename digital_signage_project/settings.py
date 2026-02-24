@@ -180,6 +180,13 @@ else:
     }
 
 # ============================================================================
+# Azure Blob Storage (for APK and persistent file storage)
+# ============================================================================
+AZURE_STORAGE_ACCOUNT_NAME = os.environ.get('AZURE_STORAGE_ACCOUNT_NAME', '')
+AZURE_STORAGE_ACCOUNT_KEY = os.environ.get('AZURE_STORAGE_ACCOUNT_KEY', '')
+AZURE_STORAGE_CONTAINER = os.environ.get('AZURE_STORAGE_CONTAINER', 'digital-signage')
+
+# ============================================================================
 # Digital Signage Specific Settings
 # ============================================================================
 
