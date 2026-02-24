@@ -15,6 +15,7 @@ python-dotenv
 
 # Azure Blob Storage (for APK and media files)
 azure-storage-blob
+django-storages[azure]
 
 # Caching (optional)
 redis
