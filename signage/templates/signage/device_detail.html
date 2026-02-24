@@ -1,0 +1,187 @@
+{% extends 'signage/base.html' %}
+
+{% block title %}{{ object.name|default:"Device" }} | {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="p-6 md:p-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <div class="flex items-center gap-3">
+            <a href="{% url 'signage:device_list' %}" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </a>
+            <div>
+                <h1 class="text-2xl font-semibold text-gray-900" style="font-family: 'Oxanium', sans-serif;">
+                    {{ object.name|default:"Unnamed Device" }}
+                </h1>
+                <p class="text-gray-500 mt-1">
+                    <span class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full {% if device_status == 'online' %}bg-green-500{% elif device_status == 'recent' %}bg-yellow-500{% else %}bg-gray-400{% endif %}"></span>
+                        {{ device_status|title }}
+                        &middot; Code: {{ object.registration_code|default:"N/A" }}
+                    </span>
+                </p>
+            </div>
+        </div>
+        <div class="mt-4 md:mt-0 flex items-center gap-3">
+            <a href="{% url 'signage:device_delete' object.pk %}"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors">
+                <span class="material-symbols-outlined" style="font-size: 1.2rem;">delete</span>
+                Delete Device
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Device Settings Form -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-6">Device Settings</h2>
+
+                <form method="post" class="space-y-5">
+                    {% csrf_token %}
+
+                    <div>
+                        <label for="id_name" class="block text-sm font-medium text-gray-700 mb-1">Device Name</label>
+                        <input type="text" name="name" id="id_name" value="{{ object.name }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900 placeholder:text-gray-400"
+                               placeholder="e.g., Lobby Display">
+                    </div>
+
+                    <div>
+                        <label for="id_group" class="block text-sm font-medium text-gray-700 mb-1">Group</label>
+                        <select name="group" id="id_group"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900">
+                            <option value="">No Group</option>
+                            {% for group in device_groups %}
+                            <option value="{{ group.id }}" {% if object.group_id == group.id %}selected{% endif %}>{{ group.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="id_location" class="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                        <input type="text" name="location" id="id_location" value="{{ object.location }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900 placeholder:text-gray-400"
+                               placeholder="e.g., Front Counter, Break Room">
+                    </div>
+
+                    <hr class="border-gray-200">
+
+                    <h3 class="text-md font-medium text-gray-900">Content Assignment</h3>
+
+                    <div>
+                        <label for="id_assigned_playlist" class="block text-sm font-medium text-gray-700 mb-1">Assigned Playlist</label>
+                        <select name="assigned_playlist" id="id_assigned_playlist"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900">
+                            <option value="">None</option>
+                            {% for playlist in available_playlists %}
+                            <option value="{{ playlist.id }}" {% if object.assigned_playlist_id == playlist.id %}selected{% endif %}>{{ playlist.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <p class="text-xs text-gray-400 mt-1">Playlist takes priority over single screen.</p>
+                    </div>
+
+                    <div>
+                        <label for="id_assigned_screen" class="block text-sm font-medium text-gray-700 mb-1">Assigned Screen</label>
+                        <select name="assigned_screen" id="id_assigned_screen"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900">
+                            <option value="">None</option>
+                            {% for design in available_designs %}
+                            <option value="{{ design.id }}" {% if object.assigned_screen_id == design.id %}selected{% endif %}>{{ design.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <p class="text-xs text-gray-400 mt-1">Used only if no playlist is assigned.</p>
+                    </div>
+
+                    <hr class="border-gray-200">
+
+                    <div>
+                        <label for="id_notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                        <textarea name="notes" id="id_notes" rows="3"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900 placeholder:text-gray-400"
+                                  placeholder="Internal notes about this device">{{ object.notes }}</textarea>
+                    </div>
+
+                    <div class="flex gap-3 pt-2">
+                        <a href="{% url 'signage:device_list' %}"
+                           class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                            Cancel
+                        </a>
+                        <button type="submit"
+                                class="px-6 py-2 rounded-lg text-white transition-colors"
+                                style="background: #0a0a0c;">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Device Info Sidebar -->
+        <div class="space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Device Info</h2>
+                <dl class="space-y-3">
+                    <div>
+                        <dt class="text-xs font-medium text-gray-500 uppercase">Device ID</dt>
+                        <dd class="text-sm text-gray-900 font-mono mt-0.5 break-all">{{ object.id }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-500 uppercase">Registration Code</dt>
+                        <dd class="text-sm text-gray-900 font-mono mt-0.5">{{ object.registration_code|default:"N/A" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-500 uppercase">Status</dt>
+                        <dd class="mt-0.5">
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs rounded-full {% if device_status == 'online' %}bg-green-100 text-green-700{% elif device_status == 'recent' %}bg-yellow-100 text-yellow-700{% else %}bg-gray-100 text-gray-600{% endif %}">
+                                <span class="w-1.5 h-1.5 rounded-full {% if device_status == 'online' %}bg-green-500{% elif device_status == 'recent' %}bg-yellow-500{% else %}bg-gray-400{% endif %}"></span>
+                                {{ device_status|title }}
+                            </span>
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-500 uppercase">Registered</dt>
+                        <dd class="text-sm text-gray-900 mt-0.5">{{ object.registered|yesno:"Yes,No" }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-500 uppercase">Last Seen</dt>
+                        <dd class="text-sm text-gray-900 mt-0.5">{{ object.last_seen|timesince }} ago</dd>
+                    </div>
+                    <div>
+                        <dt class="text-xs font-medium text-gray-500 uppercase">Created</dt>
+                        <dd class="text-sm text-gray-900 mt-0.5">{{ object.created_at|date:"M d, Y H:i" }}</dd>
+                    </div>
+                </dl>
+            </div>
+
+            {% if object.assigned_playlist or object.assigned_screen %}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Current Content</h2>
+                {% if object.assigned_playlist %}
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(59, 130, 246, 0.1);">
+                        <span class="material-symbols-outlined" style="color: #3b82f6;">playlist_play</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-900">{{ object.assigned_playlist.name }}</p>
+                        <p class="text-xs text-gray-500">Playlist</p>
+                    </div>
+                </div>
+                {% elif object.assigned_screen %}
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(34, 197, 94, 0.1);">
+                        <span class="material-symbols-outlined" style="color: #22c55e;">web</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-900">{{ object.assigned_screen.name }}</p>
+                        <p class="text-xs text-gray-500">Single Screen</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

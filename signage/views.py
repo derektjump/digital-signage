@@ -581,7 +581,7 @@ class DeviceDetailView(LoginRequiredMixin, UpdateView):
     model = Device
     template_name = 'signage/device_detail.html'
     fields = ['name', 'group', 'location', 'assigned_playlist', 'assigned_screen', 'notes']
-    success_url = reverse_lazy('signage:overview')
+    success_url = reverse_lazy('signage:device_list')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -597,7 +597,7 @@ class DeviceDeleteView(LoginRequiredMixin, DeleteView):
 
     model = Device
     template_name = 'signage/device_confirm_delete.html'
-    success_url = reverse_lazy('signage:overview')
+    success_url = reverse_lazy('signage:device_list')
 
 
 # ============================================================================
@@ -730,13 +730,28 @@ def register_device_with_code(request):
             return JsonResponse({'success': False, 'error': f'No device found with code: {code}'}, status=404)
 
         device.registered = True
+
+        # Save name and group if provided (from admin registration modal)
+        name = data.get('name', '').strip()
+        if name:
+            device.name = name
+        elif not device.name:
+            device.name = f'Device {code}'
+
+        group_id = data.get('group_id')
+        if group_id:
+            try:
+                device.group = DeviceGroup.objects.get(id=group_id)
+            except DeviceGroup.DoesNotExist:
+                pass
+
         device.save()
 
         return JsonResponse({
             'success': True,
             'device': {
                 'id': str(device.id),
-                'name': device.name or f'Device {code}',
+                'name': device.name,
                 'registration_code': device.registration_code,
             }
         })
@@ -983,6 +998,13 @@ def delete_media(request, media_id):
 def device_request_code(request):
     """Request a registration code for a new device."""
     try:
+        # Parse request body for optional device name
+        try:
+            data = json.loads(request.body) if request.body else {}
+        except (json.JSONDecodeError, ValueError):
+            data = {}
+        device_name = data.get('device_name', '').strip()
+
         # Generate unique registration code
         code = generate_registration_code()
         while Device.objects.filter(registration_code=code).exists():
@@ -990,6 +1012,8 @@ def device_request_code(request):
 
         # Create new device with code
         device = Device(registration_code=code, registered=False)
+        if device_name:
+            device.name = device_name
         device.save()
 
         return JsonResponse({
