@@ -128,6 +128,14 @@ urlpatterns = [
     path('firetv/upload/', views.firetv_upload_apk, name='firetv_upload_apk'),
 
     # =========================================================================
+    # BACKWARD-COMPATIBLE API ROUTES (Fire TV APKs with /digital-signage/ prefix)
+    # =========================================================================
+    path('digital-signage/api/devices/request-code/', views.device_request_code, name='device_request_code_compat'),
+    path('digital-signage/api/devices/<uuid:device_id>/register/', views.device_register, name='device_register_compat'),
+    path('digital-signage/api/devices/<uuid:device_id>/config/', views.device_config, name='device_config_compat'),
+    path('digital-signage/api/devices/by-code/<str:code>/config/', views.device_config_by_code, name='device_config_by_code_compat'),
+
+    # =========================================================================
     # DEPRECATED ROUTES (kept for backward compatibility)
     # =========================================================================
     path('play/<slug:slug>/', views.ScreenPlayView.as_view(), name='screen_play'),
