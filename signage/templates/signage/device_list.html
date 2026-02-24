@@ -125,10 +125,10 @@
                        class="flex-1 text-center px-3 py-2 text-sm rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
                         Manage
                     </a>
-                    <a href="{% url 'signage:device_delete' device.pk %}"
-                       class="px-3 py-2 text-sm rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors">
+                    <button onclick="showDeleteModal('{{ device.pk }}', '{{ device.name|default:device.registration_code }}')"
+                            class="px-3 py-2 text-sm rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors">
                         <span class="material-symbols-outlined" style="font-size: 1.1rem;">delete</span>
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>
@@ -245,6 +245,30 @@
     </div>
 </div>
 
+<!-- Delete Device Modal -->
+<div id="deleteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6 text-center">
+        <div class="w-14 h-14 rounded-full mx-auto mb-4 flex items-center justify-center" style="background: rgba(239, 68, 68, 0.1);">
+            <span class="material-symbols-outlined text-2xl" style="color: #ef4444;">delete</span>
+        </div>
+        <h2 class="text-lg font-semibold text-gray-900 mb-2">Delete Device</h2>
+        <p class="text-gray-500 mb-6">
+            Are you sure you want to delete <strong id="deleteDeviceName" class="text-gray-900"></strong>? This cannot be undone.
+        </p>
+        <div id="deleteError" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"></div>
+        <div class="flex gap-3">
+            <button onclick="document.getElementById('deleteModal').classList.add('hidden')"
+                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                Cancel
+            </button>
+            <button id="deleteConfirmBtn" onclick="confirmDelete()"
+                    class="flex-1 px-4 py-2 rounded-lg text-white bg-red-600 hover:bg-red-700 transition-colors">
+                Delete
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
 document.getElementById('registerForm').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -325,5 +349,46 @@ document.getElementById('groupForm').addEventListener('submit', async function(e
         errorDiv.classList.remove('hidden');
     }
 });
+
+// Delete device
+let deleteDeviceId = null;
+
+function showDeleteModal(deviceId, deviceName) {
+    deleteDeviceId = deviceId;
+    document.getElementById('deleteDeviceName').textContent = deviceName;
+    document.getElementById('deleteError').classList.add('hidden');
+    document.getElementById('deleteModal').classList.remove('hidden');
+}
+
+async function confirmDelete() {
+    if (!deleteDeviceId) return;
+    const errorDiv = document.getElementById('deleteError');
+    const btn = document.getElementById('deleteConfirmBtn');
+    btn.disabled = true;
+    btn.textContent = 'Deleting...';
+
+    try {
+        const response = await fetch(`/devices/${deleteDeviceId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        });
+
+        if (response.ok || response.redirected) {
+            location.reload();
+        } else {
+            errorDiv.textContent = 'Failed to delete device. Please try again.';
+            errorDiv.classList.remove('hidden');
+            btn.disabled = false;
+            btn.textContent = 'Delete';
+        }
+    } catch (err) {
+        errorDiv.textContent = 'An error occurred. Please try again.';
+        errorDiv.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Delete';
+    }
+}
 </script>
 {% endblock %}
