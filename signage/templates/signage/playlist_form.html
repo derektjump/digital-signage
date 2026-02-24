@@ -62,7 +62,7 @@
             <div id="playlistItems" class="space-y-3">
                 {% if playlist_items %}
                     {% for item in playlist_items %}
-                    <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200" data-item-id="{{ item.id }}">
+                    <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200 new-item" data-item-id="{{ item.id }}">
                         <div class="flex items-center gap-2 text-gray-400 cursor-move">
                             <span class="material-symbols-outlined">drag_indicator</span>
                         </div>
@@ -76,10 +76,11 @@
                                 {% if item.item_type == 'screen' %}{{ item.screen.name }}{% else %}{{ item.media_asset.name }}{% endif %}
                             </p>
                             <p class="text-sm text-gray-500">
-                                {{ item.get_item_type_display }} &middot; {{ item.duration }}s duration
+                                {{ item.get_item_type_display }} &middot; {{ item.duration_seconds }}s duration
                             </p>
                         </div>
-                        <button type="button" onclick="removeItem('{{ item.id }}')"
+                        <input type="hidden" name="items[]" value="{{ item.item_type }}:{% if item.item_type == 'screen' %}{{ item.screen_id }}{% else %}{{ item.media_asset_id }}{% endif %}:{{ item.duration_seconds }}">
+                        <button type="button" onclick="this.closest('.new-item').remove()"
                                 class="text-gray-400 hover:text-red-500 transition-colors">
                             <span class="material-symbols-outlined">delete</span>
                         </button>

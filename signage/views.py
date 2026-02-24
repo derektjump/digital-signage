@@ -628,7 +628,7 @@ class PlaylistCreateView(LoginRequiredMixin, CreateView):
     model = Playlist
     template_name = 'signage/playlist_form.html'
     fields = ['name', 'is_active']
-    success_url = reverse_lazy('signage:overview')
+    success_url = reverse_lazy('signage:playlist_list')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -637,6 +637,36 @@ class PlaylistCreateView(LoginRequiredMixin, CreateView):
         context['media_assets'] = MediaAsset.objects.filter(is_active=True).order_by('name')
         return context
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        self._save_playlist_items(self.object, self.request.POST.getlist('items[]'))
+        return response
+
+    def _save_playlist_items(self, playlist, items_data):
+        """Parse items[] form data and create PlaylistItem objects."""
+        playlist.items.all().delete()
+        for order, item_str in enumerate(items_data):
+            try:
+                parts = item_str.split(':')
+                if len(parts) != 3:
+                    continue
+                item_type, item_id, duration = parts
+                item_kwargs = {
+                    'playlist': playlist,
+                    'item_type': item_type,
+                    'order': order,
+                    'duration_seconds': int(duration),
+                }
+                if item_type == 'screen':
+                    item_kwargs['screen_id'] = int(item_id)
+                elif item_type == 'media':
+                    item_kwargs['media_asset_id'] = int(item_id)
+                else:
+                    continue
+                PlaylistItem.objects.create(**item_kwargs)
+            except (ValueError, TypeError):
+                continue
+
 
 class PlaylistUpdateView(LoginRequiredMixin, UpdateView):
     """Edit an existing playlist."""
@@ -644,7 +674,7 @@ class PlaylistUpdateView(LoginRequiredMixin, UpdateView):
     model = Playlist
     template_name = 'signage/playlist_form.html'
     fields = ['name', 'is_active']
-    success_url = reverse_lazy('signage:overview')
+    success_url = reverse_lazy('signage:playlist_list')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -653,6 +683,36 @@ class PlaylistUpdateView(LoginRequiredMixin, UpdateView):
         context['media_assets'] = MediaAsset.objects.filter(is_active=True).order_by('name')
         context['playlist_items'] = self.object.items.all().order_by('order')
         return context
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        self._save_playlist_items(self.object, self.request.POST.getlist('items[]'))
+        return response
+
+    def _save_playlist_items(self, playlist, items_data):
+        """Parse items[] form data and create PlaylistItem objects."""
+        playlist.items.all().delete()
+        for order, item_str in enumerate(items_data):
+            try:
+                parts = item_str.split(':')
+                if len(parts) != 3:
+                    continue
+                item_type, item_id, duration = parts
+                item_kwargs = {
+                    'playlist': playlist,
+                    'item_type': item_type,
+                    'order': order,
+                    'duration_seconds': int(duration),
+                }
+                if item_type == 'screen':
+                    item_kwargs['screen_id'] = int(item_id)
+                elif item_type == 'media':
+                    item_kwargs['media_asset_id'] = int(item_id)
+                else:
+                    continue
+                PlaylistItem.objects.create(**item_kwargs)
+            except (ValueError, TypeError):
+                continue
 
 
 class PlaylistDeleteView(LoginRequiredMixin, DeleteView):
