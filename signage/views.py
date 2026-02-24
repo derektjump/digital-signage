@@ -564,13 +564,14 @@ class DeviceListView(LoginRequiredMixin, ListView):
     context_object_name = 'devices'
 
     def get_queryset(self):
-        return Device.objects.all().select_related('group', 'assigned_playlist', 'assigned_screen').order_by('-updated_at')
+        return Device.objects.filter(registered=True).select_related('group', 'assigned_playlist', 'assigned_screen').order_by('-updated_at')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['registered_count'] = Device.objects.filter(registered=True).count()
-        context['online_count'] = len([d for d in Device.objects.all() if d.status == 'online'])
-        context['total_count'] = Device.objects.count()
+        registered_devices = Device.objects.filter(registered=True)
+        context['registered_count'] = registered_devices.count()
+        context['online_count'] = len([d for d in registered_devices if d.status == 'online'])
+        context['total_count'] = registered_devices.count()
         context['device_groups'] = DeviceGroup.objects.filter(is_active=True).order_by('name')
         return context
 
@@ -1041,7 +1042,24 @@ def device_register(request, device_id):
 @csrf_exempt
 @require_http_methods(["GET"])
 def device_config(request, device_id):
-    """Get device configuration (assigned content)."""
+    """Get device configuration (assigned content).
+
+    Returns format expected by Fire TV app:
+    {
+        "success": true,
+        "registered": true/false,
+        "config": {
+            "type": "playlist" | "screen" | "none",
+            "playlist_id": "...",       // for playlists
+            "screen_id": "...",         // for screens
+            "items": [{                 // for playlists
+                "player_url": "https://...",
+                "duration_seconds": 30
+            }],
+            "player_url": "https://..." // for single screens
+        }
+    }
+    """
     try:
         device = get_object_or_404(Device, id=device_id)
 
@@ -1049,58 +1067,46 @@ def device_config(request, device_id):
         device.last_seen = timezone.now()
         device.save(update_fields=['last_seen'])
 
-        # Check cache first
-        cache_key = f'device_config_{device_id}'
-        cached = cache.get(cache_key)
-        if cached:
-            return JsonResponse(cached)
+        # Build base URL for absolute player URLs
+        base_url = request.build_absolute_uri('/').rstrip('/')
 
-        # Build configuration
-        config = {
-            'device_id': str(device.id),
-            'name': device.name,
-            'registered': device.registered,
-            'content_type': None,
-            'content': None,
-        }
+        # Build configuration in format expected by Fire TV app
+        config = {'type': 'none'}
 
         if device.assigned_playlist:
             items = []
             for item in device.assigned_playlist.items.order_by('order'):
                 if item.item_type == 'screen' and item.screen:
                     items.append({
-                        'type': 'screen',
-                        'slug': item.screen.slug,
-                        'name': item.screen.name,
-                        'duration': item.effective_duration,
-                        'url': reverse('signage:screen_player', kwargs={'slug': item.screen.slug})
+                        'player_url': base_url + reverse('signage:screen_player', kwargs={'slug': item.screen.slug}),
+                        'duration_seconds': item.effective_duration,
                     })
                 elif item.item_type == 'media' and item.media_asset:
                     items.append({
-                        'type': 'media',
-                        'slug': item.media_asset.slug,
-                        'name': item.media_asset.name,
-                        'duration': item.effective_duration,
-                        'url': reverse('signage:media_player', kwargs={'slug': item.media_asset.slug})
+                        'player_url': base_url + reverse('signage:media_player', kwargs={'slug': item.media_asset.slug}),
+                        'duration_seconds': item.effective_duration,
                     })
 
-            config['content_type'] = 'playlist'
-            config['content'] = {
-                'name': device.assigned_playlist.name,
-                'items': items
+            config = {
+                'type': 'playlist',
+                'playlist_id': str(device.assigned_playlist.id),
+                'items': items,
             }
 
         elif device.assigned_screen:
-            config['content_type'] = 'screen'
-            config['content'] = {
-                'name': device.assigned_screen.name,
-                'slug': device.assigned_screen.slug,
-                'url': reverse('signage:screen_player', kwargs={'slug': device.assigned_screen.slug})
+            config = {
+                'type': 'screen',
+                'screen_id': str(device.assigned_screen.id),
+                'player_url': base_url + reverse('signage:screen_player', kwargs={'slug': device.assigned_screen.slug}),
             }
 
-        # Cache for 60 seconds
-        cache.set(cache_key, config, 60)
-        return JsonResponse(config)
+        response_data = {
+            'success': True,
+            'registered': device.registered,
+            'config': config,
+        }
+
+        return JsonResponse(response_data)
 
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
