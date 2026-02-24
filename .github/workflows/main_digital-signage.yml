@@ -40,6 +40,10 @@ jobs:
           path: |
             .
             !antenv/
+            !firetv_app/
+            !The Grid 2.0/
+            !.claude/
+            !.git/
 
       # 🚫 Opting Out of Oryx Build
       # If you prefer to disable the Oryx build process during deployment, follow these steps:
