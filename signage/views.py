@@ -156,6 +156,12 @@ class ScreenDesignListView(LoginRequiredMixin, ListView):
             queryset = queryset.filter(is_active=True)
         elif status == 'inactive':
             queryset = queryset.filter(is_active=False)
+        # Filter by folder
+        folder = self.request.GET.get('folder')
+        if folder == 'unfiled':
+            queryset = queryset.filter(folder__isnull=True)
+        elif folder:
+            queryset = queryset.filter(folder__slug=folder)
         return queryset
 
     def get_context_data(self, **kwargs):

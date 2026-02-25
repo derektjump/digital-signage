@@ -11,6 +11,11 @@
             <p class="text-gray-500 mt-1">Create and manage your signage content</p>
         </div>
         <div class="mt-4 md:mt-0 flex items-center gap-2">
+            <button onclick="document.getElementById('folderModal').classList.remove('hidden')"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
+                <span class="material-symbols-outlined" style="font-size: 1.2rem;">create_new_folder</span>
+                New Folder
+            </button>
             <a href="{% url 'signage:screen_design_create' %}"
                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white transition-colors"
                style="background: #0a0a0c;">
@@ -60,21 +65,45 @@
     <!-- Filters -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
         <div class="flex flex-wrap items-center gap-4">
+            <!-- Status filters -->
             <div class="flex items-center gap-2">
-                <span class="text-sm text-gray-500">Filter by:</span>
-                <a href="{% url 'signage:screen_design_list' %}"
+                <span class="text-sm text-gray-500">Status:</span>
+                <a href="{% url 'signage:screen_design_list' %}{% if request.GET.folder %}?folder={{ request.GET.folder }}{% endif %}"
                    class="px-3 py-1 text-sm rounded-lg {% if not request.GET.status %}bg-gray-900 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} transition-colors">
                     All
                 </a>
-                <a href="{% url 'signage:screen_design_list' %}?status=active"
+                <a href="{% url 'signage:screen_design_list' %}?status=active{% if request.GET.folder %}&folder={{ request.GET.folder }}{% endif %}"
                    class="px-3 py-1 text-sm rounded-lg {% if request.GET.status == 'active' %}bg-gray-900 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} transition-colors">
                     Active
                 </a>
-                <a href="{% url 'signage:screen_design_list' %}?status=inactive"
+                <a href="{% url 'signage:screen_design_list' %}?status=inactive{% if request.GET.folder %}&folder={{ request.GET.folder }}{% endif %}"
                    class="px-3 py-1 text-sm rounded-lg {% if request.GET.status == 'inactive' %}bg-gray-900 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} transition-colors">
                     Inactive
                 </a>
             </div>
+
+            {% if design_folders %}
+            <!-- Folder filters -->
+            <div class="border-l border-gray-200 pl-4 flex items-center gap-2">
+                <span class="text-sm text-gray-500">Folder:</span>
+                <a href="{% url 'signage:screen_design_list' %}{% if request.GET.status %}?status={{ request.GET.status }}{% endif %}"
+                   class="px-3 py-1 text-sm rounded-lg {% if not request.GET.folder %}bg-gray-900 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} transition-colors">
+                    All
+                </a>
+                {% for folder in design_folders %}
+                <a href="{% url 'signage:screen_design_list' %}?folder={{ folder.slug }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+                   class="px-3 py-1 text-sm rounded-lg {% if request.GET.folder == folder.slug %}bg-gray-900 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} transition-colors">
+                    <span class="material-symbols-outlined align-middle" style="font-size: 0.9rem;">folder</span>
+                    {{ folder.name }}
+                    <span class="text-xs opacity-60">{{ folder.design_count }}</span>
+                </a>
+                {% endfor %}
+                <a href="{% url 'signage:screen_design_list' %}?folder=unfiled{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}"
+                   class="px-3 py-1 text-sm rounded-lg {% if request.GET.folder == 'unfiled' %}bg-gray-900 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} transition-colors">
+                    Unfiled
+                </a>
+            </div>
+            {% endif %}
         </div>
     </div>
 
@@ -134,10 +163,10 @@
                        title="Save as Template">
                         <span class="material-symbols-outlined" style="font-size: 1.1rem;">bookmark_add</span>
                     </a>
-                    <a href="{% url 'signage:screen_design_delete' design.slug %}"
-                       class="px-3 py-2 text-sm rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors">
+                    <button onclick="showDeleteModal('{{ design.slug }}', '{{ design.name|escapejs }}')"
+                            class="px-3 py-2 text-sm rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors">
                         <span class="material-symbols-outlined" style="font-size: 1.1rem;">delete</span>
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>
@@ -159,4 +188,136 @@
     </div>
     {% endif %}
 </div>
+
+<!-- New Folder Modal -->
+<div id="folderModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(10, 10, 12, 0.05);">
+                <span class="material-symbols-outlined" style="color: #0a0a0c;">create_new_folder</span>
+            </div>
+            <h2 class="text-lg font-semibold text-gray-900">New Folder</h2>
+        </div>
+        <form id="folderForm">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label for="folderName" class="block text-sm font-medium text-gray-700 mb-1">Folder Name</label>
+                <input type="text" id="folderName" required
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900 placeholder:text-gray-400"
+                       placeholder="e.g., Store 101, Dashboards">
+            </div>
+            <div id="folderError" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"></div>
+            <div class="flex gap-3">
+                <button type="button" onclick="document.getElementById('folderModal').classList.add('hidden')"
+                        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="flex-1 px-4 py-2 rounded-lg text-white transition-colors"
+                        style="background: #0a0a0c;">
+                    Create Folder
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Design Modal -->
+<div id="deleteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6 text-center">
+        <div class="w-14 h-14 rounded-full mx-auto mb-4 flex items-center justify-center" style="background: rgba(239, 68, 68, 0.1);">
+            <span class="material-symbols-outlined text-2xl" style="color: #ef4444;">delete</span>
+        </div>
+        <h2 class="text-lg font-semibold text-gray-900 mb-2">Delete Design</h2>
+        <p class="text-gray-500 mb-6">
+            Are you sure you want to delete <strong id="deleteDesignName" class="text-gray-900"></strong>? This cannot be undone.
+        </p>
+        <div id="deleteError" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"></div>
+        <div class="flex gap-3">
+            <button onclick="document.getElementById('deleteModal').classList.add('hidden')"
+                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                Cancel
+            </button>
+            <button id="deleteConfirmBtn" onclick="confirmDelete()"
+                    class="flex-1 px-4 py-2 rounded-lg text-white bg-red-600 hover:bg-red-700 transition-colors">
+                Delete
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// --- Delete Design ---
+let deleteDesignSlug = null;
+
+function showDeleteModal(slug, name) {
+    deleteDesignSlug = slug;
+    document.getElementById('deleteDesignName').textContent = name;
+    document.getElementById('deleteError').classList.add('hidden');
+    document.getElementById('deleteModal').classList.remove('hidden');
+}
+
+async function confirmDelete() {
+    if (!deleteDesignSlug) return;
+    const errorDiv = document.getElementById('deleteError');
+    const btn = document.getElementById('deleteConfirmBtn');
+    btn.disabled = true;
+    btn.textContent = 'Deleting...';
+
+    try {
+        const response = await fetch(`/designs/${deleteDesignSlug}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        });
+
+        if (response.ok || response.redirected) {
+            location.reload();
+        } else {
+            errorDiv.textContent = 'Failed to delete design. Please try again.';
+            errorDiv.classList.remove('hidden');
+            btn.disabled = false;
+            btn.textContent = 'Delete';
+        }
+    } catch (err) {
+        errorDiv.textContent = 'An error occurred. Please try again.';
+        errorDiv.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Delete';
+    }
+}
+
+// --- New Folder ---
+document.getElementById('folderForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const name = document.getElementById('folderName').value.trim();
+    const errorDiv = document.getElementById('folderError');
+    errorDiv.classList.add('hidden');
+
+    if (!name) return;
+
+    try {
+        const response = await fetch('{% url "signage:create_design_folder" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({ name })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            location.reload();
+        } else {
+            errorDiv.textContent = data.error || 'Failed to create folder.';
+            errorDiv.classList.remove('hidden');
+        }
+    } catch (err) {
+        errorDiv.textContent = 'An error occurred. Please try again.';
+        errorDiv.classList.remove('hidden');
+    }
+});
+</script>
 {% endblock %}
