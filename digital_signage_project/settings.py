@@ -150,6 +150,9 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = not DEBUG
 
+# Allow same-origin iframes (needed for design previews and Fire TV player)
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+
 # CSRF settings
 CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://localhost:8000').split(',')
 
