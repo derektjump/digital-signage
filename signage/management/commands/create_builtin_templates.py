@@ -450,6 +450,7 @@ STAFF_KPI_JS = r"""
     var employees = [];
     var currentIndex = 0;
     var rotationTimer = null;
+    var dataLoaded = false;
     var ROTATION_INTERVAL = 8000; // 8 seconds per employee
 
     // Wait for data to load
@@ -458,6 +459,7 @@ STAFF_KPI_JS = r"""
     });
 
     window.addEventListener('employeeDataLoaded', function(e) {
+        dataLoaded = true;
         var data = window.employeeData;
         if (data && data.employees && data.employees.length > 0) {
             employees = data.employees;
@@ -467,8 +469,24 @@ STAFF_KPI_JS = r"""
             });
             showEmployee(0);
             startRotation();
+        } else {
+            showNoData();
         }
     });
+
+    // Fallback: if no data after 10 seconds, show message
+    setTimeout(function() {
+        if (!dataLoaded) showNoData();
+    }, 10000);
+
+    function showNoData() {
+        var nameEl = document.getElementById('employeeName');
+        var subEl = document.getElementById('employeeSubtitle');
+        var badge = document.getElementById('rankBadge');
+        if (nameEl) nameEl.textContent = 'No Employee Data';
+        if (subEl) subEl.textContent = 'Employee data is not yet available. The ETL pipeline may still be setting up.';
+        if (badge) badge.style.display = 'none';
+    }
 
     function updateStoreInfo() {
         var sales = window.signageData;

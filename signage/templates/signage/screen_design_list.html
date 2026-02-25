@@ -90,10 +90,10 @@
         {% for design in designs %}
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
             <!-- Preview Area -->
-            <div class="h-40 bg-gray-900 border-b border-gray-100 relative overflow-hidden">
+            <div class="h-44 bg-gray-900 border-b border-gray-100 relative overflow-hidden">
                 <iframe src="{% url 'signage:screen_player' design.slug %}"
-                        class="absolute inset-0 w-full h-full border-0 pointer-events-none"
-                        style="transform: scale(0.25); transform-origin: top left; width: 400%; height: 400%;"
+                        class="absolute top-0 left-0 border-0 pointer-events-none"
+                        style="width: 1920px; height: 1080px; transform: scale(0.24); transform-origin: top left;"
                         loading="lazy" tabindex="-1" title="{{ design.name }} preview"></iframe>
             </div>
 
