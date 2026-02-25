@@ -15,6 +15,7 @@
             height: 100%;
             overflow: hidden;
             background: #000;
+            color: #fff;
         }
         #content {
             width: 100%;
@@ -41,14 +42,29 @@
                 const response = await fetch('/api/designs/' + DESIGN_SLUG + '/');
                 const data = await response.json();
 
-                // Inject CSS
-                if (data.css) {
-                    document.getElementById('user-css').textContent = data.css;
+                // Inject CSS (from css field + any <style> tags in HTML)
+                let cssText = data.css || '';
+                if (data.html) {
+                    const styleMatches = data.html.match(/<style[^>]*>([\s\S]*?)<\/style>/gi);
+                    if (styleMatches) {
+                        styleMatches.forEach(function(tag) {
+                            const inner = tag.replace(/<\/?style[^>]*>/gi, '');
+                            cssText += '\n' + inner;
+                        });
+                    }
+                }
+                if (cssText) {
+                    document.getElementById('user-css').textContent = cssText;
                 }
 
-                // Inject HTML
+                // Inject HTML (extract body content if it's a full HTML document)
                 if (data.html) {
-                    document.getElementById('content').innerHTML = data.html;
+                    let html = data.html;
+                    const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+                    if (bodyMatch) {
+                        html = bodyMatch[1];
+                    }
+                    document.getElementById('content').innerHTML = html;
                 }
 
                 // Execute user JS
