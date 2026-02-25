@@ -600,11 +600,24 @@ def _fetch_employee_data_from_db(store_id=None):
         return _get_empty_employee_data()
 
     try:
-        from .models import EmployeeSalesSummary
+        from .models import EmployeeSalesSummary, SalesBoardSummary
 
         qs = EmployeeSalesSummary.objects.using('data_connect')
+        filtered_store_name = None
+
         if store_id:
-            qs = qs.filter(store_id=store_id)
+            # store_id in this table = employee's HOME store, not transaction store.
+            # store_name = where the sale actually happened.
+            # Look up the store name from SalesBoardSummary to filter by transaction location.
+            try:
+                store_obj = SalesBoardSummary.objects.using('data_connect').filter(store_id=store_id).first()
+                if store_obj:
+                    filtered_store_name = store_obj.store_name
+                    qs = qs.filter(store_name=filtered_store_name)
+                else:
+                    qs = qs.filter(store_id=store_id)
+            except Exception:
+                qs = qs.filter(store_id=store_id)
 
         all_rows = list(qs.all())
 
@@ -612,16 +625,17 @@ def _fetch_employee_data_from_db(store_id=None):
             logger.warning(f"No employee data found (store_id={store_id})")
             return _get_empty_employee_data()
 
-        # Get unique stores from the data
+        # Get unique transaction stores from the data
         stores = {}
         for row in all_rows:
-            if row.store_id not in stores:
-                stores[row.store_id] = row.store_name
+            # Use store_name (transaction store) for the store list
+            sname = row.store_name
+            if sname and sname not in stores.values():
+                stores[row.store_id] = sname
 
-        # Employees may have multiple rows (one per store they sold at).
-        # store_id = employee's primary/home store
-        # store_name = store where transaction occurred
-        # Group by employee and aggregate metrics across all their stores.
+        # Group rows by employee.
+        # When filtered to a specific store: each employee has one row for that store.
+        # When "All": employees may have rows across multiple stores — aggregate them.
         emp_groups = {}
         for row in all_rows:
             key = row.employee_id or row.employee_name
@@ -629,7 +643,6 @@ def _fetch_employee_data_from_db(store_id=None):
                 emp_groups[key] = []
             emp_groups[key].append(row)
 
-        # Build per-employee data by aggregating across stores
         employee_list = []
         for key, rows in emp_groups.items():
             employee_list.append(_build_aggregated_employee_entry(rows))
@@ -651,6 +664,7 @@ def _fetch_employee_data_from_db(store_id=None):
                 'stores': [{'store_id': sid, 'store_name': sname} for sid, sname in sorted(stores.items(), key=lambda x: x[1])],
                 'last_updated': str(all_rows[0].last_updated) if all_rows and all_rows[0].last_updated else None,
                 'filtered_store_id': store_id,
+                'filtered_store_name': filtered_store_name,
             },
             'employees': employee_list,
             'rankings': {
@@ -708,30 +722,22 @@ def _fetch_employee_data_from_db(store_id=None):
 
 def _build_aggregated_employee_entry(rows):
     """
-    Build a single employee data entry by aggregating across multiple store rows.
+    Build a single employee data entry by aggregating across store rows.
 
-    Each employee may have sold at multiple stores. We sum the metrics across
-    all stores and use their primary store (store_id from the first row, which
-    is their assigned/home store) for display.
+    Single row (store-filtered): store_name is the transaction store.
+    Multiple rows (all stores): aggregate metrics, show home store name.
     """
-    # Primary row (used for identity fields — store_id is the employee's home store)
     primary = rows[0]
 
-    # Sum numeric fields across all stores
     def _sum(field):
         return sum(float(getattr(r, field) or 0) for r in rows)
 
     def _sum_int(field):
         return sum(int(getattr(r, field) or 0) for r in rows)
 
-    # Find the store_name that matches the employee's home store_id
-    home_store_name = primary.store_name
-    for r in rows:
-        if r.store_name and r.store_id == primary.store_id:
-            # Use the row where store_name matches their home store
-            # (highest MTD profit at home store for display name)
-            home_store_name = r.store_name
-            break
+    # For display: use the transaction store_name from the row
+    # (when filtered, this is the specific store; when aggregated, first row)
+    display_store_name = primary.store_name
 
     total_mtd_profit = _sum('mtd_profit')
     total_today_profit = _sum('today_profit')
@@ -750,7 +756,7 @@ def _build_aggregated_employee_entry(rows):
         'employee_name': primary.employee_name,
         'employee_username': primary.employee_username,
         'store_id': primary.store_id,
-        'store_name': home_store_name,
+        'store_name': display_store_name,
         'today': {
             'profit': _format_currency(total_today_profit),
             'profit_raw': total_today_profit,
@@ -804,6 +810,7 @@ def _get_empty_employee_data():
             'stores': [],
             'last_updated': None,
             'filtered_store_id': None,
+            'filtered_store_name': None,
         },
         'employees': [],
         'rankings': {
