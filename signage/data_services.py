@@ -606,22 +606,33 @@ def _fetch_employee_data_from_db(store_id=None):
         if store_id:
             qs = qs.filter(store_id=store_id)
 
-        employees = list(qs.all())
+        all_rows = list(qs.all())
 
-        if not employees:
+        if not all_rows:
             logger.warning(f"No employee data found (store_id={store_id})")
             return _get_empty_employee_data()
 
         # Get unique stores from the data
         stores = {}
-        for emp in employees:
-            if emp.store_id not in stores:
-                stores[emp.store_id] = emp.store_name
+        for row in all_rows:
+            if row.store_id not in stores:
+                stores[row.store_id] = row.store_name
 
-        # Build per-employee data
+        # Employees may have multiple rows (one per store they sold at).
+        # store_id = employee's primary/home store
+        # store_name = store where transaction occurred
+        # Group by employee and aggregate metrics across all their stores.
+        emp_groups = {}
+        for row in all_rows:
+            key = row.employee_id or row.employee_name
+            if key not in emp_groups:
+                emp_groups[key] = []
+            emp_groups[key].append(row)
+
+        # Build per-employee data by aggregating across stores
         employee_list = []
-        for emp in employees:
-            employee_list.append(_build_employee_entry(emp))
+        for key, rows in emp_groups.items():
+            employee_list.append(_build_aggregated_employee_entry(rows))
 
         # Sort by MTD profit for rankings
         by_mtd_profit = sorted(employee_list, key=lambda e: e['mtd']['profit_raw'], reverse=True)
@@ -635,10 +646,10 @@ def _fetch_employee_data_from_db(store_id=None):
 
         return {
             'meta': {
-                'employee_count': len(employees),
+                'employee_count': len(employee_list),
                 'store_count': len(stores),
                 'stores': [{'store_id': sid, 'store_name': sname} for sid, sname in sorted(stores.items(), key=lambda x: x[1])],
-                'last_updated': str(employees[0].last_updated) if employees and employees[0].last_updated else None,
+                'last_updated': str(all_rows[0].last_updated) if all_rows and all_rows[0].last_updated else None,
                 'filtered_store_id': store_id,
             },
             'employees': employee_list,
@@ -695,54 +706,91 @@ def _fetch_employee_data_from_db(store_id=None):
         return _get_empty_employee_data()
 
 
-def _build_employee_entry(emp):
-    """Build a single employee data entry."""
+def _build_aggregated_employee_entry(rows):
+    """
+    Build a single employee data entry by aggregating across multiple store rows.
+
+    Each employee may have sold at multiple stores. We sum the metrics across
+    all stores and use their primary store (store_id from the first row, which
+    is their assigned/home store) for display.
+    """
+    # Primary row (used for identity fields — store_id is the employee's home store)
+    primary = rows[0]
+
+    # Sum numeric fields across all stores
+    def _sum(field):
+        return sum(float(getattr(r, field) or 0) for r in rows)
+
+    def _sum_int(field):
+        return sum(int(getattr(r, field) or 0) for r in rows)
+
+    # Find the store_name that matches the employee's home store_id
+    home_store_name = primary.store_name
+    for r in rows:
+        if r.store_name and r.store_id == primary.store_id:
+            # Use the row where store_name matches their home store
+            # (highest MTD profit at home store for display name)
+            home_store_name = r.store_name
+            break
+
+    total_mtd_profit = _sum('mtd_profit')
+    total_today_profit = _sum('today_profit')
+
+    # Targets come from the employee (same across rows), use primary row
+    profit_target = float(primary.mtd_profit_target or 0)
+    device_target = float(primary.mtd_device_target or 0)
+
+    # Recalculate pct of target from aggregated values
+    profit_pct = (total_mtd_profit / profit_target * 100) if profit_target > 0 else 0.0
+    total_mtd_devices = _sum_int('mtd_devices_sold')
+    device_pct = (total_mtd_devices / device_target * 100) if device_target > 0 else 0.0
+
     return {
-        'employee_id': emp.employee_id,
-        'employee_name': emp.employee_name,
-        'employee_username': emp.employee_username,
-        'store_id': emp.store_id,
-        'store_name': emp.store_name,
+        'employee_id': primary.employee_id,
+        'employee_name': primary.employee_name,
+        'employee_username': primary.employee_username,
+        'store_id': primary.store_id,
+        'store_name': home_store_name,
         'today': {
-            'profit': _format_currency(emp.today_profit or 0),
-            'profit_raw': float(emp.today_profit or 0),
-            'invoiced': _format_currency(emp.today_invoiced or 0),
-            'invoiced_raw': float(emp.today_invoiced or 0),
-            'invoice_count': emp.today_invoice_count or 0,
-            'devices_sold': emp.today_devices_sold or 0,
-            'device_profit': _format_currency(emp.today_device_profit or 0),
-            'device_profit_raw': float(emp.today_device_profit or 0),
+            'profit': _format_currency(total_today_profit),
+            'profit_raw': total_today_profit,
+            'invoiced': _format_currency(_sum('today_invoiced')),
+            'invoiced_raw': _sum('today_invoiced'),
+            'invoice_count': _sum_int('today_invoice_count'),
+            'devices_sold': _sum_int('today_devices_sold'),
+            'device_profit': _format_currency(_sum('today_device_profit')),
+            'device_profit_raw': _sum('today_device_profit'),
         },
         'mtd': {
-            'profit': _format_currency(emp.mtd_profit or 0),
-            'profit_raw': float(emp.mtd_profit or 0),
-            'invoiced': _format_currency(emp.mtd_invoiced or 0),
-            'invoiced_raw': float(emp.mtd_invoiced or 0),
-            'invoice_count': emp.mtd_invoice_count or 0,
-            'devices_sold': emp.mtd_devices_sold or 0,
-            'device_profit': _format_currency(emp.mtd_device_profit or 0),
-            'device_profit_raw': float(emp.mtd_device_profit or 0),
+            'profit': _format_currency(total_mtd_profit),
+            'profit_raw': total_mtd_profit,
+            'invoiced': _format_currency(_sum('mtd_invoiced')),
+            'invoiced_raw': _sum('mtd_invoiced'),
+            'invoice_count': _sum_int('mtd_invoice_count'),
+            'devices_sold': total_mtd_devices,
+            'device_profit': _format_currency(_sum('mtd_device_profit')),
+            'device_profit_raw': _sum('mtd_device_profit'),
         },
         'targets': {
-            'profit_target': _format_currency(emp.mtd_profit_target or 0),
-            'profit_target_raw': float(emp.mtd_profit_target or 0),
-            'profit_pct_of_target': _format_percentage(emp.mtd_profit_pct_of_target),
-            'profit_pct_of_target_raw': float(emp.mtd_profit_pct_of_target or 0),
-            'device_target': float(emp.mtd_device_target or 0),
-            'device_pct_of_target': _format_percentage(emp.mtd_device_pct_of_target),
-            'device_pct_of_target_raw': float(emp.mtd_device_pct_of_target or 0),
-            'activations_target': float(emp.mtd_activations_target or 0),
-            'accessories_target': float(emp.mtd_accessories_target or 0),
-            'smart_return_target': float(emp.mtd_smart_return_target or 0),
+            'profit_target': _format_currency(profit_target),
+            'profit_target_raw': profit_target,
+            'profit_pct_of_target': _format_percentage(profit_pct),
+            'profit_pct_of_target_raw': profit_pct,
+            'device_target': device_target,
+            'device_pct_of_target': _format_percentage(device_pct),
+            'device_pct_of_target_raw': device_pct,
+            'activations_target': float(primary.mtd_activations_target or 0),
+            'accessories_target': float(primary.mtd_accessories_target or 0),
+            'smart_return_target': float(primary.mtd_smart_return_target or 0),
         },
         'prior_year': {
-            'profit': _format_currency(emp.ly_month_profit or 0),
-            'profit_raw': float(emp.ly_month_profit or 0),
-            'invoiced': _format_currency(emp.ly_month_invoiced or 0),
-            'invoiced_raw': float(emp.ly_month_invoiced or 0),
-            'devices_sold': emp.ly_month_devices_sold or 0,
-            'device_profit': _format_currency(emp.ly_month_device_profit or 0),
-            'device_profit_raw': float(emp.ly_month_device_profit or 0),
+            'profit': _format_currency(_sum('ly_month_profit')),
+            'profit_raw': _sum('ly_month_profit'),
+            'invoiced': _format_currency(_sum('ly_month_invoiced')),
+            'invoiced_raw': _sum('ly_month_invoiced'),
+            'devices_sold': _sum_int('ly_month_devices_sold'),
+            'device_profit': _format_currency(_sum('ly_month_device_profit')),
+            'device_profit_raw': _sum('ly_month_device_profit'),
         },
     }
 

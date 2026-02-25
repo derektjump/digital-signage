@@ -1428,8 +1428,10 @@ class EmployeeSalesSummary(models.Model):
     DO NOT create migrations for this model - it's managed externally.
     """
 
-    id = models.AutoField(primary_key=True)
-    store_id = models.IntegerField()
+    # No auto-generated id column — the ETL table has no single-column PK.
+    # We use store_id as a dummy PK for Django's ORM. For read-only iteration
+    # via list(qs.all()), this works fine even though store_id is not unique.
+    store_id = models.IntegerField(primary_key=True)
     store_name = models.CharField(max_length=200)
     employee_id = models.IntegerField(null=True)
     employee_name = models.CharField(max_length=200)
