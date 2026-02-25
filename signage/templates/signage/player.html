@@ -36,12 +36,19 @@
         // Global signage data API
         window.signageData = null;
         window.employeeData = null;
+        window.designConfig = null;
 
         // Load design HTML/CSS/JS from API
         async function loadDesign() {
             try {
                 const response = await fetch('/api/designs/' + DESIGN_SLUG + '/');
                 const data = await response.json();
+
+                // Store design config (store filter, date filter)
+                window.designConfig = {
+                    store_filter_id: data.store_filter_id || null,
+                    date_filter_mode: data.date_filter_mode || 'current',
+                };
 
                 // Inject CSS (from css field + any <style> tags in HTML)
                 let cssText = data.css || '';
@@ -89,7 +96,12 @@
         // Fetch all data (sales + employees) from API
         async function fetchSalesData() {
             try {
-                const response = await fetch('/api/data/all/');
+                // Build URL with store filter if configured on the design
+                let url = '/api/data/all/';
+                if (window.designConfig && window.designConfig.store_filter_id) {
+                    url += '?store_id=' + window.designConfig.store_filter_id;
+                }
+                const response = await fetch(url);
                 const data = await response.json();
                 if (data.success) {
                     window.signageData = data.sales;

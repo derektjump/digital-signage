@@ -1202,6 +1202,8 @@ def screen_design_api(request, slug):
         'html': design.html_code,
         'css': design.css_code,
         'js': design.js_code,
+        'store_filter_id': design.store_filter_id,
+        'date_filter_mode': design.date_filter_mode,
     })
 
 

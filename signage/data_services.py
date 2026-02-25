@@ -21,12 +21,18 @@ DEFAULT_CACHE_TIMEOUT = 300  # 5 minutes
 # STORE SALES DATA (sales_board_summary)
 # =============================================================================
 
-def get_sales_data():
+def get_sales_data(store_id=None):
     """
     Fetch all sales data from the sales_board_summary table.
     Returns a comprehensive data structure for use in templates.
 
+    When store_id is provided, all stores are still included in rankings
+    but a 'store' key is added with just that store's data for easy access.
+
     Data is cached for 5 minutes (configurable).
+
+    Args:
+        store_id: Optional store ID to highlight a specific store
 
     Returns:
         dict: Structured sales data with totals, rankings, and top performers
@@ -34,18 +40,20 @@ def get_sales_data():
     cache_key = f'{CACHE_PREFIX}:sales_all'
     cached_data = cache.get(cache_key)
 
-    if cached_data is not None:
-        logger.debug("Returning cached sales data")
-        return cached_data
+    if cached_data is None:
+        try:
+            cached_data = _fetch_sales_data_from_db()
+            cache.set(cache_key, cached_data, DEFAULT_CACHE_TIMEOUT)
+            logger.info("Sales data fetched and cached")
+        except Exception as e:
+            logger.error(f"Error fetching sales data: {e}")
+            cached_data = _get_empty_sales_data()
 
-    try:
-        data = _fetch_sales_data_from_db()
-        cache.set(cache_key, data, DEFAULT_CACHE_TIMEOUT)
-        logger.info("Sales data fetched and cached")
-        return data
-    except Exception as e:
-        logger.error(f"Error fetching sales data: {e}")
-        return _get_empty_sales_data()
+    # If store_id filter is set, add a 'store' key with that store's data
+    if store_id and cached_data:
+        cached_data = _add_store_filter(cached_data, store_id)
+
+    return cached_data
 
 
 def _fetch_sales_data_from_db():
@@ -263,6 +271,70 @@ def _get_empty_prior_year():
         'all_profit': [],
         'top5_profit': [],
     }
+
+
+def _add_store_filter(data, store_id):
+    """
+    Add a 'store' key to the data with just the filtered store's metrics.
+    Rankings still contain all stores so you can see position.
+    The 'store' key gives quick access to the specific store's numbers.
+    """
+    import copy
+    result = copy.deepcopy(data)
+
+    # Find this store in the all_profit rankings for each period
+    store_data = {
+        'store_id': store_id,
+        'store_name': None,
+    }
+
+    for period in ['today', 'wtd', 'mtd']:
+        period_data = result.get(period, {})
+        store_entry = None
+        for entry in period_data.get('all_profit', []):
+            if entry.get('store_id') == store_id:
+                store_entry = entry
+                if not store_data['store_name']:
+                    store_data['store_name'] = entry.get('store_name')
+                break
+
+        if store_entry:
+            store_data[period] = {
+                'profit': store_entry.get('value', '$0'),
+                'profit_raw': store_entry.get('value_raw', 0),
+                'rank': store_entry.get('rank', 0),
+            }
+            # For MTD, include LY and target fields
+            if period == 'mtd':
+                store_data[period]['ly_month_profit'] = store_entry.get('ly_month_profit', '$0')
+                store_data[period]['ly_month_profit_raw'] = store_entry.get('ly_month_profit_raw', 0)
+                store_data[period]['profit_target'] = store_entry.get('profit_target', '$0')
+                store_data[period]['profit_target_raw'] = store_entry.get('profit_target_raw', 0)
+                store_data[period]['profit_pct_of_target'] = store_entry.get('profit_pct_of_target', '0%')
+                store_data[period]['profit_pct_of_target_raw'] = store_entry.get('profit_pct_of_target_raw', 0)
+        else:
+            store_data[period] = {
+                'profit': '$0', 'profit_raw': 0, 'rank': 0,
+            }
+
+    # Prior year for this store
+    prior_year = result.get('prior_year', {})
+    ly_entry = None
+    for entry in prior_year.get('all_profit', []):
+        if entry.get('store_id') == store_id:
+            ly_entry = entry
+            break
+    if ly_entry:
+        store_data['prior_year'] = {
+            'profit': ly_entry.get('value', '$0'),
+            'profit_raw': ly_entry.get('value_raw', 0),
+        }
+    else:
+        store_data['prior_year'] = {'profit': '$0', 'profit_raw': 0}
+
+    result['store'] = store_data
+    result['meta']['filtered_store_id'] = store_id
+    return result
 
 
 def _calculate_company_pct_of_target(stores, has_target_columns):
@@ -720,8 +792,8 @@ def get_all_data(store_id=None):
         dict: Combined data with 'sales' and 'employees' keys
     """
     return {
-        'sales': get_sales_data(),
-        'employees': get_employee_data(store_id),
+        'sales': get_sales_data(store_id=store_id),
+        'employees': get_employee_data(store_id=store_id),
     }
 
 
