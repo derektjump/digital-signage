@@ -20,7 +20,6 @@
         #content {
             width: 100%;
             height: 100%;
-            transform-origin: top left;
         }
     </style>
     <style id="user-css"></style>
@@ -175,7 +174,7 @@
             });
         }
 
-        // Auto-scale fixed-size content to fit viewport
+        // Auto-scale fixed-size content to fit viewport, centered
         function autoScale() {
             const content = document.getElementById('content');
             if (!content || !content.firstElementChild) return;
@@ -188,7 +187,11 @@
                 const scaleX = window.innerWidth / cw;
                 const scaleY = window.innerHeight / ch;
                 const scale = Math.min(scaleX, scaleY);
-                content.style.transform = 'scale(' + scale + ')';
+                // Center the scaled content in the viewport
+                const offsetX = (window.innerWidth - cw * scale) / 2;
+                const offsetY = (window.innerHeight - ch * scale) / 2;
+                content.style.transformOrigin = 'top left';
+                content.style.transform = 'translate(' + offsetX + 'px, ' + offsetY + 'px) scale(' + scale + ')';
                 content.style.width = cw + 'px';
                 content.style.height = ch + 'px';
             }

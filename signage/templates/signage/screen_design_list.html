@@ -92,8 +92,8 @@
             <!-- Preview Area -->
             <div class="h-44 bg-gray-900 border-b border-gray-100 relative overflow-hidden">
                 <iframe src="{% url 'signage:screen_player' design.slug %}"
-                        class="absolute top-0 left-0 border-0 pointer-events-none"
-                        style="width: 1920px; height: 1080px; transform: scale(0.24); transform-origin: top left;"
+                        class="absolute border-0 pointer-events-none"
+                        style="width: 1920px; height: 1080px; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.16); transform-origin: center center;"
                         loading="lazy" tabindex="-1" title="{{ design.name }} preview"></iframe>
             </div>
 
