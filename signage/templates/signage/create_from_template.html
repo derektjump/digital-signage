@@ -66,14 +66,14 @@
                     <div class="space-y-3">
                         <div>
                             <select name="store_filter_id" id="store_filter_id"
-                                    class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-300"
+                                    class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-300"
                                     onchange="updateAutoName()">
                                 <option value="">All Stores (Company-wide)</option>
                                 {% for store in available_stores %}
                                 <option value="{{ store.store_id }}">{{ store.store_name }}</option>
                                 {% endfor %}
                             </select>
-                            <p class="text-xs text-gray-400 mt-1.5">
+                            <p class="text-xs text-gray-500 mt-1.5">
                                 {% if template.template_type == 'kpi_dashboard' %}
                                 Filters employee data to this store only
                                 {% else %}
@@ -83,9 +83,9 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-medium text-gray-500 mb-1">Date Mode</label>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Date Mode</label>
                             <select name="date_filter_mode" id="date_filter_mode"
-                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300">
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-300">
                                 <option value="current">Current Period</option>
                                 <option value="yesterday">Yesterday</option>
                                 <option value="last_week">Last Week</option>
@@ -105,14 +105,14 @@
                         <div>
                             <input type="text" id="name" name="name" required
                                    placeholder="{{ template.name }}"
-                                   class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-300">
-                            <p class="text-xs text-gray-400 mt-1">Leave blank to auto-generate from template + store</p>
+                                   class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-300">
+                            <p class="text-xs text-gray-500 mt-1">Leave blank to auto-generate from template + store</p>
                         </div>
 
                         <div>
-                            <label class="block text-xs font-medium text-gray-500 mb-1">Folder</label>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Folder</label>
                             <select id="folder" name="folder"
-                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300">
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-300">
                                 <option value="">No Folder</option>
                                 {% for folder in design_folders %}
                                 <option value="{{ folder.id }}">{{ folder.name }}</option>
@@ -121,10 +121,10 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-medium text-gray-500 mb-1">Description</label>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Description</label>
                             <textarea id="description" name="description" rows="2"
                                       placeholder="Optional..."
-                                      class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"></textarea>
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"></textarea>
                         </div>
                     </div>
                 </div>
@@ -141,7 +141,7 @@
                     <div class="px-5 pb-5 pt-0 border-t border-gray-100">
                         <div class="grid grid-cols-2 gap-3 mt-4">
                             <div>
-                                <label class="block text-xs font-medium text-gray-500 mb-1">Primary</label>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Primary</label>
                                 <div class="flex items-center gap-2">
                                     <input type="color" name="primary_color"
                                            value="{{ template.branding_config.primary_color|default:'#00aa90' }}"
@@ -150,7 +150,7 @@
                                 </div>
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-gray-500 mb-1">Accent</label>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Accent</label>
                                 <div class="flex items-center gap-2">
                                     <input type="color" name="accent_color"
                                            value="{{ template.branding_config.accent_color|default:'#c850c0' }}"
@@ -159,7 +159,7 @@
                                 </div>
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-gray-500 mb-1">Background</label>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Background</label>
                                 <div class="flex items-center gap-2">
                                     <input type="color" name="background_color"
                                            value="{{ template.branding_config.background_color|default:'#003d36' }}"
@@ -168,7 +168,7 @@
                                 </div>
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-gray-500 mb-1">Text</label>
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Text</label>
                                 <div class="flex items-center gap-2">
                                     <input type="color" name="text_color"
                                            value="{{ template.branding_config.text_color|default:'#ffffff' }}"
