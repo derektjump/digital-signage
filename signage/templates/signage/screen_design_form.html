@@ -87,11 +87,6 @@
         </div>
         <div class="mt-4 md:mt-0 flex items-center gap-3">
             {% if not is_new %}
-            <a href="{% url 'signage:visual_builder_update' object.slug %}"
-               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-purple-200 text-purple-700 hover:bg-purple-50 transition-colors">
-                <span class="material-symbols-outlined" style="font-size: 1.2rem;">dashboard_customize</span>
-                Visual Builder
-            </a>
             <a href="{% url 'signage:save_as_template' object.slug %}"
                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
                 <span class="material-symbols-outlined" style="font-size: 1.2rem;">bookmark_add</span>
@@ -101,12 +96,6 @@
                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
                 <span class="material-symbols-outlined" style="font-size: 1.2rem;">visibility</span>
                 Preview
-            </a>
-            {% else %}
-            <a href="{% url 'signage:visual_builder_create' %}"
-               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-purple-200 text-purple-700 hover:bg-purple-50 transition-colors">
-                <span class="material-symbols-outlined" style="font-size: 1.2rem;">dashboard_customize</span>
-                Visual Builder
             </a>
             {% endif %}
             <a href="{% url 'signage:screen_design_list' %}"
