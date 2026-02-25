@@ -20,19 +20,54 @@
             width: 100%;
             height: 100%;
         }
-        /* User CSS will be injected here */
-        {{ design.css_code|safe }}
     </style>
+    <style id="user-css"></style>
 </head>
 <body>
-    <div id="content">
-        <!-- Design HTML content - using autoescape off to prevent Django from escaping user template syntax -->
-        {% autoescape off %}{{ design.html_code }}{% endautoescape %}
-    </div>
+    <div id="content"></div>
 
+    <script>
+        var DESIGN_SLUG = "{{ design.slug }}";
+    </script>
+
+    {% verbatim %}
     <script>
         // Global signage data API
         window.signageData = null;
+
+        // Load design HTML/CSS/JS from API
+        async function loadDesign() {
+            try {
+                const response = await fetch('/api/designs/' + DESIGN_SLUG + '/');
+                const data = await response.json();
+
+                // Inject CSS
+                if (data.css) {
+                    document.getElementById('user-css').textContent = data.css;
+                }
+
+                // Inject HTML
+                if (data.html) {
+                    document.getElementById('content').innerHTML = data.html;
+                }
+
+                // Execute user JS
+                if (data.js) {
+                    try {
+                        const script = document.createElement('script');
+                        script.textContent = data.js;
+                        document.body.appendChild(script);
+                    } catch (e) {
+                        console.error('Error in design JavaScript:', e);
+                    }
+                }
+
+                // Fetch data after design is loaded
+                fetchSalesData();
+            } catch (error) {
+                console.error('Error loading design:', error);
+            }
+        }
 
         // Fetch sales data from API
         async function fetchSalesData() {
@@ -67,7 +102,6 @@
 
             // Replace {{variable}} patterns
             html = html.replace(/\{\{(\w+(?:\.\w+)*)\}\}/g, (match, path) => {
-                // Check if it's a sales data variable
                 if (path.startsWith('sales.')) {
                     return getNestedValue(window.signageData, path.replace('sales.', ''));
                 }
@@ -95,29 +129,19 @@
 
                 return array.map((item, index) => {
                     let itemHtml = template;
-                    // Replace {{this.property}} with item values
                     itemHtml = itemHtml.replace(/\{\{this\.(\w+)\}\}/g, (m, prop) => {
                         return item[prop] !== undefined ? item[prop] : '';
                     });
-                    // Replace {{@index}} with the current index
                     itemHtml = itemHtml.replace(/\{\{@index\}\}/g, index);
                     return itemHtml;
                 }).join('');
             });
         }
 
-        // Initial data fetch
-        fetchSalesData();
-
-        // Refresh data every 5 minutes
+        // Load design then start data refresh cycle
+        loadDesign();
         setInterval(fetchSalesData, 5 * 60 * 1000);
-
-        // Execute user JavaScript
-        try {
-            {{ design.js_code|safe }}
-        } catch (e) {
-            console.error('Error in design JavaScript:', e);
-        }
     </script>
+    {% endverbatim %}
 </body>
 </html>
