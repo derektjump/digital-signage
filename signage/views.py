@@ -404,10 +404,24 @@ def create_from_template(request, slug):
     """
     template = get_object_or_404(ScreenTemplate, slug=slug, is_active=True)
 
+    # Get available stores for the filter dropdown
+    available_stores = []
+    try:
+        from .models import SalesBoardSummary
+        available_stores = list(
+            SalesBoardSummary.objects.using('data_connect')
+            .values('store_id', 'store_name')
+            .distinct().order_by('store_name')
+        )
+    except Exception:
+        pass
+
     if request.method == 'POST':
         name = request.POST.get('name', '').strip()
         description = request.POST.get('description', '').strip()
         folder_id = request.POST.get('folder', '').strip()
+        store_filter_id = request.POST.get('store_filter_id', '').strip()
+        date_filter_mode = request.POST.get('date_filter_mode', 'current').strip()
 
         if not name:
             messages.error(request, 'Design name is required.')
@@ -457,7 +471,7 @@ def create_from_template(request, slug):
             except DesignFolder.DoesNotExist:
                 pass
 
-        # Create new design
+        # Create new design with store filter
         design = ScreenDesign.objects.create(
             name=name,
             slug=design_slug,
@@ -466,6 +480,8 @@ def create_from_template(request, slug):
             css_code=css_code,
             js_code=template.js_code,
             folder=folder,
+            store_filter_id=int(store_filter_id) if store_filter_id else None,
+            date_filter_mode=date_filter_mode,
         )
 
         # Increment template usage count
@@ -478,6 +494,7 @@ def create_from_template(request, slug):
     context = {
         'template': template,
         'design_folders': DesignFolder.objects.all().order_by('name'),
+        'available_stores': available_stores,
     }
     return render(request, 'signage/create_from_template.html', context)
 

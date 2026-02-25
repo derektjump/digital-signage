@@ -1,35 +1,49 @@
 {% extends 'signage/base.html' %}
 
-{% block title %}Create from Template | {{ app_name }}{% endblock %}
+{% block title %}{{ template.name }} | Create Design{% endblock %}
 
 {% block content %}
-<div class="p-6 md:p-8">
+<div class="p-6 md:p-8 max-w-5xl mx-auto">
     <!-- Header -->
-    <div class="mb-8">
-        <a href="{% url 'signage:template_gallery' %}" class="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700 mb-4">
-            <span class="material-symbols-outlined" style="font-size: 1.2rem;">arrow_back</span>
-            Back to Templates
+    <div class="mb-6">
+        <a href="{% url 'signage:template_gallery' %}" class="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700 mb-3 text-sm">
+            <span class="material-symbols-outlined" style="font-size: 1.1rem;">arrow_back</span>
+            Templates
         </a>
-        <h1 class="text-2xl font-semibold text-gray-900" style="font-family: 'Oxanium', sans-serif;">Create from Template</h1>
-        <p class="text-gray-500 mt-1">Customize and create a new design from "{{ template.name }}"</p>
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style="background: linear-gradient(135deg, #003d36, #1a1a2e);">
+                <span class="material-symbols-outlined text-white" style="font-size: 1.4rem;">
+                    {% if template.template_type == 'leaderboard' %}leaderboard
+                    {% elif template.template_type == 'kpi_dashboard' %}dashboard
+                    {% elif template.template_type == 'announcement' %}campaign
+                    {% else %}web{% endif %}
+                </span>
+            </div>
+            <div>
+                <h1 class="text-xl font-semibold text-gray-900" style="font-family: 'Oxanium', sans-serif;">{{ template.name }}</h1>
+                {% if template.description %}
+                <p class="text-sm text-gray-500 mt-0.5">{{ template.description }}</p>
+                {% endif %}
+            </div>
+        </div>
     </div>
 
     <form method="post" id="createForm">
         {% csrf_token %}
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Preview Panel -->
-            <div class="space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            <!-- Left: Preview (3 cols) -->
+            <div class="lg:col-span-3 space-y-4">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                        <h2 class="text-lg font-medium text-gray-900">Live Preview</h2>
+                    <div class="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+                        <span class="text-sm font-medium text-gray-700">Preview</span>
                         <a href="{% url 'signage:template_preview' template.slug %}" target="_blank"
-                           class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
-                            <span class="material-symbols-outlined" style="font-size: 1rem;">open_in_new</span>
+                           class="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1">
+                            <span class="material-symbols-outlined" style="font-size: 0.9rem;">open_in_new</span>
                             Full Screen
                         </a>
                     </div>
-                    <div class="relative" style="padding-top: 56.25%;">
+                    <div class="relative bg-gray-950" style="padding-top: 56.25%;">
                         <iframe id="previewFrame"
                                 src="{% url 'signage:template_preview' template.slug %}"
                                 data-base-url="{% url 'signage:template_preview' template.slug %}"
@@ -37,185 +51,145 @@
                                 loading="lazy"></iframe>
                     </div>
                 </div>
+            </div>
 
-                <!-- Template Info -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <div class="flex items-start gap-4">
-                        <div class="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style="background: rgba(10, 10, 12, 0.05);">
-                            <span class="material-symbols-outlined text-gray-400">
-                                {% if template.template_type == 'leaderboard' %}leaderboard
-                                {% elif template.template_type == 'kpi_dashboard' %}dashboard
-                                {% elif template.template_type == 'announcement' %}campaign
-                                {% else %}web{% endif %}
-                            </span>
-                        </div>
+            <!-- Right: Configuration (2 cols) -->
+            <div class="lg:col-span-2 space-y-4">
+
+                <!-- Step 1: Store Selection (primary) -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-bold flex items-center justify-center">1</div>
+                        <h2 class="text-base font-semibold text-gray-900">Select Store</h2>
+                    </div>
+
+                    <div class="space-y-3">
                         <div>
-                            <h3 class="font-medium text-gray-900">{{ template.name }}</h3>
-                            <span class="inline-block px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600 mt-1">
-                                {{ template.get_template_type_display }}
-                            </span>
-                            {% if template.description %}
-                            <p class="text-sm text-gray-500 mt-2">{{ template.description }}</p>
-                            {% endif %}
+                            <select name="store_filter_id" id="store_filter_id"
+                                    class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-300"
+                                    onchange="updateAutoName()">
+                                <option value="">All Stores (Company-wide)</option>
+                                {% for store in available_stores %}
+                                <option value="{{ store.store_id }}">{{ store.store_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <p class="text-xs text-gray-400 mt-1.5">
+                                {% if template.template_type == 'kpi_dashboard' %}
+                                Filters employee data to this store only
+                                {% else %}
+                                Highlights this store's data in rankings
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Date Mode</label>
+                            <select name="date_filter_mode" id="date_filter_mode"
+                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300">
+                                <option value="current">Current Period</option>
+                                <option value="yesterday">Yesterday</option>
+                                <option value="last_week">Last Week</option>
+                            </select>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Configuration Panel -->
-            <div class="space-y-6">
-                <!-- Design Details -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <h2 class="text-lg font-medium text-gray-900 mb-4">New Design Details</h2>
+                <!-- Step 2: Name & Folder -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-bold flex items-center justify-center">2</div>
+                        <h2 class="text-base font-semibold text-gray-900">Name Your Design</h2>
+                    </div>
 
-                    <div class="space-y-4">
+                    <div class="space-y-3">
                         <div>
-                            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Design Name *</label>
                             <input type="text" id="name" name="name" required
-                                   placeholder="My New Design"
-                                   class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-200">
+                                   placeholder="{{ template.name }}"
+                                   class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-300">
+                            <p class="text-xs text-gray-400 mt-1">Leave blank to auto-generate from template + store</p>
                         </div>
 
                         <div>
-                            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                            <textarea id="description" name="description" rows="2"
-                                      placeholder="Optional description..."
-                                      class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-200"></textarea>
-                        </div>
-
-                        <div>
-                            <label for="folder" class="block text-sm font-medium text-gray-700 mb-1">Folder</label>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Folder</label>
                             <select id="folder" name="folder"
-                                    class="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-200">
+                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300">
                                 <option value="">No Folder</option>
                                 {% for folder in design_folders %}
                                 <option value="{{ folder.id }}">{{ folder.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
-                    </div>
-                </div>
 
-                <!-- Branding Customization -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-lg font-medium text-gray-900">Customize Branding</h2>
-                        <button type="button" id="resetBranding" class="text-xs text-gray-500 hover:text-gray-700">
-                            Reset to Defaults
-                        </button>
-                    </div>
-                    <p class="text-sm text-gray-500 mb-4">Adjust colors and fonts. Changes update the preview in real-time.</p>
-
-                    <div class="space-y-4">
-                        <!-- Colors -->
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label for="primary_color" class="block text-sm font-medium text-gray-700 mb-1">Primary</label>
-                                <div class="flex items-center gap-2">
-                                    <input type="color" id="primary_color" name="primary_color"
-                                           value="{{ template.branding_config.primary_color|default:'#6434f8' }}"
-                                           data-default="{{ template.branding_config.primary_color|default:'#6434f8' }}"
-                                           class="w-10 h-10 rounded border border-gray-200 cursor-pointer branding-input">
-                                    <input type="text" id="primary_color_text"
-                                           value="{{ template.branding_config.primary_color|default:'#6434f8' }}"
-                                           class="flex-1 px-2 py-1 border border-gray-200 rounded text-xs font-mono">
-                                </div>
-                            </div>
-
-                            <div>
-                                <label for="secondary_color" class="block text-sm font-medium text-gray-700 mb-1">Secondary</label>
-                                <div class="flex items-center gap-2">
-                                    <input type="color" id="secondary_color" name="secondary_color"
-                                           value="{{ template.branding_config.secondary_color|default:'#00f0ff' }}"
-                                           data-default="{{ template.branding_config.secondary_color|default:'#00f0ff' }}"
-                                           class="w-10 h-10 rounded border border-gray-200 cursor-pointer branding-input">
-                                    <input type="text" id="secondary_color_text"
-                                           value="{{ template.branding_config.secondary_color|default:'#00f0ff' }}"
-                                           class="flex-1 px-2 py-1 border border-gray-200 rounded text-xs font-mono">
-                                </div>
-                            </div>
-
-                            <div>
-                                <label for="accent_color" class="block text-sm font-medium text-gray-700 mb-1">Accent</label>
-                                <div class="flex items-center gap-2">
-                                    <input type="color" id="accent_color" name="accent_color"
-                                           value="{{ template.branding_config.accent_color|default:'#ff5959' }}"
-                                           data-default="{{ template.branding_config.accent_color|default:'#ff5959' }}"
-                                           class="w-10 h-10 rounded border border-gray-200 cursor-pointer branding-input">
-                                    <input type="text" id="accent_color_text"
-                                           value="{{ template.branding_config.accent_color|default:'#ff5959' }}"
-                                           class="flex-1 px-2 py-1 border border-gray-200 rounded text-xs font-mono">
-                                </div>
-                            </div>
-
-                            <div>
-                                <label for="background_color" class="block text-sm font-medium text-gray-700 mb-1">Background</label>
-                                <div class="flex items-center gap-2">
-                                    <input type="color" id="background_color" name="background_color"
-                                           value="{{ template.branding_config.background_color|default:'#0a0a0f' }}"
-                                           data-default="{{ template.branding_config.background_color|default:'#0a0a0f' }}"
-                                           class="w-10 h-10 rounded border border-gray-200 cursor-pointer branding-input">
-                                    <input type="text" id="background_color_text"
-                                           value="{{ template.branding_config.background_color|default:'#0a0a0f' }}"
-                                           class="flex-1 px-2 py-1 border border-gray-200 rounded text-xs font-mono">
-                                </div>
-                            </div>
-
-                            <div>
-                                <label for="text_color" class="block text-sm font-medium text-gray-700 mb-1">Text</label>
-                                <div class="flex items-center gap-2">
-                                    <input type="color" id="text_color" name="text_color"
-                                           value="{{ template.branding_config.text_color|default:'#ffffff' }}"
-                                           data-default="{{ template.branding_config.text_color|default:'#ffffff' }}"
-                                           class="w-10 h-10 rounded border border-gray-200 cursor-pointer branding-input">
-                                    <input type="text" id="text_color_text"
-                                           value="{{ template.branding_config.text_color|default:'#ffffff' }}"
-                                           class="flex-1 px-2 py-1 border border-gray-200 rounded text-xs font-mono">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Fonts -->
-                        <div class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
-                            <div>
-                                <label for="heading_font" class="block text-sm font-medium text-gray-700 mb-1">Heading Font</label>
-                                <select id="heading_font" name="heading_font"
-                                        data-default="{{ template.branding_config.heading_font|default:'' }}"
-                                        class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm branding-input">
-                                    <option value="">Default</option>
-                                    <option value="Suisse Intl, Inter, sans-serif" {% if template.branding_config.heading_font == 'Suisse Intl, Inter, sans-serif' %}selected{% endif %}>Suisse Intl</option>
-                                    <option value="Roboto, sans-serif" {% if template.branding_config.heading_font == 'Roboto, sans-serif' %}selected{% endif %}>Roboto</option>
-                                    <option value="Open Sans, sans-serif" {% if template.branding_config.heading_font == 'Open Sans, sans-serif' %}selected{% endif %}>Open Sans</option>
-                                    <option value="Montserrat, sans-serif" {% if template.branding_config.heading_font == 'Montserrat, sans-serif' %}selected{% endif %}>Montserrat</option>
-                                    <option value="Oxanium, sans-serif" {% if template.branding_config.heading_font == 'Oxanium, sans-serif' %}selected{% endif %}>Oxanium</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label for="body_font" class="block text-sm font-medium text-gray-700 mb-1">Body Font</label>
-                                <select id="body_font" name="body_font"
-                                        data-default="{{ template.branding_config.body_font|default:'' }}"
-                                        class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm branding-input">
-                                    <option value="">Default</option>
-                                    <option value="Suisse Intl Mono, Roboto Mono, monospace" {% if template.branding_config.body_font == 'Suisse Intl Mono, Roboto Mono, monospace' %}selected{% endif %}>Suisse Intl Mono</option>
-                                    <option value="Roboto Mono, monospace" {% if template.branding_config.body_font == 'Roboto Mono, monospace' %}selected{% endif %}>Roboto Mono</option>
-                                    <option value="Source Code Pro, monospace" {% if template.branding_config.body_font == 'Source Code Pro, monospace' %}selected{% endif %}>Source Code Pro</option>
-                                    <option value="Inter, sans-serif" {% if template.branding_config.body_font == 'Inter, sans-serif' %}selected{% endif %}>Inter</option>
-                                </select>
-                            </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Description</label>
+                            <textarea id="description" name="description" rows="2"
+                                      placeholder="Optional..."
+                                      class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"></textarea>
                         </div>
                     </div>
                 </div>
 
-                <!-- Actions -->
-                <div class="flex items-center gap-4">
+                <!-- Branding (collapsed by default) -->
+                <details class="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <summary class="p-5 cursor-pointer select-none flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-gray-400" style="font-size: 1.2rem;">palette</span>
+                            <span class="text-sm font-medium text-gray-700">Customize Colors</span>
+                        </div>
+                        <span class="material-symbols-outlined text-gray-400 transition-transform" style="font-size: 1.2rem;">expand_more</span>
+                    </summary>
+                    <div class="px-5 pb-5 pt-0 border-t border-gray-100">
+                        <div class="grid grid-cols-2 gap-3 mt-4">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Primary</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" name="primary_color"
+                                           value="{{ template.branding_config.primary_color|default:'#00aa90' }}"
+                                           class="w-8 h-8 rounded border border-gray-200 cursor-pointer">
+                                    <span class="text-xs font-mono text-gray-400">{{ template.branding_config.primary_color|default:'#00aa90' }}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Accent</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" name="accent_color"
+                                           value="{{ template.branding_config.accent_color|default:'#c850c0' }}"
+                                           class="w-8 h-8 rounded border border-gray-200 cursor-pointer">
+                                    <span class="text-xs font-mono text-gray-400">{{ template.branding_config.accent_color|default:'#c850c0' }}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Background</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" name="background_color"
+                                           value="{{ template.branding_config.background_color|default:'#003d36' }}"
+                                           class="w-8 h-8 rounded border border-gray-200 cursor-pointer">
+                                    <span class="text-xs font-mono text-gray-400">{{ template.branding_config.background_color|default:'#003d36' }}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Text</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" name="text_color"
+                                           value="{{ template.branding_config.text_color|default:'#ffffff' }}"
+                                           class="w-8 h-8 rounded border border-gray-200 cursor-pointer">
+                                    <span class="text-xs font-mono text-gray-400">{{ template.branding_config.text_color|default:'#ffffff' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <!-- Create Button -->
+                <div class="flex items-center gap-3">
                     <a href="{% url 'signage:template_gallery' %}"
-                       class="px-6 py-3 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
+                       class="px-5 py-3 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm transition-colors">
                         Cancel
                     </a>
                     <button type="submit"
-                            class="flex-1 px-6 py-3 rounded-lg text-white font-medium transition-colors"
+                            class="flex-1 px-5 py-3 rounded-lg text-white font-medium text-sm transition-colors flex items-center justify-center gap-2"
                             style="background: #0a0a0c;">
+                        <span class="material-symbols-outlined" style="font-size: 1.1rem;">add</span>
                         Create Design
                     </button>
                 </div>
@@ -225,83 +199,39 @@
 </div>
 
 <script>
-    // Debounce function
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
+    var templateName = "{{ template.name|escapejs }}";
 
-    // Update preview iframe with branding params
-    function updatePreview() {
-        const iframe = document.getElementById('previewFrame');
-        const baseUrl = iframe.dataset.baseUrl;
-        const params = new URLSearchParams();
+    // Auto-generate name when store changes
+    function updateAutoName() {
+        var nameInput = document.getElementById('name');
+        // Only auto-fill if user hasn't typed a custom name
+        if (nameInput.dataset.userEdited === 'true') return;
 
-        // Color inputs
-        ['primary_color', 'secondary_color', 'accent_color', 'background_color', 'text_color'].forEach(key => {
-            const input = document.getElementById(key);
-            if (input && input.value) {
-                params.append(key, input.value);
-            }
-        });
+        var storeSelect = document.getElementById('store_filter_id');
+        var storeName = storeSelect.options[storeSelect.selectedIndex].text;
 
-        // Font selects
-        ['heading_font', 'body_font'].forEach(key => {
-            const select = document.getElementById(key);
-            if (select && select.value) {
-                params.append(key, select.value);
-            }
-        });
-
-        const queryString = params.toString();
-        iframe.src = baseUrl + (queryString ? '?' + queryString : '');
-    }
-
-    const debouncedUpdate = debounce(updatePreview, 300);
-
-    // Sync color inputs with text fields and update preview
-    document.querySelectorAll('input[type="color"]').forEach(colorInput => {
-        const textId = colorInput.id + '_text';
-        const textInput = document.getElementById(textId);
-        if (textInput) {
-            colorInput.addEventListener('input', () => {
-                textInput.value = colorInput.value;
-                debouncedUpdate();
-            });
-            textInput.addEventListener('input', () => {
-                if (/^#[0-9A-Fa-f]{6}$/.test(textInput.value)) {
-                    colorInput.value = textInput.value;
-                    debouncedUpdate();
-                }
-            });
+        if (storeSelect.value) {
+            nameInput.value = templateName + ' - ' + storeName;
+        } else {
+            nameInput.value = templateName;
         }
+    }
+
+    // Track if user has manually edited the name
+    document.getElementById('name').addEventListener('input', function() {
+        this.dataset.userEdited = this.value.trim() !== '' ? 'true' : 'false';
     });
 
-    // Update preview on select changes
-    document.querySelectorAll('select.branding-input').forEach(select => {
-        select.addEventListener('change', debouncedUpdate);
-    });
+    // Auto-fill name on page load
+    updateAutoName();
 
-    // Reset branding to defaults
-    document.getElementById('resetBranding').addEventListener('click', () => {
-        document.querySelectorAll('.branding-input').forEach(input => {
-            const defaultValue = input.dataset.default || '';
-            if (input.type === 'color') {
-                input.value = defaultValue || '#000000';
-                const textInput = document.getElementById(input.id + '_text');
-                if (textInput) textInput.value = input.value;
-            } else {
-                input.value = defaultValue;
-            }
-        });
-        updatePreview();
+    // Ensure name is filled before submit
+    document.getElementById('createForm').addEventListener('submit', function(e) {
+        var nameInput = document.getElementById('name');
+        if (!nameInput.value.trim()) {
+            updateAutoName();
+            nameInput.dataset.userEdited = 'false';
+        }
     });
 </script>
 {% endblock %}
