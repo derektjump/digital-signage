@@ -66,11 +66,17 @@
                         <div class="flex items-center gap-2 text-gray-400 cursor-move">
                             <span class="material-symbols-outlined">drag_indicator</span>
                         </div>
-                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(10, 10, 12, 0.05);">
+                        {% if item.item_type == 'media' and item.media_asset and item.media_asset.asset_type == 'image' and item.media_asset.file %}
+                        <div class="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
+                            <img src="{{ item.media_asset.file.url }}" alt="{{ item.media_asset.name }}" class="w-full h-full object-cover">
+                        </div>
+                        {% else %}
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background: rgba(10, 10, 12, 0.05);">
                             <span class="material-symbols-outlined" style="color: #0a0a0c;">
-                                {% if item.item_type == 'screen' %}web{% else %}image{% endif %}
+                                {% if item.item_type == 'screen' %}web{% elif item.item_type == 'media' and item.media_asset and item.media_asset.asset_type == 'video' %}videocam{% else %}image{% endif %}
                             </span>
                         </div>
+                        {% endif %}
                         <div class="flex-1">
                             <p class="font-medium text-gray-900">
                                 {% if item.item_type == 'screen' %}{{ item.screen.name }}{% else %}{{ item.media_asset.name }}{% endif %}
@@ -139,7 +145,7 @@
             {% if available_designs %}
                 {% for design in available_designs %}
                 <div class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors"
-                     onclick="selectItem('screen', '{{ design.id }}', '{{ design.name|escapejs }}')">
+                     onclick="selectItem('screen', '{{ design.id }}', '{{ design.name|escapejs }}', '')">
                     <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(10, 10, 12, 0.05);">
                         <span class="material-symbols-outlined" style="color: #0a0a0c;">web</span>
                     </div>
@@ -159,7 +165,7 @@
             {% if media_assets %}
                 {% for asset in media_assets %}
                 <div class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors"
-                     onclick="selectItem('media', '{{ asset.id }}', '{{ asset.name|escapejs }}')">
+                     onclick="selectItem('media', '{{ asset.id }}', '{{ asset.name|escapejs }}', '{% if asset.asset_type == "image" and asset.file %}{{ asset.file.url }}{% endif %}')">
                     {% if asset.asset_type == 'image' and asset.file %}
                     <div class="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
                         <img src="{{ asset.file.url }}" alt="{{ asset.name }}" class="w-full h-full object-cover">
@@ -212,6 +218,7 @@
 let selectedItemType = null;
 let selectedItemId = null;
 let selectedItemName = null;
+let selectedItemThumb = null;
 
 function showItemTab(tab) {
     const screensTab = document.getElementById('tabScreens');
@@ -239,10 +246,11 @@ function showItemTab(tab) {
     document.getElementById('durationSection').classList.add('hidden');
 }
 
-function selectItem(type, id, name) {
+function selectItem(type, id, name, thumbUrl) {
     selectedItemType = type;
     selectedItemId = id;
     selectedItemName = name;
+    selectedItemThumb = thumbUrl || '';
 
     document.getElementById('selectedItemName').textContent = name;
     document.getElementById('selectedItemType').textContent = type === 'screen' ? 'Screen Design' : 'Media Asset';
@@ -257,6 +265,7 @@ function cancelItemSelection() {
     selectedItemType = null;
     selectedItemId = null;
     selectedItemName = null;
+    selectedItemThumb = null;
 
     document.getElementById('durationSection').classList.add('hidden');
 
@@ -277,18 +286,24 @@ function confirmAddItem() {
         emptyState.remove();
     }
 
-    // Add item to the list (visual only for now - would need AJAX for persistence)
     const itemsContainer = document.getElementById('playlistItems');
+    let thumbHtml;
+    if (selectedItemThumb) {
+        thumbHtml = `<div class="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
+                <img src="${selectedItemThumb}" alt="${selectedItemName}" class="w-full h-full object-cover">
+            </div>`;
+    } else {
+        const icon = selectedItemType === 'screen' ? 'web' : (selectedItemType === 'media' ? 'videocam' : 'image');
+        thumbHtml = `<div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background: rgba(10, 10, 12, 0.05);">
+                <span class="material-symbols-outlined" style="color: #0a0a0c;">${icon}</span>
+            </div>`;
+    }
     const itemHtml = `
         <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200 new-item">
             <div class="flex items-center gap-2 text-gray-400 cursor-move">
                 <span class="material-symbols-outlined">drag_indicator</span>
             </div>
-            <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(10, 10, 12, 0.05);">
-                <span class="material-symbols-outlined" style="color: #0a0a0c;">
-                    ${selectedItemType === 'screen' ? 'web' : 'image'}
-                </span>
-            </div>
+            ${thumbHtml}
             <div class="flex-1">
                 <p class="font-medium text-gray-900">${selectedItemName}</p>
                 <p class="text-sm text-gray-500">
