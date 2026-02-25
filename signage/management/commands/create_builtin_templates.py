@@ -180,15 +180,15 @@ STAFF_KPI_CSS = r"""
 }
 
 .store-name {
-    font-size: 22px;
+    font-size: 28px;
     font-weight: 600;
     letter-spacing: 0.5px;
 }
 
 .date-display {
-    font-size: 15px;
+    font-size: 18px;
     color: var(--text-secondary);
-    margin-top: 2px;
+    margin-top: 4px;
 }
 
 /* Main content */
@@ -304,48 +304,48 @@ STAFF_KPI_CSS = r"""
 
 .kpi-icon {
     font-family: 'Material Icons';
-    font-size: 28px;
+    font-size: 40px;
     color: var(--brand-primary);
-    margin-bottom: 8px;
+    margin-bottom: 10px;
     opacity: 0.8;
 }
 
 .kpi-label {
-    font-size: 13px;
+    font-size: 18px;
     font-weight: 700;
     letter-spacing: 1.5px;
     text-transform: uppercase;
     color: var(--text-secondary);
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 }
 
 .kpi-value {
-    font-size: 42px;
+    font-size: 52px;
     font-weight: 800;
     letter-spacing: -0.5px;
     line-height: 1.1;
 }
 
 .target-of {
-    font-size: 24px;
+    font-size: 30px;
     font-weight: 500;
     color: var(--text-secondary);
 }
 
 .kpi-details {
-    font-size: 16px;
+    font-size: 20px;
     color: var(--text-secondary);
-    margin-top: 10px;
+    margin-top: 12px;
     font-weight: 500;
 }
 
 /* Progress bars */
 .progress-bar {
     width: 100%;
-    height: 8px;
+    height: 10px;
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-    margin-top: 14px;
+    border-radius: 5px;
+    margin-top: 16px;
     overflow: hidden;
 }
 
@@ -360,9 +360,9 @@ STAFF_KPI_CSS = r"""
 /* Percentage badge */
 .pct-badge {
     display: inline-block;
-    padding: 2px 10px;
-    border-radius: 12px;
-    font-size: 15px;
+    padding: 4px 14px;
+    border-radius: 14px;
+    font-size: 20px;
     font-weight: 700;
 }
 
@@ -405,13 +405,13 @@ STAFF_KPI_CSS = r"""
 }
 
 .employee-counter {
-    font-size: 15px;
+    font-size: 18px;
     color: var(--text-muted);
     font-weight: 500;
 }
 
 .last-updated {
-    font-size: 13px;
+    font-size: 16px;
     color: var(--text-muted);
 }
 
