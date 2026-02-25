@@ -90,10 +90,11 @@
         {% for design in designs %}
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
             <!-- Preview Area -->
-            <div class="h-40 bg-gray-50 flex items-center justify-center border-b border-gray-100">
-                <div class="w-16 h-16 rounded-full flex items-center justify-center" style="background: rgba(10, 10, 12, 0.05);">
-                    <span class="material-symbols-outlined text-3xl text-gray-300">web</span>
-                </div>
+            <div class="h-40 bg-gray-900 border-b border-gray-100 relative overflow-hidden">
+                <iframe src="{% url 'signage:screen_player' design.slug %}"
+                        class="absolute inset-0 w-full h-full border-0 pointer-events-none"
+                        style="transform: scale(0.25); transform-origin: top left; width: 400%; height: 400%;"
+                        loading="lazy" tabindex="-1" title="{{ design.name }} preview"></iframe>
             </div>
 
             <!-- Card Content -->

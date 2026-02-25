@@ -1,0 +1,65 @@
+{% extends 'signage/base.html' %}
+
+{% block title %}Preview: {{ object.name }} | {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="p-6 md:p-8">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+            <a href="{% url 'signage:screen_design_list' %}" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </a>
+            <div>
+                <h1 class="text-2xl font-semibold text-gray-900" style="font-family: 'Oxanium', sans-serif;">
+                    {{ object.name }}
+                </h1>
+                <p class="text-gray-500 mt-1">Preview</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="{% url 'signage:screen_player' object.slug %}" target="_blank"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
+                <span class="material-symbols-outlined" style="font-size: 1.2rem;">open_in_new</span>
+                Fullscreen
+            </a>
+            <a href="{% url 'signage:screen_design_update' object.slug %}"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white transition-colors"
+               style="background: #0a0a0c;">
+                <span class="material-symbols-outlined" style="font-size: 1.2rem;">edit</span>
+                Edit
+            </a>
+        </div>
+    </div>
+
+    <!-- Preview Frame -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="relative w-full" style="padding-bottom: 56.25%;">
+            <iframe src="{% url 'signage:screen_player' object.slug %}"
+                    class="absolute inset-0 w-full h-full border-0"
+                    sandbox="allow-scripts allow-same-origin"
+                    title="Screen Design Preview"></iframe>
+        </div>
+    </div>
+
+    <!-- Design Info -->
+    <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <dt class="text-xs font-medium text-gray-500 uppercase">Status</dt>
+            <dd class="mt-1">
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs rounded-full {% if object.is_active %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-600{% endif %}">
+                    {% if object.is_active %}Active{% else %}Inactive{% endif %}
+                </span>
+            </dd>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <dt class="text-xs font-medium text-gray-500 uppercase">Slug</dt>
+            <dd class="text-sm text-gray-900 font-mono mt-1">{{ object.slug }}</dd>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <dt class="text-xs font-medium text-gray-500 uppercase">Last Updated</dt>
+            <dd class="text-sm text-gray-900 mt-1">{{ object.updated_at|timesince }} ago</dd>
+        </div>
+    </div>
+</div>
+{% endblock %}
