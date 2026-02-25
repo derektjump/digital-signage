@@ -658,9 +658,9 @@ class PlaylistCreateView(LoginRequiredMixin, CreateView):
                     'duration_seconds': int(duration),
                 }
                 if item_type == 'screen':
-                    item_kwargs['screen_id'] = int(item_id)
+                    item_kwargs['screen_id'] = item_id
                 elif item_type == 'media':
-                    item_kwargs['media_asset_id'] = int(item_id)
+                    item_kwargs['media_asset_id'] = item_id
                 else:
                     continue
                 PlaylistItem.objects.create(**item_kwargs)
@@ -705,9 +705,9 @@ class PlaylistUpdateView(LoginRequiredMixin, UpdateView):
                     'duration_seconds': int(duration),
                 }
                 if item_type == 'screen':
-                    item_kwargs['screen_id'] = int(item_id)
+                    item_kwargs['screen_id'] = item_id
                 elif item_type == 'media':
-                    item_kwargs['media_asset_id'] = int(item_id)
+                    item_kwargs['media_asset_id'] = item_id
                 else:
                     continue
                 PlaylistItem.objects.create(**item_kwargs)
@@ -720,7 +720,7 @@ class PlaylistDeleteView(LoginRequiredMixin, DeleteView):
 
     model = Playlist
     template_name = 'signage/playlist_confirm_delete.html'
-    success_url = reverse_lazy('signage:overview')
+    success_url = reverse_lazy('signage:playlist_list')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
