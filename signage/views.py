@@ -56,7 +56,7 @@ from .models import (
     ScreenDesign, Screen, SalesData, KPI, Device, DeviceGroup, Playlist, PlaylistItem,
     MediaFolder, MediaAsset, DesignFolder, ScreenTemplate, generate_registration_code
 )
-from .data_services import get_sales_data, clear_sales_cache, get_available_data_variables
+from .data_services import get_sales_data, get_employee_data, get_all_data, clear_sales_cache, clear_employee_cache, get_available_data_variables
 import json
 import os
 
@@ -1239,6 +1239,38 @@ def clear_sales_cache_api(request):
     """Clear sales data cache."""
     clear_sales_cache()
     return JsonResponse({'success': True, 'message': 'Cache cleared'})
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def get_employee_data_api(request):
+    """Get employee-level sales data as JSON for screen templates."""
+    try:
+        store_id = request.GET.get('store_id')
+        if store_id:
+            store_id = int(store_id)
+        data = get_employee_data(store_id=store_id)
+        return JsonResponse({'success': True, 'employees': data})
+    except ValueError:
+        return JsonResponse({'success': False, 'error': 'Invalid store_id'}, status=400)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def get_all_data_api(request):
+    """Get both store and employee sales data in one call."""
+    try:
+        store_id = request.GET.get('store_id')
+        if store_id:
+            store_id = int(store_id)
+        data = get_all_data(store_id=store_id)
+        return JsonResponse({'success': True, **data})
+    except ValueError:
+        return JsonResponse({'success': False, 'error': 'Invalid store_id'}, status=400)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
 @login_required

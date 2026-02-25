@@ -35,6 +35,7 @@
     <script>
         // Global signage data API
         window.signageData = null;
+        window.employeeData = null;
 
         // Load design HTML/CSS/JS from API
         async function loadDesign() {
@@ -85,20 +86,22 @@
             }
         }
 
-        // Fetch sales data from API
+        // Fetch all data (sales + employees) from API
         async function fetchSalesData() {
             try {
-                const response = await fetch('/api/data/sales/');
+                const response = await fetch('/api/data/all/');
                 const data = await response.json();
                 if (data.success) {
                     window.signageData = data.sales;
-                    // Dispatch event for custom scripts
+                    window.employeeData = data.employees;
+                    // Dispatch events for custom scripts
                     window.dispatchEvent(new CustomEvent('signageDataLoaded', { detail: data.sales }));
+                    window.dispatchEvent(new CustomEvent('employeeDataLoaded', { detail: data.employees }));
                     // Process template variables
                     processTemplate();
                 }
             } catch (error) {
-                console.error('Error fetching sales data:', error);
+                console.error('Error fetching data:', error);
             }
         }
 
@@ -121,6 +124,9 @@
                 if (path.startsWith('sales.')) {
                     return getNestedValue(window.signageData, path.replace('sales.', ''));
                 }
+                if (path.startsWith('employees.')) {
+                    return getNestedValue(window.employeeData, path.replace('employees.', ''));
+                }
                 return match;
             });
 
@@ -139,6 +145,8 @@
 
                 if (arrayPath.startsWith('sales.')) {
                     array = getNestedValue(window.signageData, arrayPath.replace('sales.', ''));
+                } else if (arrayPath.startsWith('employees.')) {
+                    array = getNestedValue(window.employeeData, arrayPath.replace('employees.', ''));
                 }
 
                 if (!Array.isArray(array)) return '';

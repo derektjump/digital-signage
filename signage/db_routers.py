@@ -15,7 +15,7 @@ class DataConnectRouter:
     """
 
     # Models that should use the data_connect database
-    DATA_CONNECT_MODELS = {'salesboardsummary'}
+    DATA_CONNECT_MODELS = {'salesboardsummary', 'employeesalessummary'}
 
     def db_for_read(self, model, **hints):
         """Route reads for SalesBoardSummary to data_connect."""

@@ -93,6 +93,8 @@ urlpatterns = [
     # API ENDPOINTS - Data
     # =========================================================================
     path('api/data/sales/', views.get_sales_data_api, name='get_sales_data_api'),
+    path('api/data/employees/', views.get_employee_data_api, name='get_employee_data_api'),
+    path('api/data/all/', views.get_all_data_api, name='get_all_data_api'),
     path('api/data/variables/', views.get_data_variables_api, name='get_data_variables_api'),
     path('api/data/registry/', views.get_data_registry_api, name='get_data_registry_api'),
     path('api/data/sales/clear-cache/', views.clear_sales_cache_api, name='clear_sales_cache_api'),

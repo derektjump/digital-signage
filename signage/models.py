@@ -1396,6 +1396,16 @@ class SalesBoardSummary(models.Model):
     mtd_accessories_pct_of_target = models.DecimalField(max_digits=6, decimal_places=2, null=True)
     mtd_accessories_trending = models.DecimalField(max_digits=10, decimal_places=2, null=True)
 
+    # MTD Profit Targets
+    mtd_profit_target = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+    mtd_profit_pct_of_target = models.DecimalField(max_digits=6, decimal_places=2, null=True)
+
+    # Prior Year Same Month
+    ly_month_profit = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+    ly_month_invoiced = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+    ly_month_devices_sold = models.IntegerField(null=True)
+    ly_month_device_profit = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+
     last_updated = models.DateTimeField(null=True)
 
     class Meta:
@@ -1406,3 +1416,64 @@ class SalesBoardSummary(models.Model):
 
     def __str__(self):
         return f"{self.store_name} - {self.report_date}"
+
+
+class EmployeeSalesSummary(models.Model):
+    """
+    Employee Sales Summary Model (READ-ONLY)
+
+    Maps to the employee_sales_summary table in the data_connect database.
+    This table is populated by an external ETL process and refreshed every 15 minutes.
+
+    DO NOT create migrations for this model - it's managed externally.
+    """
+
+    id = models.AutoField(primary_key=True)
+    store_id = models.IntegerField()
+    store_name = models.CharField(max_length=200)
+    employee_id = models.IntegerField(null=True)
+    employee_name = models.CharField(max_length=200)
+    employee_username = models.CharField(max_length=200, null=True)
+    report_date = models.DateField()
+
+    # Today Metrics
+    today_profit = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+    today_invoiced = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+    today_invoice_count = models.IntegerField(null=True)
+    today_devices_sold = models.IntegerField(null=True)
+    today_device_profit = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+
+    # Month-to-Date Metrics
+    mtd_profit = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+    mtd_invoiced = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+    mtd_invoice_count = models.IntegerField(null=True)
+    mtd_devices_sold = models.IntegerField(null=True)
+    mtd_device_profit = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+
+    # Individual Targets (MTD)
+    mtd_profit_target = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+    mtd_device_target = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+    mtd_activations_target = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+    mtd_accessories_target = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+    mtd_smart_return_target = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+
+    # Target Achievement
+    mtd_profit_pct_of_target = models.DecimalField(max_digits=6, decimal_places=2, null=True)
+    mtd_device_pct_of_target = models.DecimalField(max_digits=6, decimal_places=2, null=True)
+
+    # Prior Year Same Month
+    ly_month_profit = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+    ly_month_invoiced = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+    ly_month_devices_sold = models.IntegerField(null=True)
+    ly_month_device_profit = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+
+    last_updated = models.DateTimeField(null=True)
+
+    class Meta:
+        managed = False  # Django will NOT create/modify this table
+        db_table = 'employee_sales_summary'
+        verbose_name = "Employee Sales Summary"
+        verbose_name_plural = "Employee Sales Summaries"
+
+    def __str__(self):
+        return f"{self.employee_name} @ {self.store_name} - {self.report_date}"
