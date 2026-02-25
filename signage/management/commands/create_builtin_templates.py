@@ -451,7 +451,17 @@ STAFF_KPI_JS = r"""
     var currentIndex = 0;
     var rotationTimer = null;
     var dataLoaded = false;
+    var firstRender = true;
     var ROTATION_INTERVAL = 8000; // 8 seconds per employee
+
+    // Load required fonts dynamically
+    ['https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap',
+     'https://fonts.googleapis.com/icon?family=Material+Icons'].forEach(function(url) {
+        var link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = url;
+        document.head.appendChild(link);
+    });
 
     // Wait for data to load
     window.addEventListener('signageDataLoaded', function() {
@@ -541,82 +551,88 @@ STAFF_KPI_JS = r"""
 
         var content = document.getElementById('mainContent');
 
-        // Fade out
+        // First render: populate immediately without fade animation
+        if (firstRender) {
+            firstRender = false;
+            populateEmployee(emp);
+            return;
+        }
+
+        // Subsequent renders: fade out, update, fade in
         content.classList.add('fade-out');
 
         setTimeout(function() {
-            // Update employee info
-            setText('employeeName', emp.employee_name || 'Unknown');
-            setText('employeeSubtitle', emp.store_name || '');
-
-            // Rank badge (MTD profit rank)
-            var rank = currentIndex + 1;
-            var badge = document.getElementById('rankBadge');
-            var rankNum = document.getElementById('rankNumber');
-            if (badge && rankNum) {
-                rankNum.textContent = rank;
-                badge.className = 'rank-badge';
-                if (rank === 1) badge.classList.add('gold');
-                else if (rank === 2) badge.classList.add('silver');
-                else if (rank === 3) badge.classList.add('bronze');
-            }
-
-            // Today
-            setText('todayProfit', emp.today.profit || '$0');
-            setText('todayDevices', emp.today.devices_sold || 0);
-            setText('todayInvoices', emp.today.invoice_count || 0);
-
-            // MTD
-            setText('mtdProfit', emp.mtd.profit || '$0');
-            setText('mtdDevices', emp.mtd.devices_sold || 0);
-            setText('mtdInvoices', emp.mtd.invoice_count || 0);
-
-            // Profit target
-            setText('profitTarget', emp.targets.profit_target || '$0');
-            var profitPct = emp.targets.profit_pct_of_target_raw || 0;
-            setProgress('profitProgress', profitPct);
-            setPctBadge('profitPctTarget', profitPct);
-
-            // Device target
-            var da = document.getElementById('deviceActual');
-            if (da) {
-                var devSold = emp.mtd.devices_sold || 0;
-                var devTarget = Math.round(emp.targets.device_target || 0);
-                da.innerHTML = devSold + ' <span class="target-of">/ <span id="deviceTarget">' + devTarget + '</span></span>';
-            }
-            var devicePct = emp.targets.device_pct_of_target_raw || 0;
-            setProgress('deviceProgress', devicePct);
-            setPctBadge('devicePctTarget', devicePct);
-
-            // Prior year comparison
-            setText('lyProfit', emp.prior_year.profit || '$0');
-            var lyChange = document.getElementById('lyChange');
-            if (lyChange) {
-                var mtdRaw = emp.mtd.profit_raw || 0;
-                var lyRaw = emp.prior_year.profit_raw || 0;
-                if (lyRaw > 0) {
-                    var changePct = ((mtdRaw - lyRaw) / lyRaw) * 100;
-                    var sign = changePct >= 0 ? '+' : '';
-                    lyChange.textContent = sign + changePct.toFixed(1) + '% vs LY';
-                    lyChange.className = 'ly-change ' + (changePct >= 0 ? 'positive' : 'negative');
-                } else {
-                    lyChange.textContent = 'No LY data';
-                    lyChange.className = 'ly-change';
-                }
-            }
-
-            // Store info (refresh in case data updated)
-            updateStoreInfo();
-
-            // Employee counter
-            var counter = document.getElementById('employeeCounter');
-            if (counter) {
-                counter.textContent = (currentIndex + 1) + ' of ' + employees.length;
-            }
-
-            // Fade in
+            populateEmployee(emp);
             content.classList.remove('fade-out');
         }, 500);
+    }
+
+    function populateEmployee(emp) {
+        setText('employeeName', emp.employee_name || 'Unknown');
+        setText('employeeSubtitle', emp.store_name || '');
+
+        // Rank badge (MTD profit rank)
+        var rank = currentIndex + 1;
+        var badge = document.getElementById('rankBadge');
+        var rankNum = document.getElementById('rankNumber');
+        if (badge && rankNum) {
+            rankNum.textContent = rank;
+            badge.className = 'rank-badge';
+            if (rank === 1) badge.classList.add('gold');
+            else if (rank === 2) badge.classList.add('silver');
+            else if (rank === 3) badge.classList.add('bronze');
+        }
+
+        // Today
+        setText('todayProfit', emp.today.profit || '$0');
+        setText('todayDevices', emp.today.devices_sold || 0);
+        setText('todayInvoices', emp.today.invoice_count || 0);
+
+        // MTD
+        setText('mtdProfit', emp.mtd.profit || '$0');
+        setText('mtdDevices', emp.mtd.devices_sold || 0);
+        setText('mtdInvoices', emp.mtd.invoice_count || 0);
+
+        // Profit target
+        setText('profitTarget', emp.targets.profit_target || '$0');
+        var profitPct = emp.targets.profit_pct_of_target_raw || 0;
+        setProgress('profitProgress', profitPct);
+        setPctBadge('profitPctTarget', profitPct);
+
+        // Device target
+        var da = document.getElementById('deviceActual');
+        if (da) {
+            var devSold = emp.mtd.devices_sold || 0;
+            var devTarget = Math.round(emp.targets.device_target || 0);
+            da.innerHTML = devSold + ' <span class="target-of">/ <span id="deviceTarget">' + devTarget + '</span></span>';
+        }
+        var devicePct = emp.targets.device_pct_of_target_raw || 0;
+        setProgress('deviceProgress', devicePct);
+        setPctBadge('devicePctTarget', devicePct);
+
+        // Prior year comparison
+        setText('lyProfit', emp.prior_year.profit || '$0');
+        var lyChange = document.getElementById('lyChange');
+        if (lyChange) {
+            var mtdRaw = emp.mtd.profit_raw || 0;
+            var lyRaw = emp.prior_year.profit_raw || 0;
+            if (lyRaw > 0) {
+                var changePct = ((mtdRaw - lyRaw) / lyRaw) * 100;
+                var sign = changePct >= 0 ? '+' : '';
+                lyChange.textContent = sign + changePct.toFixed(1) + '% vs LY';
+                lyChange.className = 'ly-change ' + (changePct >= 0 ? 'positive' : 'negative');
+            } else {
+                lyChange.textContent = 'No LY data';
+                lyChange.className = 'ly-change';
+            }
+        }
+
+        updateStoreInfo();
+
+        var counter = document.getElementById('employeeCounter');
+        if (counter) {
+            counter.textContent = (currentIndex + 1) + ' of ' + employees.length;
+        }
     }
 
     function startRotation() {
@@ -852,6 +868,13 @@ STORE_LEADERBOARD_JS = r"""
     var currentPage = 0;
     var totalPages = 1;
     var pageTimer = null;
+    var firstRender = true;
+
+    // Load required fonts dynamically
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap';
+    document.head.appendChild(link);
 
     window.addEventListener('signageDataLoaded', function() {
         var sales = window.signageData;
@@ -882,48 +905,56 @@ STORE_LEADERBOARD_JS = r"""
     function showPage(page) {
         currentPage = page % totalPages;
         var container = document.getElementById('boardContainer');
+
+        if (firstRender) {
+            firstRender = false;
+            populatePage(container);
+            return;
+        }
+
         container.classList.add('fade-out');
-
         setTimeout(function() {
-            container.innerHTML = '';
-
-            // Column header
-            var header = document.createElement('div');
-            header.className = 'lb-header';
-            header.innerHTML = '<span>RANK</span><span>STORE</span><span>MTD PROFIT</span><span>LY PROFIT</span><span>% TARGET</span>';
-            container.appendChild(header);
-
-            var start = currentPage * ROWS_PER_PAGE;
-            var pageStores = stores.slice(start, start + ROWS_PER_PAGE);
-
-            pageStores.forEach(function(store, i) {
-                var rank = start + i + 1;
-                var row = document.createElement('div');
-                row.className = 'lb-row' + (rank <= 3 ? ' top-3' : '');
-
-                var rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
-                var pctRaw = store.profit_pct_of_target_raw || 0;
-                var pctClass = pctRaw >= 100 ? 'ahead' : pctRaw >= 70 ? 'on-track' : 'behind';
-                var pctText = store.profit_pct_of_target || '0%';
-
-                row.innerHTML =
-                    '<div class="lb-rank ' + rankClass + '">' + rank + '</div>' +
-                    '<div class="lb-name">' + (store.store_name || '') + '</div>' +
-                    '<div class="lb-value">' + (store.value || '$0') + '</div>' +
-                    '<div class="lb-secondary">' + (store.ly_month_profit || '$0') + '</div>' +
-                    '<div class="lb-pct ' + pctClass + '">' + pctText + '</div>';
-
-                container.appendChild(row);
-            });
-
-            // Page indicator
-            var pi = document.getElementById('pageIndicator');
-            if (pi && totalPages > 1) {
-                pi.textContent = 'Page ' + (currentPage + 1) + ' of ' + totalPages;
-            }
-
+            populatePage(container);
             container.classList.remove('fade-out');
         }, 400);
+    }
+
+    function populatePage(container) {
+        container.innerHTML = '';
+
+        // Column header
+        var header = document.createElement('div');
+        header.className = 'lb-header';
+        header.innerHTML = '<span>RANK</span><span>STORE</span><span>MTD PROFIT</span><span>LY PROFIT</span><span>% TARGET</span>';
+        container.appendChild(header);
+
+        var start = currentPage * ROWS_PER_PAGE;
+        var pageStores = stores.slice(start, start + ROWS_PER_PAGE);
+
+        pageStores.forEach(function(store, i) {
+            var rank = start + i + 1;
+            var row = document.createElement('div');
+            row.className = 'lb-row' + (rank <= 3 ? ' top-3' : '');
+
+            var rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+            var pctRaw = store.profit_pct_of_target_raw || 0;
+            var pctClass = pctRaw >= 100 ? 'ahead' : pctRaw >= 70 ? 'on-track' : 'behind';
+            var pctText = store.profit_pct_of_target || '0%';
+
+            row.innerHTML =
+                '<div class="lb-rank ' + rankClass + '">' + rank + '</div>' +
+                '<div class="lb-name">' + (store.store_name || '') + '</div>' +
+                '<div class="lb-value">' + (store.value || '$0') + '</div>' +
+                '<div class="lb-secondary">' + (store.ly_month_profit || '$0') + '</div>' +
+                '<div class="lb-pct ' + pctClass + '">' + pctText + '</div>';
+
+            container.appendChild(row);
+        });
+
+        var pi = document.getElementById('pageIndicator');
+        if (pi && totalPages > 1) {
+            pi.textContent = 'Page ' + (currentPage + 1) + ' of ' + totalPages;
+        }
     }
 
     function startPaging() {
