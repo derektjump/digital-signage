@@ -286,14 +286,14 @@ STAFF_KPI_CSS = r"""
 .kpi-icon {
     font-family: 'Material Icons';
     font-size: 32px;
-    color: var(--brand-primary);
+    color: #fff;
     margin-bottom: 12px;
     width: 56px;
     height: 56px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.22);
     border-radius: 16px;
 }
 
