@@ -762,6 +762,30 @@ class PlaylistDeleteView(LoginRequiredMixin, DeleteView):
         return context
 
 
+class PlaylistPreviewView(LoginRequiredMixin, DetailView):
+    """Preview a playlist — cycles through items in an iframe."""
+
+    model = Playlist
+    template_name = 'signage/playlist_preview.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        playlist = self.get_object()
+        items = []
+        for item in playlist.items.order_by('order'):
+            player_url = item.get_player_url()
+            if player_url:
+                items.append({
+                    'name': item.content_name,
+                    'type': item.item_type,
+                    'url': player_url,
+                    'duration': item.effective_duration,
+                })
+        context['playlist_items_json'] = json.dumps(items)
+        context['playlist_items'] = items
+        return context
+
+
 # ============================================================================
 # MEDIA LIBRARY
 # ============================================================================

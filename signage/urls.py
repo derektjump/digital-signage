@@ -57,6 +57,7 @@ urlpatterns = [
     path('playlists/create/', views.PlaylistCreateView.as_view(), name='playlist_create'),
     path('playlists/<uuid:pk>/edit/', views.PlaylistUpdateView.as_view(), name='playlist_update'),
     path('playlists/<uuid:pk>/delete/', views.PlaylistDeleteView.as_view(), name='playlist_delete'),
+    path('playlists/<uuid:pk>/preview/', views.PlaylistPreviewView.as_view(), name='playlist_preview'),
 
     # =========================================================================
     # DEVICES

@@ -1,0 +1,238 @@
+{% extends 'signage/base.html' %}
+
+{% block title %}Preview: {{ object.name }} | {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="p-6 md:p-8">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-3">
+            <a href="{% url 'signage:playlist_list' %}" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </a>
+            <div>
+                <h1 class="text-2xl font-semibold text-gray-900" style="font-family: 'Oxanium', sans-serif;">
+                    {{ object.name }}
+                </h1>
+                <p class="text-gray-500 mt-1">Playlist Preview</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="{% url 'signage:playlist_update' object.pk %}"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white transition-colors"
+               style="background: #0a0a0c;">
+                <span class="material-symbols-outlined" style="font-size: 1.2rem;">edit</span>
+                Edit
+            </a>
+        </div>
+    </div>
+
+    <!-- Preview Frame -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <!-- Now-playing bar -->
+        <div class="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-100">
+            <div class="flex items-center gap-2 text-sm">
+                <span class="material-symbols-outlined text-gray-400" style="font-size: 1.1rem;" id="playPauseIcon">play_arrow</span>
+                <span class="text-gray-500">Now playing:</span>
+                <span class="font-medium text-gray-900" id="nowPlayingName">—</span>
+                <span class="text-gray-400" id="nowPlayingIndex"></span>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1.5 text-sm text-gray-500">
+                    <span class="material-symbols-outlined" style="font-size: 1rem;">timer</span>
+                    <span id="timeRemaining">—</span>
+                </div>
+                <button onclick="togglePlayPause()" class="p-1 rounded hover:bg-gray-200 transition-colors" title="Play/Pause">
+                    <span class="material-symbols-outlined text-gray-600" style="font-size: 1.2rem;" id="playPauseBtn">play_arrow</span>
+                </button>
+                <button onclick="skipNext()" class="p-1 rounded hover:bg-gray-200 transition-colors" title="Skip to next">
+                    <span class="material-symbols-outlined text-gray-600" style="font-size: 1.2rem;">skip_next</span>
+                </button>
+            </div>
+        </div>
+        <!-- Progress bar -->
+        <div class="h-1 bg-gray-100">
+            <div class="h-full transition-all duration-1000 ease-linear" style="background: #0a0a0c; width: 0%;" id="progressBar"></div>
+        </div>
+        <!-- Iframe -->
+        <div class="relative w-full" style="padding-bottom: 56.25%;">
+            <iframe id="previewFrame"
+                    class="absolute inset-0 w-full h-full border-0"
+                    title="Playlist Preview"></iframe>
+        </div>
+    </div>
+
+    <!-- Playlist Info -->
+    <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <dt class="text-xs font-medium text-gray-500 uppercase">Items</dt>
+            <dd class="text-lg font-semibold text-gray-900 mt-1">{{ playlist_items|length }}</dd>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <dt class="text-xs font-medium text-gray-500 uppercase">Total Duration</dt>
+            <dd class="text-lg font-semibold text-gray-900 mt-1" id="totalDuration">—</dd>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <dt class="text-xs font-medium text-gray-500 uppercase">Status</dt>
+            <dd class="mt-1">
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs rounded-full {% if object.is_active %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-600{% endif %}">
+                    {% if object.is_active %}Active{% else %}Inactive{% endif %}
+                </span>
+            </dd>
+        </div>
+    </div>
+
+    <!-- Item List -->
+    <div class="mt-6 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-4 py-3 border-b border-gray-100">
+            <h2 class="text-sm font-medium text-gray-700">Playlist Items</h2>
+        </div>
+        <div id="itemList">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    var items = {{ playlist_items_json|safe }};
+    var currentIndex = -1;
+    var timer = null;
+    var countdownTimer = null;
+    var timeLeft = 0;
+    var paused = false;
+    var frame = document.getElementById('previewFrame');
+
+    if (items.length === 0) {
+        document.getElementById('nowPlayingName').textContent = 'No items in playlist';
+        return;
+    }
+
+    // Calculate total duration
+    var totalSec = items.reduce(function(sum, item) { return sum + item.duration; }, 0);
+    var totalMin = Math.floor(totalSec / 60);
+    var totalRemSec = totalSec % 60;
+    document.getElementById('totalDuration').textContent =
+        totalMin + ':' + (totalRemSec < 10 ? '0' : '') + totalRemSec;
+
+    // Build item list
+    var listEl = document.getElementById('itemList');
+    items.forEach(function(item, i) {
+        var row = document.createElement('div');
+        row.id = 'item-row-' + i;
+        row.className = 'flex items-center gap-3 px-4 py-3 border-b border-gray-50 cursor-pointer hover:bg-gray-50 transition-colors';
+        row.onclick = function() { loadItem(i); };
+
+        var icon = item.type === 'screen' ? 'display_settings' : 'image';
+        var durMin = Math.floor(item.duration / 60);
+        var durSec = item.duration % 60;
+        var durStr = durMin > 0
+            ? durMin + ':' + (durSec < 10 ? '0' : '') + durSec
+            : durSec + 's';
+        if (item.duration === 0) durStr = 'Auto';
+
+        row.innerHTML =
+            '<div class="w-7 text-center text-sm font-medium text-gray-400">' + (i + 1) + '</div>' +
+            '<span class="material-symbols-outlined text-gray-400" style="font-size: 1.1rem;">' + icon + '</span>' +
+            '<div class="flex-1 text-sm font-medium text-gray-700">' + item.name + '</div>' +
+            '<div class="text-sm text-gray-400">' + durStr + '</div>' +
+            '<span class="material-symbols-outlined text-transparent now-playing-icon" style="font-size: 1rem;">play_arrow</span>';
+
+        listEl.appendChild(row);
+    });
+
+    // Load an item by index
+    function loadItem(index) {
+        // Clear existing timers
+        if (timer) clearTimeout(timer);
+        if (countdownTimer) clearInterval(countdownTimer);
+
+        currentIndex = index % items.length;
+        var item = items[currentIndex];
+
+        // Update iframe
+        frame.src = item.url;
+
+        // Update now-playing
+        document.getElementById('nowPlayingName').textContent = item.name;
+        document.getElementById('nowPlayingIndex').textContent = '(' + (currentIndex + 1) + ' of ' + items.length + ')';
+
+        // Highlight current row
+        items.forEach(function(_, i) {
+            var row = document.getElementById('item-row-' + i);
+            if (i === currentIndex) {
+                row.classList.add('bg-gray-50');
+                row.querySelector('.now-playing-icon').classList.remove('text-transparent');
+                row.querySelector('.now-playing-icon').classList.add('text-green-500');
+            } else {
+                row.classList.remove('bg-gray-50');
+                row.querySelector('.now-playing-icon').classList.add('text-transparent');
+                row.querySelector('.now-playing-icon').classList.remove('text-green-500');
+            }
+        });
+
+        // Set duration & countdown
+        var duration = item.duration || 30;
+        timeLeft = duration;
+        updateTimeDisplay();
+        updateProgress(duration);
+
+        if (!paused) {
+            startTimers(duration);
+        }
+    }
+
+    function startTimers(duration) {
+        // Countdown every second
+        countdownTimer = setInterval(function() {
+            timeLeft--;
+            updateTimeDisplay();
+            updateProgress(duration);
+            if (timeLeft <= 0) clearInterval(countdownTimer);
+        }, 1000);
+
+        // Advance to next after duration
+        timer = setTimeout(function() {
+            clearInterval(countdownTimer);
+            loadItem(currentIndex + 1);
+        }, duration * 1000);
+    }
+
+    function updateTimeDisplay() {
+        var min = Math.floor(Math.max(0, timeLeft) / 60);
+        var sec = Math.max(0, timeLeft) % 60;
+        document.getElementById('timeRemaining').textContent =
+            min + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+
+    function updateProgress(totalDuration) {
+        var pct = totalDuration > 0 ? ((totalDuration - timeLeft) / totalDuration) * 100 : 0;
+        document.getElementById('progressBar').style.width = Math.min(pct, 100) + '%';
+    }
+
+    // Controls
+    window.togglePlayPause = function() {
+        paused = !paused;
+        var icon = paused ? 'play_arrow' : 'pause';
+        document.getElementById('playPauseBtn').textContent = icon;
+        document.getElementById('playPauseIcon').textContent = paused ? 'pause' : 'play_arrow';
+
+        if (paused) {
+            if (timer) clearTimeout(timer);
+            if (countdownTimer) clearInterval(countdownTimer);
+        } else {
+            var item = items[currentIndex];
+            var duration = item.duration || 30;
+            startTimers(timeLeft);
+        }
+    };
+
+    window.skipNext = function() {
+        loadItem(currentIndex + 1);
+    };
+
+    // Start playing
+    loadItem(0);
+})();
+</script>
+{% endblock %}

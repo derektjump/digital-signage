@@ -79,6 +79,10 @@
                     Updated {{ playlist.updated_at|timesince }} ago
                 </p>
                 <div class="flex items-center gap-2">
+                    <a href="{% url 'signage:playlist_preview' playlist.pk %}"
+                       class="flex-1 text-center px-3 py-2 text-sm rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
+                        Preview
+                    </a>
                     <a href="{% url 'signage:playlist_update' playlist.pk %}"
                        class="flex-1 text-center px-3 py-2 text-sm rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
                         Edit
