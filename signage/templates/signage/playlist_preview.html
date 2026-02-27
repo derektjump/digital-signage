@@ -99,6 +99,8 @@
     var currentIndex = -1;
     var timer = null;
     var countdownTimer = null;
+    var cyclePollTimer = null;
+    var elapsed = 0;
     var timeLeft = 0;
     var paused = false;
     var frame = document.getElementById('previewFrame');
@@ -108,12 +110,13 @@
         return;
     }
 
-    // Calculate total duration
-    var totalSec = items.reduce(function(sum, item) { return sum + item.duration; }, 0);
+    // Calculate total duration (show "Auto" items as ~)
+    var totalSec = items.reduce(function(sum, item) { return item.auto ? sum : sum + item.duration; }, 0);
+    var hasAuto = items.some(function(item) { return item.auto; });
     var totalMin = Math.floor(totalSec / 60);
     var totalRemSec = totalSec % 60;
     document.getElementById('totalDuration').textContent =
-        totalMin + ':' + (totalRemSec < 10 ? '0' : '') + totalRemSec;
+        (hasAuto ? '~' : '') + totalMin + ':' + (totalRemSec < 10 ? '0' : '') + totalRemSec + (hasAuto ? ' + auto' : '');
 
     // Build item list
     var listEl = document.getElementById('itemList');
@@ -124,12 +127,16 @@
         row.onclick = function() { loadItem(i); };
 
         var icon = item.type === 'screen' ? 'display_settings' : 'image';
-        var durMin = Math.floor(item.duration / 60);
-        var durSec = item.duration % 60;
-        var durStr = durMin > 0
-            ? durMin + ':' + (durSec < 10 ? '0' : '') + durSec
-            : durSec + 's';
-        if (item.auto) durStr = 'Auto (' + durStr + ')';
+        var durStr;
+        if (item.auto) {
+            durStr = 'Auto';
+        } else {
+            var durMin = Math.floor(item.duration / 60);
+            var durSec = item.duration % 60;
+            durStr = durMin > 0
+                ? durMin + ':' + (durSec < 10 ? '0' : '') + durSec
+                : durSec + 's';
+        }
 
         row.innerHTML =
             '<div class="w-7 text-center text-sm font-medium text-gray-400">' + (i + 1) + '</div>' +
@@ -141,11 +148,32 @@
         listEl.appendChild(row);
     });
 
+    // Check if the iframe's screen has completed its cycle
+    function checkCycleComplete() {
+        try {
+            if (frame.contentWindow && frame.contentWindow.signageCycleComplete) {
+                // Cycle finished — advance after a brief pause
+                clearAllTimers();
+                setTimeout(function() {
+                    if (!paused) loadItem(currentIndex + 1);
+                }, 2000);
+                return true;
+            }
+        } catch (e) {
+            // Cross-origin or iframe not ready — ignore
+        }
+        return false;
+    }
+
+    function clearAllTimers() {
+        if (timer) { clearTimeout(timer); timer = null; }
+        if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+        if (cyclePollTimer) { clearInterval(cyclePollTimer); cyclePollTimer = null; }
+    }
+
     // Load an item by index
     function loadItem(index) {
-        // Clear existing timers
-        if (timer) clearTimeout(timer);
-        if (countdownTimer) clearInterval(countdownTimer);
+        clearAllTimers();
 
         currentIndex = index % items.length;
         var item = items[currentIndex];
@@ -171,19 +199,44 @@
             }
         });
 
-        // Set duration & countdown
-        var duration = item.duration || 30;
-        timeLeft = duration;
-        updateTimeDisplay();
-        updateProgress(duration);
+        elapsed = 0;
 
-        if (!paused) {
-            startTimers(duration);
+        if (item.auto) {
+            // Auto mode: count up elapsed time, poll for signageCycleComplete
+            updateAutoDisplay();
+            document.getElementById('progressBar').style.width = '0%';
+            if (!paused) startAutoTimers(item);
+        } else {
+            // Fixed duration: count down
+            timeLeft = item.duration || 30;
+            updateTimeDisplay();
+            updateProgress(item.duration);
+            if (!paused) startFixedTimers(item.duration);
         }
     }
 
-    function startTimers(duration) {
-        // Countdown every second
+    // Timers for auto-mode items (poll signageCycleComplete)
+    function startAutoTimers(item) {
+        // Count up elapsed time every second
+        countdownTimer = setInterval(function() {
+            elapsed++;
+            updateAutoDisplay();
+        }, 1000);
+
+        // Poll iframe for signageCycleComplete every second (start after 5s to let it load)
+        cyclePollTimer = setInterval(function() {
+            if (elapsed > 5) checkCycleComplete();
+        }, 1000);
+
+        // Safety max timeout
+        timer = setTimeout(function() {
+            clearAllTimers();
+            loadItem(currentIndex + 1);
+        }, item.duration * 1000);
+    }
+
+    // Timers for fixed-duration items
+    function startFixedTimers(duration) {
         countdownTimer = setInterval(function() {
             timeLeft--;
             updateTimeDisplay();
@@ -191,11 +244,17 @@
             if (timeLeft <= 0) clearInterval(countdownTimer);
         }, 1000);
 
-        // Advance to next after duration
         timer = setTimeout(function() {
-            clearInterval(countdownTimer);
+            clearAllTimers();
             loadItem(currentIndex + 1);
         }, duration * 1000);
+    }
+
+    function updateAutoDisplay() {
+        var min = Math.floor(elapsed / 60);
+        var sec = elapsed % 60;
+        document.getElementById('timeRemaining').textContent =
+            'Auto ' + min + ':' + (sec < 10 ? '0' : '') + sec;
     }
 
     function updateTimeDisplay() {
@@ -218,12 +277,14 @@
         document.getElementById('playPauseIcon').textContent = paused ? 'pause' : 'play_arrow';
 
         if (paused) {
-            if (timer) clearTimeout(timer);
-            if (countdownTimer) clearInterval(countdownTimer);
+            clearAllTimers();
         } else {
             var item = items[currentIndex];
-            var duration = item.duration || 30;
-            startTimers(timeLeft);
+            if (item.auto) {
+                startAutoTimers(item);
+            } else {
+                startFixedTimers(timeLeft);
+            }
         }
     };
 
