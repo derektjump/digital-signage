@@ -1200,7 +1200,7 @@ STORE_TOP_PERFORMERS_CSS = r"""
 
 /* Grid Container */
 .grid-container {
-    flex: 1;
+    flex: 3;
     padding: 20px 60px 10px;
     display: flex;
     flex-direction: column;
@@ -1336,6 +1336,7 @@ STORE_TOP_PERFORMERS_CSS = r"""
 
 /* Bottom sections (2x2 grid) */
 .bottom-sections {
+    flex: 2;
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
