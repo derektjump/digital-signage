@@ -773,13 +773,14 @@ STORE_LEADERBOARD_CSS = r"""
 /* Leaderboard row */
 .lb-row {
     display: grid;
-    grid-template-columns: 70px 1fr 180px 180px 140px;
+    grid-template-columns: 70px 1fr 180px 140px 180px 140px;
     align-items: center;
     background: rgba(255,255,255,0.07);
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 12px;
     padding: 14px 24px;
     gap: 16px;
+    flex: 1;
 }
 
 .lb-row.top-3 {
@@ -825,9 +826,17 @@ STORE_LEADERBOARD_CSS = r"""
 .lb-pct.behind { color: #ff8a8a; }
 .lb-pct.ahead { color: #00ffcc; }
 
+.lb-change {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.lb-change.positive { color: #00ddb3; }
+.lb-change.negative { color: #ff8a8a; }
+
 .lb-header {
     display: grid;
-    grid-template-columns: 70px 1fr 180px 180px 140px;
+    grid-template-columns: 70px 1fr 180px 140px 180px 140px;
     padding: 0 24px 6px;
     gap: 16px;
 }
@@ -928,7 +937,7 @@ STORE_LEADERBOARD_JS = r"""
         // Column header
         var header = document.createElement('div');
         header.className = 'lb-header';
-        header.innerHTML = '<span>RANK</span><span>STORE</span><span>MTD PROFIT</span><span>LY PROFIT</span><span>% TARGET</span>';
+        header.innerHTML = '<span>RANK</span><span>STORE</span><span>MTD PROFIT</span><span>VS LY</span><span>LY PROFIT</span><span>% TARGET</span>';
         container.appendChild(header);
 
         var start = currentPage * ROWS_PER_PAGE;
@@ -944,10 +953,25 @@ STORE_LEADERBOARD_JS = r"""
             var pctClass = pctRaw >= 100 ? 'ahead' : pctRaw >= 70 ? 'on-track' : 'behind';
             var pctText = store.profit_pct_of_target || '0%';
 
+            // Calculate MTD vs LY % change
+            var mtdRaw = store.value_raw || 0;
+            var lyRaw = store.ly_month_profit_raw || 0;
+            var vsLyText = '--';
+            var vsLyClass = '';
+            if (lyRaw > 0) {
+                var changePct = ((mtdRaw - lyRaw) / lyRaw) * 100;
+                vsLyText = (changePct >= 0 ? '+' : '') + changePct.toFixed(0) + '%';
+                vsLyClass = changePct >= 0 ? 'positive' : 'negative';
+            } else if (mtdRaw > 0) {
+                vsLyText = '+100%';
+                vsLyClass = 'positive';
+            }
+
             row.innerHTML =
                 '<div class="lb-rank ' + rankClass + '">' + rank + '</div>' +
                 '<div class="lb-name">' + (store.store_name || '') + '</div>' +
                 '<div class="lb-value">' + (store.value || '$0') + '</div>' +
+                '<div class="lb-change ' + vsLyClass + '">' + vsLyText + '</div>' +
                 '<div class="lb-secondary">' + (store.ly_month_profit || '$0') + '</div>' +
                 '<div class="lb-pct ' + pctClass + '">' + pctText + '</div>';
 
@@ -1005,11 +1029,10 @@ STORE_TOP_PERFORMERS_HTML = r"""
         <!-- Row 1: Last Year Month -->
         <div class="grid-row" id="rowLY">
             <div class="col-category">
-                <div class="category-icon"><span class="material-icons">history</span></div>
+                <div class="category-icon ly"><span class="material-icons">history</span></div>
                 <div class="category-label">LAST YEAR<br>MONTH TOTAL</div>
             </div>
             <div class="col-employee">
-                <div class="emp-avatar" id="lyAvatar">-</div>
                 <div class="emp-name" id="lyName">--</div>
             </div>
             <div class="col-staff">
@@ -1027,7 +1050,6 @@ STORE_TOP_PERFORMERS_HTML = r"""
                 <div class="category-label">MONTH<br>TO DATE</div>
             </div>
             <div class="col-employee">
-                <div class="emp-avatar" id="mtdAvatar">-</div>
                 <div class="emp-name" id="mtdName">--</div>
             </div>
             <div class="col-staff">
@@ -1045,7 +1067,6 @@ STORE_TOP_PERFORMERS_HTML = r"""
                 <div class="category-label">PROFIT<br>TARGET</div>
             </div>
             <div class="col-employee">
-                <div class="emp-avatar" id="targetAvatar">-</div>
                 <div class="emp-name" id="targetName">--</div>
             </div>
             <div class="col-staff">
@@ -1056,6 +1077,16 @@ STORE_TOP_PERFORMERS_HTML = r"""
                 <div class="metric-value store-value" id="targetStoreValue">$0</div>
                 <div class="metric-sub" id="targetStorePct"></div>
             </div>
+        </div>
+    </div>
+
+    <!-- 2nd Place Runner-Up Section -->
+    <div class="runner-up-section" id="runnerUpSection">
+        <div class="runner-up-label">RUNNER UP &mdash; MONTH TO DATE</div>
+        <div class="runner-up-content">
+            <div class="runner-up-name" id="runnerUpName">--</div>
+            <div class="runner-up-value" id="runnerUpValue">$0</div>
+            <div class="runner-up-gap" id="runnerUpGap"></div>
         </div>
     </div>
 
@@ -1176,7 +1207,6 @@ STORE_TOP_PERFORMERS_CSS = r"""
     width: 64px;
     height: 64px;
     border-radius: 16px;
-    background: rgba(0, 170, 144, 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1185,7 +1215,14 @@ STORE_TOP_PERFORMERS_CSS = r"""
 
 .category-icon .material-icons {
     font-size: 32px;
-    color: var(--brand-primary);
+}
+
+.category-icon.ly {
+    background: rgba(255, 200, 60, 0.15);
+}
+
+.category-icon.ly .material-icons {
+    color: #f0c040;
 }
 
 .category-icon.mtd {
@@ -1216,21 +1253,7 @@ STORE_TOP_PERFORMERS_CSS = r"""
 .col-employee {
     display: flex;
     align-items: center;
-    gap: 18px;
     padding-left: 10px;
-}
-
-.emp-avatar {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 26px;
-    font-weight: 800;
-    flex-shrink: 0;
 }
 
 .emp-name {
@@ -1264,6 +1287,49 @@ STORE_TOP_PERFORMERS_CSS = r"""
 
 .metric-sub.ahead { color: var(--brand-primary); }
 .metric-sub.behind { color: #ff6b6b; }
+
+/* Runner-up section */
+.runner-up-section {
+    padding: 16px 60px 8px;
+    position: relative;
+    z-index: 1;
+}
+
+.runner-up-label {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.3);
+    margin-bottom: 12px;
+}
+
+.runner-up-content {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 24px 30px;
+}
+
+.runner-up-name {
+    font-size: 24px;
+    font-weight: 700;
+    flex: 1;
+}
+
+.runner-up-value {
+    font-size: 36px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.7);
+}
+
+.runner-up-gap {
+    font-size: 18px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.4);
+}
 
 /* Footer */
 .footer {
@@ -1369,19 +1435,16 @@ STORE_TOP_PERFORMERS_JS = r"""
 
         // Populate LY row
         setText('lyName', topLY.employee_name || 'Unknown');
-        setAvatar('lyAvatar', topLY.employee_name);
         setText('lyStaffValue', formatCurrency(topLY.prior_year.profit_raw || 0));
         setText('lyStoreValue', formatCurrency(storeLY));
 
         // Populate MTD row
         setText('mtdName', topMTD.employee_name || 'Unknown');
-        setAvatar('mtdAvatar', topMTD.employee_name);
         setText('mtdStaffValue', formatCurrency(topMTD.mtd.profit_raw || 0));
         setText('mtdStoreValue', formatCurrency(storeMTD));
 
         // Populate Target row
         setText('targetName', topTarget.employee_name || 'Unknown');
-        setAvatar('targetAvatar', topTarget.employee_name);
         setText('targetStaffValue', formatCurrency(topTarget.targets.profit_target_raw || 0));
         setText('targetStoreValue', formatCurrency(storeTarget));
 
@@ -1402,6 +1465,21 @@ STORE_TOP_PERFORMERS_JS = r"""
             }
         }
 
+        // 2nd place MTD employee
+        var sortedMTD = employees.slice().sort(function(a, b) {
+            return (b.mtd.profit_raw || 0) - (a.mtd.profit_raw || 0);
+        });
+        if (sortedMTD.length >= 2) {
+            var second = sortedMTD[1];
+            setText('runnerUpName', second.employee_name || 'Unknown');
+            setText('runnerUpValue', formatCurrency(second.mtd.profit_raw || 0));
+            var gap = (topMTD.mtd.profit_raw || 0) - (second.mtd.profit_raw || 0);
+            setText('runnerUpGap', formatCurrency(gap) + ' behind #1');
+        } else {
+            var section = document.getElementById('runnerUpSection');
+            if (section) section.style.display = 'none';
+        }
+
         // Employee count
         setText('employeeCount', employees.length + ' employees');
     }
@@ -1411,13 +1489,6 @@ STORE_TOP_PERFORMERS_JS = r"""
             return '$' + (value / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
         }
         return '$' + Math.round(value).toLocaleString();
-    }
-
-    function setAvatar(id, name) {
-        var el = document.getElementById(id);
-        if (el && name) {
-            el.textContent = name.charAt(0).toUpperCase();
-        }
     }
 
     function setText(id, value) {
@@ -1446,101 +1517,92 @@ STORE_SNAPSHOT_HTML = r"""
         </div>
     </div>
 
-    <div class="cards-row" id="cardsRow">
-        <!-- Card 1: Last Year Comparison -->
-        <div class="perf-card">
-            <div class="card-header">
+    <div class="cards-stack" id="cardsStack">
+        <!-- Card 1: Last Year -->
+        <div class="wide-card">
+            <div class="card-left">
                 <div class="card-icon ly"><span class="material-icons">history</span></div>
-                <div class="card-title">VS LAST YEAR</div>
-            </div>
-            <div class="spotlight">
-                <div class="spotlight-avatar" id="lyAvatar2">-</div>
-                <div class="spotlight-info">
-                    <div class="spotlight-label">TOP PERFORMER</div>
-                    <div class="spotlight-name" id="lyName2">--</div>
+                <div class="card-info">
+                    <div class="card-label">VS LAST YEAR</div>
+                    <div class="card-emp" id="lyName2">--</div>
                 </div>
             </div>
-            <div class="big-number" id="lyStaffBig">$0</div>
-            <div class="comparison-bar">
-                <div class="bar-track">
-                    <div class="bar-fill staff-fill" id="lyBarStaff"></div>
+            <div class="card-metrics">
+                <div class="metric-block">
+                    <div class="metric-label">STAFF</div>
+                    <div class="metric-num primary" id="lyStaffBig">$0</div>
                 </div>
-                <div class="bar-labels">
-                    <span class="bar-label-staff">Staff</span>
-                    <span class="bar-label-store">Store <span id="lyStoreBig">$0</span></span>
+                <div class="metric-block">
+                    <div class="metric-label">STORE</div>
+                    <div class="metric-num" id="lyStoreBig">$0</div>
+                </div>
+                <div class="metric-block">
+                    <div class="metric-label">CONTRIBUTION</div>
+                    <div class="metric-num small" id="lyContrib">0%</div>
                 </div>
             </div>
-            <div class="card-stat">
-                <span class="material-icons stat-icon">group</span>
-                <span id="lyContrib">0%</span> of store total
+            <div class="card-bar">
+                <div class="bar-track"><div class="bar-fill" id="lyBarStaff"></div></div>
             </div>
         </div>
 
-        <!-- Card 2: Month to Date -->
-        <div class="perf-card featured">
-            <div class="card-header">
+        <!-- Card 2: MTD -->
+        <div class="wide-card featured">
+            <div class="card-left">
                 <div class="card-icon mtd"><span class="material-icons">trending_up</span></div>
-                <div class="card-title">MONTH TO DATE</div>
-            </div>
-            <div class="spotlight">
-                <div class="spotlight-avatar" id="mtdAvatar2">-</div>
-                <div class="spotlight-info">
-                    <div class="spotlight-label">TOP PERFORMER</div>
-                    <div class="spotlight-name" id="mtdName2">--</div>
+                <div class="card-info">
+                    <div class="card-label">MONTH TO DATE</div>
+                    <div class="card-emp" id="mtdName2">--</div>
                 </div>
             </div>
-            <div class="big-number" id="mtdStaffBig">$0</div>
-            <div class="comparison-bar">
-                <div class="bar-track">
-                    <div class="bar-fill staff-fill" id="mtdBarStaff"></div>
+            <div class="card-metrics">
+                <div class="metric-block">
+                    <div class="metric-label">STAFF</div>
+                    <div class="metric-num primary" id="mtdStaffBig">$0</div>
                 </div>
-                <div class="bar-labels">
-                    <span class="bar-label-staff">Staff</span>
-                    <span class="bar-label-store">Store <span id="mtdStoreBig">$0</span></span>
+                <div class="metric-block">
+                    <div class="metric-label">STORE</div>
+                    <div class="metric-num" id="mtdStoreBig">$0</div>
+                </div>
+                <div class="metric-block">
+                    <div class="metric-label">CONTRIBUTION</div>
+                    <div class="metric-num small" id="mtdContrib">0%</div>
                 </div>
             </div>
-            <div class="card-stat">
-                <span class="material-icons stat-icon">group</span>
-                <span id="mtdContrib">0%</span> of store total
+            <div class="card-bar">
+                <div class="bar-track"><div class="bar-fill" id="mtdBarStaff"></div></div>
             </div>
         </div>
 
         <!-- Card 3: Target -->
-        <div class="perf-card">
-            <div class="card-header">
+        <div class="wide-card">
+            <div class="card-left">
                 <div class="card-icon target"><span class="material-icons">flag</span></div>
-                <div class="card-title">PROFIT TARGET</div>
-            </div>
-            <div class="spotlight">
-                <div class="spotlight-avatar" id="targetAvatar2">-</div>
-                <div class="spotlight-info">
-                    <div class="spotlight-label">TOP PERFORMER</div>
-                    <div class="spotlight-name" id="targetName2">--</div>
+                <div class="card-info">
+                    <div class="card-label">PROFIT TARGET</div>
+                    <div class="card-emp" id="targetName2">--</div>
                 </div>
             </div>
-            <div class="big-number" id="targetStaffBig">$0</div>
-            <div class="target-progress">
-                <div class="target-ring" id="targetRing">
-                    <svg viewBox="0 0 120 120">
-                        <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
-                        <circle class="ring-fill" cx="60" cy="60" r="52" id="ringFill"></circle>
-                    </svg>
-                    <div class="ring-text" id="ringText">0%</div>
+            <div class="card-metrics">
+                <div class="metric-block">
+                    <div class="metric-label">STAFF TARGET</div>
+                    <div class="metric-num primary" id="targetStaffBig">$0</div>
                 </div>
-                <div class="target-details">
-                    <div class="target-detail-row">
-                        <span class="target-detail-label">Staff % of Target</span>
-                        <span class="target-detail-value" id="staffTargetPct">0%</span>
-                    </div>
-                    <div class="target-detail-row">
-                        <span class="target-detail-label">Store % of Target</span>
-                        <span class="target-detail-value" id="storeTargetPct">0%</span>
-                    </div>
-                    <div class="target-detail-row">
-                        <span class="target-detail-label">Store Target</span>
-                        <span class="target-detail-value" id="storeTargetVal">$0</span>
-                    </div>
+                <div class="metric-block">
+                    <div class="metric-label">STORE TARGET</div>
+                    <div class="metric-num" id="storeTargetVal">$0</div>
                 </div>
+                <div class="metric-block">
+                    <div class="metric-label">STAFF %</div>
+                    <div class="metric-num small" id="staffTargetPct">0%</div>
+                </div>
+                <div class="metric-block">
+                    <div class="metric-label">STORE %</div>
+                    <div class="metric-num small" id="storeTargetPct">0%</div>
+                </div>
+            </div>
+            <div class="card-bar">
+                <div class="bar-track"><div class="bar-fill" id="targetBarStaff"></div></div>
             </div>
         </div>
     </div>
@@ -1606,244 +1668,140 @@ STORE_SNAPSHOT_CSS = r"""
     color: rgba(255,255,255,0.4);
 }
 
-/* Cards Row */
-.cards-row {
+/* Cards Stack */
+.cards-stack {
     flex: 1;
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 24px;
-    padding: 10px 50px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 10px 50px;
     position: relative;
     z-index: 1;
 }
 
-.perf-card {
+.wide-card {
+    flex: 1;
     background: rgba(255,255,255,0.07);
     border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 24px;
-    padding: 32px;
+    border-radius: 20px;
+    padding: 28px 40px;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    gap: 40px;
     position: relative;
     overflow: hidden;
 }
 
-.perf-card.featured {
+.wide-card.featured {
     background: rgba(255,255,255,0.12);
     border-color: rgba(0, 170, 144, 0.3);
     box-shadow: 0 0 40px rgba(0, 170, 144, 0.1);
 }
 
-.card-header {
+/* Left section: icon + label + employee */
+.card-left {
     display: flex;
     align-items: center;
-    gap: 14px;
-    margin-bottom: 28px;
+    gap: 18px;
+    min-width: 340px;
 }
 
 .card-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 14px;
-    background: rgba(0, 170, 144, 0.2);
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 .card-icon .material-icons {
-    font-size: 26px;
-    color: var(--brand-primary);
+    font-size: 28px;
 }
 
-.card-icon.ly { background: rgba(0, 170, 144, 0.2); }
-.card-icon.ly .material-icons { color: var(--brand-primary); }
+.card-icon.ly { background: rgba(255, 200, 60, 0.15); }
+.card-icon.ly .material-icons { color: #f0c040; }
 .card-icon.mtd { background: rgba(100, 180, 255, 0.2); }
 .card-icon.mtd .material-icons { color: #64b4ff; }
 .card-icon.target { background: rgba(200, 80, 192, 0.2); }
 .card-icon.target .material-icons { color: var(--brand-accent); }
 
-.card-title {
-    font-size: 16px;
+.card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.card-label {
+    font-size: 13px;
     font-weight: 700;
     letter-spacing: 3px;
-    color: rgba(255,255,255,0.5);
+    color: rgba(255,255,255,0.45);
 }
 
-/* Spotlight (employee) */
-.spotlight {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 20px;
+.card-emp {
+    font-size: 26px;
+    font-weight: 700;
+    white-space: nowrap;
 }
 
-.spotlight-avatar {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
+/* Metrics section */
+.card-metrics {
     display: flex;
-    align-items: center;
+    gap: 48px;
+    flex: 1;
     justify-content: center;
-    font-size: 24px;
-    font-weight: 800;
-    flex-shrink: 0;
 }
 
-.spotlight-label {
+.metric-block {
+    text-align: center;
+}
+
+.metric-label {
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 2px;
     color: rgba(255,255,255,0.4);
+    margin-bottom: 6px;
 }
 
-.spotlight-name {
-    font-size: 24px;
-    font-weight: 700;
-    margin-top: 2px;
-}
-
-.big-number {
-    font-size: 56px;
+.metric-num {
+    font-size: 32px;
     font-weight: 800;
-    color: var(--brand-primary);
-    margin-bottom: 24px;
-    line-height: 1;
+    color: rgba(255,255,255,0.8);
 }
 
-/* Comparison Bar */
-.comparison-bar {
-    margin-bottom: 20px;
+.metric-num.primary {
+    color: var(--brand-primary);
+}
+
+.metric-num.small {
+    font-size: 28px;
+}
+
+/* Bar section */
+.card-bar {
+    width: 200px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
 }
 
 .bar-track {
+    width: 100%;
     height: 12px;
     background: rgba(255,255,255,0.1);
     border-radius: 6px;
     overflow: hidden;
-    margin-bottom: 8px;
 }
 
 .bar-fill {
     height: 100%;
     border-radius: 6px;
-    transition: width 1s ease;
-}
-
-.bar-fill.staff-fill {
     background: linear-gradient(90deg, var(--brand-primary), var(--brand-accent));
-}
-
-.bar-labels {
-    display: flex;
-    justify-content: space-between;
-    font-size: 14px;
-}
-
-.bar-label-staff {
-    color: var(--brand-primary);
-    font-weight: 600;
-}
-
-.bar-label-store {
-    color: rgba(255,255,255,0.5);
-}
-
-.bar-label-store span {
-    font-weight: 700;
-    color: rgba(255,255,255,0.7);
-}
-
-.card-stat {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 16px;
-    color: rgba(255,255,255,0.5);
-    margin-top: auto;
-}
-
-.card-stat span:first-child {
-    font-weight: 700;
-    color: var(--brand-primary);
-}
-
-.stat-icon {
-    font-size: 20px !important;
-    color: rgba(255,255,255,0.3) !important;
-}
-
-/* Target Ring */
-.target-progress {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    margin-bottom: 16px;
-}
-
-.target-ring {
-    width: 120px;
-    height: 120px;
-    position: relative;
-    flex-shrink: 0;
-}
-
-.target-ring svg {
-    transform: rotate(-90deg);
-    width: 100%;
-    height: 100%;
-}
-
-.ring-bg {
-    fill: none;
-    stroke: rgba(255,255,255,0.1);
-    stroke-width: 8;
-}
-
-.ring-fill {
-    fill: none;
-    stroke: var(--brand-primary);
-    stroke-width: 8;
-    stroke-linecap: round;
-    stroke-dasharray: 327;
-    stroke-dashoffset: 327;
-    transition: stroke-dashoffset 1.5s ease;
-}
-
-.ring-text {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 24px;
-    font-weight: 800;
-    color: var(--brand-primary);
-}
-
-.target-details {
-    flex: 1;
-}
-
-.target-detail-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-}
-
-.target-detail-row:last-child {
-    border-bottom: none;
-}
-
-.target-detail-label {
-    font-size: 14px;
-    color: rgba(255,255,255,0.5);
-}
-
-.target-detail-value {
-    font-size: 16px;
-    font-weight: 700;
+    transition: width 1s ease;
+    width: 0%;
 }
 
 /* Footer */
@@ -1943,7 +1901,6 @@ STORE_SNAPSHOT_JS = r"""
 
         // Card 1: LY
         setText('lyName2', topLY.employee_name || 'Unknown');
-        setAvatar('lyAvatar2', topLY.employee_name);
         setText('lyStaffBig', formatCurrency(topLY.prior_year.profit_raw || 0));
         setText('lyStoreBig', formatCurrency(storeLY));
         setBar('lyBarStaff', topLY.prior_year.profit_raw || 0, storeLY);
@@ -1952,7 +1909,6 @@ STORE_SNAPSHOT_JS = r"""
 
         // Card 2: MTD
         setText('mtdName2', topMTD.employee_name || 'Unknown');
-        setAvatar('mtdAvatar2', topMTD.employee_name);
         setText('mtdStaffBig', formatCurrency(topMTD.mtd.profit_raw || 0));
         setText('mtdStoreBig', formatCurrency(storeMTD));
         setBar('mtdBarStaff', topMTD.mtd.profit_raw || 0, storeMTD);
@@ -1961,26 +1917,13 @@ STORE_SNAPSHOT_JS = r"""
 
         // Card 3: Target
         setText('targetName2', topTarget.employee_name || 'Unknown');
-        setAvatar('targetAvatar2', topTarget.employee_name);
         setText('targetStaffBig', formatCurrency(topTarget.targets.profit_target_raw || 0));
-
-        // Target ring - staff % of target
+        setText('storeTargetVal', formatCurrency(storeTarget));
         var staffPct = topTarget.targets.profit_pct_of_target_raw || 0;
-        setText('ringText', Math.round(staffPct) + '%');
-        var ring = document.getElementById('ringFill');
-        if (ring) {
-            var circumference = 2 * Math.PI * 52; // ~327
-            var offset = circumference - (Math.min(staffPct, 100) / 100) * circumference;
-            setTimeout(function() { ring.style.strokeDashoffset = offset; }, 100);
-            if (staffPct >= 100) ring.style.stroke = 'var(--brand-primary)';
-            else if (staffPct >= 70) ring.style.stroke = '#f0ad4e';
-            else ring.style.stroke = '#ff6b6b';
-        }
-
         setText('staffTargetPct', staffPct.toFixed(0) + '%');
         var storePct = storeTarget > 0 ? (storeMTD / storeTarget * 100) : 0;
         setText('storeTargetPct', storePct.toFixed(0) + '%');
-        setText('storeTargetVal', formatCurrency(storeTarget));
+        setBar('targetBarStaff', staffPct, 100);
 
         setText('employeeCount2', employees.length + ' employees');
     }
@@ -1998,11 +1941,6 @@ STORE_SNAPSHOT_JS = r"""
             var pct = Math.min((staffVal / storeVal) * 100, 100);
             el.style.width = pct + '%';
         }
-    }
-
-    function setAvatar(id, name) {
-        var el = document.getElementById(id);
-        if (el && name) el.textContent = name.charAt(0).toUpperCase();
     }
 
     function setText(id, value) {
