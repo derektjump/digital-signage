@@ -1200,6 +1200,7 @@ STORE_TOP_PERFORMERS_CSS = r"""
 
 /* Grid Container */
 .grid-container {
+    flex: 1;
     padding: 20px 60px 10px;
     display: flex;
     flex-direction: column;
@@ -1228,6 +1229,7 @@ STORE_TOP_PERFORMERS_CSS = r"""
 }
 
 .grid-row {
+    flex: 1;
     display: grid;
     grid-template-columns: 280px 1fr 1fr 1fr;
     gap: 20px;
@@ -1334,15 +1336,18 @@ STORE_TOP_PERFORMERS_CSS = r"""
 
 /* Bottom sections (2x2 grid) */
 .bottom-sections {
-    flex: 1;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto;
+    grid-template-rows: 1fr 1fr;
     gap: 12px 20px;
     padding: 10px 60px 6px;
-    align-content: start;
     position: relative;
     z-index: 1;
+}
+
+.bottom-card {
+    display: flex;
+    flex-direction: column;
 }
 
 .bottom-label {
@@ -1354,6 +1359,7 @@ STORE_TOP_PERFORMERS_CSS = r"""
 }
 
 .bottom-content {
+    flex: 1;
     display: flex;
     align-items: center;
     gap: 20px;
