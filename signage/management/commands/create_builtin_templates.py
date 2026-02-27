@@ -38,7 +38,7 @@ STAFF_KPI_HTML = r"""
 
         <div class="kpi-grid">
             <div class="kpi-card">
-                <div class="kpi-icon">&#xe8e5;</div>
+                <div class="kpi-icon"><span class="material-icons">trending_up</span></div>
                 <div class="kpi-label">TODAY'S PROFIT</div>
                 <div class="kpi-value" id="todayProfit">$0</div>
                 <div class="kpi-details">
@@ -48,7 +48,7 @@ STAFF_KPI_HTML = r"""
             </div>
 
             <div class="kpi-card">
-                <div class="kpi-icon">&#xe85c;</div>
+                <div class="kpi-icon"><span class="material-icons">calendar_month</span></div>
                 <div class="kpi-label">MTD PROFIT</div>
                 <div class="kpi-value" id="mtdProfit">$0</div>
                 <div class="kpi-details">
@@ -58,7 +58,7 @@ STAFF_KPI_HTML = r"""
             </div>
 
             <div class="kpi-card target-card">
-                <div class="kpi-icon">&#xe153;</div>
+                <div class="kpi-icon"><span class="material-icons">flag</span></div>
                 <div class="kpi-label">PROFIT TARGET</div>
                 <div class="kpi-value" id="profitTarget">$0</div>
                 <div class="progress-bar">
@@ -70,7 +70,7 @@ STAFF_KPI_HTML = r"""
             </div>
 
             <div class="kpi-card target-card">
-                <div class="kpi-icon">&#xeb7f;</div>
+                <div class="kpi-icon"><span class="material-icons">devices</span></div>
                 <div class="kpi-label">DEVICE TARGET</div>
                 <div class="kpi-value" id="deviceActual">0 <span class="target-of">/ <span id="deviceTarget">0</span></span></div>
                 <div class="progress-bar">
@@ -82,7 +82,7 @@ STAFF_KPI_HTML = r"""
             </div>
 
             <div class="kpi-card">
-                <div class="kpi-icon">&#xe889;</div>
+                <div class="kpi-icon"><span class="material-icons">history</span></div>
                 <div class="kpi-label">VS LAST YEAR</div>
                 <div class="kpi-value" id="lyProfit">$0</div>
                 <div class="kpi-details">
@@ -91,7 +91,7 @@ STAFF_KPI_HTML = r"""
             </div>
 
             <div class="kpi-card">
-                <div class="kpi-icon">&#xe80b;</div>
+                <div class="kpi-icon"><span class="material-icons">store</span></div>
                 <div class="kpi-label">STORE MTD</div>
                 <div class="kpi-value" id="storeProfit">$0</div>
                 <div class="kpi-details">
@@ -284,17 +284,19 @@ STAFF_KPI_CSS = r"""
 }
 
 .kpi-icon {
-    font-family: 'Material Icons';
-    font-size: 32px;
-    color: var(--brand-primary);
     margin-bottom: 12px;
     width: 56px;
     height: 56px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.3);
     border-radius: 16px;
+}
+
+.kpi-icon .material-icons {
+    font-size: 30px;
+    color: var(--brand-primary);
 }
 
 .kpi-label {
