@@ -1171,17 +1171,24 @@ def device_config(request, device_id):
             for item in device.assigned_playlist.items.order_by('order'):
                 if item.item_type == 'screen' and item.screen:
                     duration = item.effective_duration
-                    # For screens with page_duration, calculate dynamic duration
-                    # based on actual employee/page count
+                    # For screens with page_duration, calculate dynamic max timeout.
+                    # The Fire TV app uses signal-based advancement (signageCycleComplete)
+                    # as the primary mechanism; this is just a safety fallback.
                     if item.screen.page_duration:
                         try:
+                            # Try to estimate page count from employee data
                             emp_data = get_employee_data(store_id=item.screen.store_filter_id)
+                            page_count = 0
                             if emp_data and emp_data.get('employees'):
                                 page_count = len(emp_data['employees'])
-                                if page_count > 0:
-                                    duration = page_count * item.screen.page_duration
+                            # Use a generous max timeout (page_count * duration + buffer)
+                            # to ensure the signal fires before the fallback
+                            if page_count > 0:
+                                duration = max(page_count * item.screen.page_duration + 10, 60)
+                            else:
+                                duration = max(item.effective_duration, 120)
                         except Exception:
-                            pass  # Fall back to static duration
+                            duration = max(item.effective_duration, 120)
                     items.append({
                         'player_url': base_url + reverse('signage:screen_player', kwargs={'slug': item.screen.slug}),
                         'duration_seconds': duration,
