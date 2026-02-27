@@ -1113,6 +1113,26 @@ STORE_TOP_PERFORMERS_HTML = r"""
                 <div class="bottom-detail" id="companyRankDetail">MTD Profit</div>
             </div>
         </div>
+
+        <!-- Top Employee Company-Wide -->
+        <div class="bottom-card" id="topCompanyEmpSection">
+            <div class="bottom-label">TOP IN COMPANY &mdash; MTD PROFIT</div>
+            <div class="bottom-content">
+                <div class="bottom-name" id="topCompanyEmpName">--</div>
+                <div class="bottom-value" id="topCompanyEmpValue">$0</div>
+                <div class="bottom-detail" id="topCompanyEmpStore"></div>
+            </div>
+        </div>
+
+        <!-- Top Store Company-Wide -->
+        <div class="bottom-card" id="topCompanyStoreSection">
+            <div class="bottom-label">TOP STORE &mdash; MTD PROFIT</div>
+            <div class="bottom-content">
+                <div class="bottom-name" id="topCompanyStoreName">--</div>
+                <div class="bottom-value" id="topCompanyStoreValue">$0</div>
+                <div class="bottom-detail" id="topCompanyStoreDetail"></div>
+            </div>
+        </div>
     </div>
 
     <div class="footer">
@@ -1215,8 +1235,8 @@ STORE_TOP_PERFORMERS_CSS = r"""
     background: rgba(255,255,255,0.07);
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 20px;
-    padding: 36px 30px;
-    margin-bottom: 16px;
+    padding: 28px 30px;
+    margin-bottom: 12px;
     transition: transform 0.3s ease;
 }
 
@@ -1312,52 +1332,51 @@ STORE_TOP_PERFORMERS_CSS = r"""
 .metric-sub.ahead { color: var(--brand-primary); }
 .metric-sub.behind { color: #ff6b6b; }
 
-/* Bottom sections (runner-up + company rank) */
+/* Bottom sections (2x2 grid) */
 .bottom-sections {
     flex: 1;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    padding: 12px 60px 8px;
+    grid-template-rows: auto auto;
+    gap: 12px 20px;
+    padding: 10px 60px 6px;
     align-content: start;
     position: relative;
     z-index: 1;
 }
 
-.bottom-card {}
-
 .bottom-label {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
-    letter-spacing: 3px;
+    letter-spacing: 2.5px;
     color: rgba(255,255,255,0.3);
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 .bottom-content {
     display: flex;
     align-items: center;
-    gap: 24px;
+    gap: 20px;
     background: rgba(255,255,255,0.05);
     border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 16px;
-    padding: 22px 28px;
+    border-radius: 14px;
+    padding: 18px 24px;
 }
 
 .bottom-name {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 700;
     flex: 1;
 }
 
 .bottom-value {
-    font-size: 32px;
+    font-size: 28px;
     font-weight: 800;
     color: rgba(255,255,255,0.7);
 }
 
 .bottom-detail {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     color: rgba(255,255,255,0.4);
 }
@@ -1416,23 +1435,47 @@ STORE_TOP_PERFORMERS_JS = r"""
         var storeId = sales.store && sales.store.store_id;
         var storeName = sales.store && sales.store.store_name;
 
-        if (!storeId && !storeName) return;
-
-        var rank = 0;
-        var storeProfit = '$0';
-        for (var i = 0; i < allStores.length; i++) {
-            if (allStores[i].store_id === storeId || allStores[i].store_name === storeName) {
-                rank = i + 1;
-                storeProfit = allStores[i].value || '$0';
-                break;
+        // Current store rank
+        if (storeId || storeName) {
+            for (var i = 0; i < allStores.length; i++) {
+                if (allStores[i].store_id === storeId || allStores[i].store_name === storeName) {
+                    setText('companyRankText', '#' + (i + 1) + ' of ' + allStores.length + ' stores');
+                    setText('companyRankProfit', allStores[i].value || '$0');
+                    setText('companyRankDetail', 'MTD Profit');
+                    break;
+                }
             }
         }
 
-        if (rank > 0) {
-            setText('companyRankText', '#' + rank + ' of ' + allStores.length + ' stores');
-            setText('companyRankProfit', storeProfit);
-            setText('companyRankDetail', 'MTD Profit');
+        // Top store in company (first in sorted list)
+        if (allStores.length > 0) {
+            var top = allStores[0];
+            setText('topCompanyStoreName', top.store_name || 'Unknown');
+            setText('topCompanyStoreValue', top.value || '$0');
+            setText('topCompanyStoreDetail', 'MTD Profit');
         }
+
+        // Fetch company-wide employees for top employee
+        fetchCompanyTopEmployee();
+    }
+
+    function fetchCompanyTopEmployee() {
+        fetch('/api/data/employees/')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.success || !data.employees || !data.employees.employees) return;
+                var allEmps = data.employees.employees;
+                if (allEmps.length === 0) return;
+
+                var topEmp = allEmps.slice().sort(function(a, b) {
+                    return (b.mtd.profit_raw || 0) - (a.mtd.profit_raw || 0);
+                })[0];
+
+                setText('topCompanyEmpName', topEmp.employee_name || 'Unknown');
+                setText('topCompanyEmpValue', formatCurrency(topEmp.mtd.profit_raw || 0));
+                setText('topCompanyEmpStore', topEmp.store_name || '');
+            })
+            .catch(function() {});
     }
 
     function updateHeader() {
