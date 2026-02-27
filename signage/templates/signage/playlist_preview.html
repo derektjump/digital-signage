@@ -129,7 +129,7 @@
         var durStr = durMin > 0
             ? durMin + ':' + (durSec < 10 ? '0' : '') + durSec
             : durSec + 's';
-        if (item.duration === 0) durStr = 'Auto';
+        if (item.auto) durStr = 'Auto (' + durStr + ')';
 
         row.innerHTML =
             '<div class="w-7 text-center text-sm font-medium text-gray-400">' + (i + 1) + '</div>' +
