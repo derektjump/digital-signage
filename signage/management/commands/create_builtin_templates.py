@@ -796,6 +796,12 @@ STORE_LEADERBOARD_CSS = r"""
     border-color: rgba(255,255,255,0.15);
 }
 
+.lb-row.highlighted {
+    background: rgba(0, 170, 144, 0.15);
+    border-color: rgba(0, 170, 144, 0.4);
+    box-shadow: 0 0 20px rgba(0, 170, 144, 0.1);
+}
+
 .lb-rank {
     font-size: 26px;
     font-weight: 800;
@@ -892,6 +898,7 @@ STORE_LEADERBOARD_JS = r"""
     var totalPages = 1;
     var pageTimer = null;
     var firstRender = true;
+    var highlightStoreId = (window.designConfig && window.designConfig.store_filter_id) || null;
 
     // Load required fonts dynamically
     var link = document.createElement('link');
@@ -961,7 +968,8 @@ STORE_LEADERBOARD_JS = r"""
         pageStores.forEach(function(store, i) {
             var rank = start + i + 1;
             var row = document.createElement('div');
-            row.className = 'lb-row' + (rank <= 3 ? ' top-3' : '');
+            var isHighlighted = highlightStoreId && store.store_id === highlightStoreId;
+            row.className = 'lb-row' + (rank <= 3 ? ' top-3' : '') + (isHighlighted ? ' highlighted' : '');
 
             var rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
             var pctRaw = store.profit_pct_of_target_raw || 0;
