@@ -20,6 +20,8 @@
         #content {
             width: 100%;
             height: 100%;
+            opacity: 0;
+            transition: opacity 0.4s ease;
         }
     </style>
     <style id="user-css"></style>
@@ -37,6 +39,12 @@
         window.signageData = null;
         window.employeeData = null;
         window.designConfig = null;
+        window.signageCycleComplete = false;
+
+        // Reveal content after scaling is done
+        function revealContent() {
+            document.getElementById('content').style.opacity = '1';
+        }
 
         // Load design HTML/CSS/JS from API
         async function loadDesign() {
@@ -44,10 +52,11 @@
                 const response = await fetch('/api/designs/' + DESIGN_SLUG + '/');
                 const data = await response.json();
 
-                // Store design config (store filter, date filter)
+                // Store design config (store filter, date filter, page duration)
                 window.designConfig = {
                     store_filter_id: data.store_filter_id || null,
                     date_filter_mode: data.date_filter_mode || 'current',
+                    page_duration: data.page_duration || null,
                 };
 
                 // Inject CSS (from css field + any <style> tags in HTML)
@@ -86,10 +95,19 @@
                     }
                 }
 
+                // Scale immediately after HTML is injected, then reveal
+                autoScale();
+                setTimeout(function() {
+                    autoScale();
+                    revealContent();
+                }, 300);
+
                 // Fetch data after design is loaded
                 fetchSalesData();
             } catch (error) {
                 console.error('Error loading design:', error);
+                // Reveal even on error so it's not stuck on black
+                revealContent();
             }
         }
 
@@ -111,6 +129,8 @@
                     window.dispatchEvent(new CustomEvent('employeeDataLoaded', { detail: data.employees }));
                     // Process template variables
                     processTemplate();
+                    // Re-scale after data renders (content size may change)
+                    setTimeout(autoScale, 100);
                 }
             } catch (error) {
                 console.error('Error fetching data:', error);
@@ -200,8 +220,6 @@
         // Load design then start data refresh cycle
         loadDesign();
         setInterval(fetchSalesData, 5 * 60 * 1000);
-        // Auto-scale after a brief delay to let design render
-        setTimeout(autoScale, 1500);
         window.addEventListener('resize', autoScale);
     </script>
     {% endverbatim %}

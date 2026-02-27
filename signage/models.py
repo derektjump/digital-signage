@@ -237,6 +237,13 @@ class ScreenDesign(models.Model):
         help_text="Date context for data displayed on this screen"
     )
 
+    # Multi-page timing
+    page_duration = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Seconds per page for multi-page designs (e.g., per employee in KPI cards)"
+    )
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

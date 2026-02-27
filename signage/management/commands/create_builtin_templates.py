@@ -452,7 +452,10 @@ STAFF_KPI_JS = r"""
     var rotationTimer = null;
     var dataLoaded = false;
     var firstRender = true;
-    var ROTATION_INTERVAL = 8000; // 8 seconds per employee
+    // Use page_duration from design config if set, otherwise default to 5 seconds
+    var ROTATION_INTERVAL = (window.designConfig && window.designConfig.page_duration)
+        ? window.designConfig.page_duration * 1000
+        : 5000;
 
     // Load required fonts dynamically
     ['https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap',
@@ -546,7 +549,12 @@ STAFF_KPI_JS = r"""
 
     function showEmployee(index) {
         if (employees.length === 0) return;
-        currentIndex = index % employees.length;
+        var wrappedIndex = index % employees.length;
+        // Signal cycle complete when we wrap back to the first employee
+        if (index > 0 && wrappedIndex === 0) {
+            window.signageCycleComplete = true;
+        }
+        currentIndex = wrappedIndex;
         var emp = employees[currentIndex];
 
         var content = document.getElementById('mainContent');
@@ -863,7 +871,10 @@ STORE_LEADERBOARD_CSS = r"""
 STORE_LEADERBOARD_JS = r"""
 (function() {
     var ROWS_PER_PAGE = 10;
-    var PAGE_INTERVAL = 10000;
+    // Use page_duration from design config if set, otherwise default to 10 seconds
+    var PAGE_INTERVAL = (window.designConfig && window.designConfig.page_duration)
+        ? window.designConfig.page_duration * 1000
+        : 10000;
     var stores = [];
     var currentPage = 0;
     var totalPages = 1;
@@ -903,6 +914,10 @@ STORE_LEADERBOARD_JS = r"""
     });
 
     function showPage(page) {
+        // Signal cycle complete when we wrap back to the first page
+        if (page > 0 && page % totalPages === 0) {
+            window.signageCycleComplete = true;
+        }
         currentPage = page % totalPages;
         var container = document.getElementById('boardContainer');
 

@@ -92,6 +92,8 @@ public class MainActivity extends Activity {
 
     // Playlist rotation handler
     private Handler playlistHandler;
+    private Handler cycleCheckHandler;
+    private Runnable cycleCheckRunnable;
     private int currentPlaylistIndex = 0;
     private List<PlaylistItem> playlistItems;
 
@@ -183,6 +185,7 @@ public class MainActivity extends Activity {
         // Initialize handlers
         pollHandler = new Handler(Looper.getMainLooper());
         playlistHandler = new Handler(Looper.getMainLooper());
+        cycleCheckHandler = new Handler(Looper.getMainLooper());
 
         // Check for saved device ID first
         String savedDeviceId = loadSavedDeviceId();
@@ -471,7 +474,22 @@ public class MainActivity extends Activity {
     }
 
     /**
-     * Load a specific playlist item
+     * Advance to the next playlist item
+     */
+    private void advancePlaylist() {
+        // Stop any pending timers/checks
+        playlistHandler.removeCallbacksAndMessages(null);
+        if (cycleCheckRunnable != null) {
+            cycleCheckHandler.removeCallbacks(cycleCheckRunnable);
+        }
+        currentPlaylistIndex = (currentPlaylistIndex + 1) % playlistItems.size();
+        loadPlaylistItem(currentPlaylistIndex);
+    }
+
+    /**
+     * Load a specific playlist item.
+     * Uses signal-based advancement: polls window.signageCycleComplete every second.
+     * Falls back to duration_seconds as a maximum timeout.
      */
     private void loadPlaylistItem(int index) {
         if (playlistItems == null || playlistItems.isEmpty()) {
@@ -481,10 +499,39 @@ public class MainActivity extends Activity {
         PlaylistItem item = playlistItems.get(index);
         webView.loadUrl(item.url);
 
-        // Schedule next item
+        // Clear any previous timers
+        playlistHandler.removeCallbacksAndMessages(null);
+        if (cycleCheckRunnable != null) {
+            cycleCheckHandler.removeCallbacks(cycleCheckRunnable);
+        }
+
+        // Only set up rotation if there's more than one item
+        if (playlistItems.size() <= 1) {
+            return;
+        }
+
+        // Start polling for cycle-complete signal from the screen's JS
+        cycleCheckRunnable = new Runnable() {
+            @Override
+            public void run() {
+                webView.evaluateJavascript("window.signageCycleComplete", value -> {
+                    if ("true".equals(value)) {
+                        advancePlaylist();
+                    } else {
+                        cycleCheckHandler.postDelayed(this, 1000);
+                    }
+                });
+            }
+        };
+        // Start checking after 3 seconds (give page time to load)
+        cycleCheckHandler.postDelayed(cycleCheckRunnable, 3000);
+
+        // Safety fallback: max duration timer
         playlistHandler.postDelayed(() -> {
-            currentPlaylistIndex = (currentPlaylistIndex + 1) % playlistItems.size();
-            loadPlaylistItem(currentPlaylistIndex);
+            if (cycleCheckRunnable != null) {
+                cycleCheckHandler.removeCallbacks(cycleCheckRunnable);
+            }
+            advancePlaylist();
         }, item.durationSeconds * 1000L);
     }
 
@@ -552,6 +599,9 @@ public class MainActivity extends Activity {
         }
         if (playlistHandler != null) {
             playlistHandler.removeCallbacksAndMessages(null);
+        }
+        if (cycleCheckHandler != null) {
+            cycleCheckHandler.removeCallbacksAndMessages(null);
         }
         // Release wake lock
         if (wakeLock != null && wakeLock.isHeld()) {

@@ -178,7 +178,7 @@ class ScreenDesignUpdateView(LoginRequiredMixin, UpdateView):
     model = ScreenDesign
     template_name = 'signage/screen_design_form.html'
     fields = ['name', 'slug', 'description', 'folder', 'html_code', 'css_code', 'js_code', 'notes', 'is_active',
-              'store_filter_id', 'date_filter_mode']
+              'store_filter_id', 'date_filter_mode', 'page_duration']
     slug_field = 'slug'
     slug_url_kwarg = 'slug'
 
@@ -428,6 +428,7 @@ def create_from_template(request, slug):
         folder_id = request.POST.get('folder', '').strip()
         store_filter_id = request.POST.get('store_filter_id', '').strip()
         date_filter_mode = request.POST.get('date_filter_mode', 'current').strip()
+        page_duration_str = request.POST.get('page_duration', '').strip()
 
         if not name:
             messages.error(request, 'Design name is required.')
@@ -477,6 +478,14 @@ def create_from_template(request, slug):
             except DesignFolder.DoesNotExist:
                 pass
 
+        # Parse page duration
+        page_duration = None
+        if page_duration_str:
+            try:
+                page_duration = int(page_duration_str)
+            except ValueError:
+                pass
+
         # Create new design with store filter
         design = ScreenDesign.objects.create(
             name=name,
@@ -488,6 +497,7 @@ def create_from_template(request, slug):
             folder=folder,
             store_filter_id=int(store_filter_id) if store_filter_id else None,
             date_filter_mode=date_filter_mode,
+            page_duration=page_duration,
         )
 
         # Increment template usage count
@@ -1160,9 +1170,21 @@ def device_config(request, device_id):
             items = []
             for item in device.assigned_playlist.items.order_by('order'):
                 if item.item_type == 'screen' and item.screen:
+                    duration = item.effective_duration
+                    # For screens with page_duration, calculate dynamic duration
+                    # based on actual employee/page count
+                    if item.screen.page_duration:
+                        try:
+                            emp_data = get_employee_data(store_id=item.screen.store_filter_id)
+                            if emp_data and emp_data.get('employees'):
+                                page_count = len(emp_data['employees'])
+                                if page_count > 0:
+                                    duration = page_count * item.screen.page_duration
+                        except Exception:
+                            pass  # Fall back to static duration
                     items.append({
                         'player_url': base_url + reverse('signage:screen_player', kwargs={'slug': item.screen.slug}),
-                        'duration_seconds': item.effective_duration,
+                        'duration_seconds': duration,
                     })
                 elif item.item_type == 'media' and item.media_asset:
                     items.append({
@@ -1227,6 +1249,7 @@ def screen_design_api(request, slug):
         'js': design.js_code,
         'store_filter_id': design.store_filter_id,
         'date_filter_mode': design.date_filter_mode,
+        'page_duration': design.page_duration,
     })
 
 
