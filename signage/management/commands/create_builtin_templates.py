@@ -1200,7 +1200,7 @@ STORE_TOP_PERFORMERS_CSS = r"""
 
 /* Grid Container */
 .grid-container {
-    flex: 3;
+    flex: 4;
     padding: 20px 60px 10px;
     display: flex;
     flex-direction: column;
@@ -1336,7 +1336,7 @@ STORE_TOP_PERFORMERS_CSS = r"""
 
 /* Bottom sections (2x2 grid) */
 .bottom-sections {
-    flex: 2;
+    flex: 1.5;
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
@@ -1371,19 +1371,19 @@ STORE_TOP_PERFORMERS_CSS = r"""
 }
 
 .bottom-name {
-    font-size: 20px;
+    font-size: 24px;
     font-weight: 700;
     flex: 1;
 }
 
 .bottom-value {
-    font-size: 28px;
+    font-size: 32px;
     font-weight: 800;
     color: rgba(255,255,255,0.7);
 }
 
 .bottom-detail {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
     color: rgba(255,255,255,0.4);
 }
