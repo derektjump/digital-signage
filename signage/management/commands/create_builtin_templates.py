@@ -797,9 +797,9 @@ STORE_LEADERBOARD_CSS = r"""
 }
 
 .lb-row.highlighted {
-    background: rgba(0, 170, 144, 0.15);
-    border-color: rgba(0, 170, 144, 0.4);
-    box-shadow: 0 0 20px rgba(0, 170, 144, 0.1);
+    background: rgba(255, 255, 255, 0.18);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.08);
 }
 
 .lb-rank {
