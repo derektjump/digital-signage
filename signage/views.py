@@ -769,33 +769,39 @@ class PlaylistPreviewView(LoginRequiredMixin, DetailView):
     template_name = 'signage/playlist_preview.html'
 
     def _calculate_auto_duration(self, item):
-        """Calculate duration for auto-mode items (duration_seconds=0)."""
+        """Calculate duration for auto-mode items (duration_seconds=0).
+
+        Uses store_filter_id to distinguish screen types:
+        - With store_filter_id: KPI/per-employee screen → duration based on employee count
+        - Without store_filter_id: Company-wide leaderboard → duration based on store page count
+        """
         if not (item.item_type == 'screen' and item.screen):
             return 30
 
         screen = item.screen
         page_duration = screen.page_duration or 5
 
-        # Try employee-based page count first (KPI templates)
         if screen.page_duration:
-            try:
-                emp_data = get_employee_data(store_id=screen.store_filter_id)
-                if emp_data and emp_data.get('employees'):
-                    page_count = len(emp_data['employees'])
-                    if page_count > 0:
-                        return page_count * page_duration + 5
-            except Exception:
-                pass
-
-            # Fall back to store-based page count (leaderboard templates)
-            try:
-                sales = get_sales_data()
-                store_count = len(sales.get('mtd', {}).get('all_profit', []))
-                if store_count > 0:
-                    pages = -(-store_count // 10)  # ceil division, 10 per page
-                    return pages * page_duration + 5
-            except Exception:
-                pass
+            if screen.store_filter_id:
+                # Store-filtered screen (e.g., Staff KPI Card) — use employee count
+                try:
+                    emp_data = get_employee_data(store_id=screen.store_filter_id)
+                    if emp_data and emp_data.get('employees'):
+                        page_count = len(emp_data['employees'])
+                        if page_count > 0:
+                            return page_count * page_duration + 5
+                except Exception:
+                    pass
+            else:
+                # Company-wide screen (e.g., Leaderboard) — use store page count
+                try:
+                    sales = get_sales_data()
+                    store_count = len(sales.get('mtd', {}).get('all_profit', []))
+                    if store_count > 0:
+                        pages = -(-store_count // 10)  # ceil division, 10 per page
+                        return pages * page_duration + 5
+                except Exception:
+                    pass
 
         return max(60, page_duration * 10)
 
