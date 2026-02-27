@@ -285,10 +285,16 @@ STAFF_KPI_CSS = r"""
 
 .kpi-icon {
     font-family: 'Material Icons';
-    font-size: 40px;
+    font-size: 32px;
     color: var(--brand-primary);
-    margin-bottom: 10px;
-    opacity: 0.8;
+    margin-bottom: 12px;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
 }
 
 .kpi-label {
@@ -773,7 +779,7 @@ STORE_LEADERBOARD_CSS = r"""
 /* Leaderboard row */
 .lb-row {
     display: grid;
-    grid-template-columns: 70px 1fr 180px 140px 180px 140px;
+    grid-template-columns: 70px 1fr 320px 200px 160px;
     align-items: center;
     background: rgba(255,255,255,0.07);
     border: 1px solid rgba(255,255,255,0.08);
@@ -826,6 +832,13 @@ STORE_LEADERBOARD_CSS = r"""
 .lb-pct.behind { color: #ff8a8a; }
 .lb-pct.ahead { color: #00ffcc; }
 
+.lb-value-group {
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
 .lb-change {
     font-size: 16px;
     font-weight: 700;
@@ -836,7 +849,7 @@ STORE_LEADERBOARD_CSS = r"""
 
 .lb-header {
     display: grid;
-    grid-template-columns: 70px 1fr 180px 140px 180px 140px;
+    grid-template-columns: 70px 1fr 320px 200px 160px;
     padding: 0 24px 6px;
     gap: 16px;
 }
@@ -937,7 +950,7 @@ STORE_LEADERBOARD_JS = r"""
         // Column header
         var header = document.createElement('div');
         header.className = 'lb-header';
-        header.innerHTML = '<span>RANK</span><span>STORE</span><span>MTD PROFIT</span><span>VS LY</span><span>LY PROFIT</span><span>% TARGET</span>';
+        header.innerHTML = '<span>RANK</span><span>STORE</span><span>MTD PROFIT</span><span>LY PROFIT</span><span>% TARGET</span>';
         container.appendChild(header);
 
         var start = currentPage * ROWS_PER_PAGE;
@@ -970,8 +983,7 @@ STORE_LEADERBOARD_JS = r"""
             row.innerHTML =
                 '<div class="lb-rank ' + rankClass + '">' + rank + '</div>' +
                 '<div class="lb-name">' + (store.store_name || '') + '</div>' +
-                '<div class="lb-value">' + (store.value || '$0') + '</div>' +
-                '<div class="lb-change ' + vsLyClass + '">' + vsLyText + '</div>' +
+                '<div class="lb-value-group"><span class="lb-value">' + (store.value || '$0') + '</span><span class="lb-change ' + vsLyClass + '">' + vsLyText + '</span></div>' +
                 '<div class="lb-secondary">' + (store.ly_month_profit || '$0') + '</div>' +
                 '<div class="lb-pct ' + pctClass + '">' + pctText + '</div>';
 
@@ -1080,13 +1092,26 @@ STORE_TOP_PERFORMERS_HTML = r"""
         </div>
     </div>
 
-    <!-- 2nd Place Runner-Up Section -->
-    <div class="runner-up-section" id="runnerUpSection">
-        <div class="runner-up-label">RUNNER UP &mdash; MONTH TO DATE</div>
-        <div class="runner-up-content">
-            <div class="runner-up-name" id="runnerUpName">--</div>
-            <div class="runner-up-value" id="runnerUpValue">$0</div>
-            <div class="runner-up-gap" id="runnerUpGap"></div>
+    <!-- Bottom sections -->
+    <div class="bottom-sections">
+        <!-- 2nd Place Runner-Up -->
+        <div class="bottom-card" id="runnerUpSection">
+            <div class="bottom-label">RUNNER UP &mdash; MONTH TO DATE</div>
+            <div class="bottom-content">
+                <div class="bottom-name" id="runnerUpName">--</div>
+                <div class="bottom-value" id="runnerUpValue">$0</div>
+                <div class="bottom-detail" id="runnerUpGap"></div>
+            </div>
+        </div>
+
+        <!-- Store Company Rank -->
+        <div class="bottom-card" id="companyRankSection">
+            <div class="bottom-label">STORE RANKING</div>
+            <div class="bottom-content">
+                <div class="bottom-name" id="companyRankText">--</div>
+                <div class="bottom-value" id="companyRankProfit">$0</div>
+                <div class="bottom-detail" id="companyRankDetail">MTD Profit</div>
+            </div>
         </div>
     </div>
 
@@ -1155,8 +1180,7 @@ STORE_TOP_PERFORMERS_CSS = r"""
 
 /* Grid Container */
 .grid-container {
-    flex: 1;
-    padding: 20px 60px;
+    padding: 20px 60px 10px;
     display: flex;
     flex-direction: column;
     gap: 0;
@@ -1288,45 +1312,52 @@ STORE_TOP_PERFORMERS_CSS = r"""
 .metric-sub.ahead { color: var(--brand-primary); }
 .metric-sub.behind { color: #ff6b6b; }
 
-/* Runner-up section */
-.runner-up-section {
-    padding: 16px 60px 8px;
+/* Bottom sections (runner-up + company rank) */
+.bottom-sections {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 12px 60px 8px;
+    align-content: start;
     position: relative;
     z-index: 1;
 }
 
-.runner-up-label {
-    font-size: 13px;
+.bottom-card {}
+
+.bottom-label {
+    font-size: 12px;
     font-weight: 700;
     letter-spacing: 3px;
     color: rgba(255,255,255,0.3);
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
-.runner-up-content {
+.bottom-content {
     display: flex;
     align-items: center;
-    gap: 30px;
+    gap: 24px;
     background: rgba(255,255,255,0.05);
     border: 1px solid rgba(255,255,255,0.08);
     border-radius: 16px;
-    padding: 24px 30px;
+    padding: 22px 28px;
 }
 
-.runner-up-name {
-    font-size: 24px;
+.bottom-name {
+    font-size: 22px;
     font-weight: 700;
     flex: 1;
 }
 
-.runner-up-value {
-    font-size: 36px;
+.bottom-value {
+    font-size: 32px;
     font-weight: 800;
     color: rgba(255,255,255,0.7);
 }
 
-.runner-up-gap {
-    font-size: 18px;
+.bottom-detail {
+    font-size: 16px;
     font-weight: 600;
     color: rgba(255,255,255,0.4);
 }
@@ -1360,6 +1391,7 @@ STORE_TOP_PERFORMERS_JS = r"""
 
     window.addEventListener('signageDataLoaded', function() {
         updateHeader();
+        populateCompanyRank();
     });
 
     window.addEventListener('employeeDataLoaded', function() {
@@ -1374,6 +1406,33 @@ STORE_TOP_PERFORMERS_JS = r"""
     function showNoData() {
         var el = document.getElementById('mtdName');
         if (el) el.textContent = 'No data available';
+    }
+
+    function populateCompanyRank() {
+        var sales = window.signageData;
+        if (!sales || !sales.mtd || !sales.mtd.all_profit) return;
+
+        var allStores = sales.mtd.all_profit;
+        var storeId = sales.store && sales.store.store_id;
+        var storeName = sales.store && sales.store.store_name;
+
+        if (!storeId && !storeName) return;
+
+        var rank = 0;
+        var storeProfit = '$0';
+        for (var i = 0; i < allStores.length; i++) {
+            if (allStores[i].store_id === storeId || allStores[i].store_name === storeName) {
+                rank = i + 1;
+                storeProfit = allStores[i].value || '$0';
+                break;
+            }
+        }
+
+        if (rank > 0) {
+            setText('companyRankText', '#' + rank + ' of ' + allStores.length + ' stores');
+            setText('companyRankProfit', storeProfit);
+            setText('companyRankDetail', 'MTD Profit');
+        }
     }
 
     function updateHeader() {
