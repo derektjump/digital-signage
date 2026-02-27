@@ -1171,24 +1171,26 @@ def device_config(request, device_id):
             for item in device.assigned_playlist.items.order_by('order'):
                 if item.item_type == 'screen' and item.screen:
                     duration = item.effective_duration
-                    # For screens with page_duration, calculate dynamic max timeout.
-                    # The Fire TV app uses signal-based advancement (signageCycleComplete)
-                    # as the primary mechanism; this is just a safety fallback.
-                    if item.screen.page_duration:
+                    # For screens with page_duration (multi-page designs), calculate
+                    # a dynamic max timeout. The Fire TV app uses signal-based
+                    # advancement (signageCycleComplete) as the primary mechanism;
+                    # this duration is just a safety fallback.
+                    # duration_seconds=0 means "auto mode" (wait for all pages).
+                    if item.screen.page_duration and item.duration_seconds == 0:
                         try:
-                            # Try to estimate page count from employee data
                             emp_data = get_employee_data(store_id=item.screen.store_filter_id)
                             page_count = 0
                             if emp_data and emp_data.get('employees'):
                                 page_count = len(emp_data['employees'])
-                            # Use a generous max timeout (page_count * duration + buffer)
-                            # to ensure the signal fires before the fallback
                             if page_count > 0:
                                 duration = max(page_count * item.screen.page_duration + 10, 60)
                             else:
-                                duration = max(item.effective_duration, 120)
+                                duration = max(120, item.screen.page_duration * 20)
                         except Exception:
-                            duration = max(item.effective_duration, 120)
+                            duration = max(120, item.screen.page_duration * 20)
+                    elif item.duration_seconds == 0:
+                        # Auto mode but no page_duration set — generous default
+                        duration = 120
                     items.append({
                         'player_url': base_url + reverse('signage:screen_player', kwargs={'slug': item.screen.slug}),
                         'duration_seconds': duration,

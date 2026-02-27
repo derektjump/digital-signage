@@ -82,7 +82,7 @@
                                 {% if item.item_type == 'screen' %}{{ item.screen.name }}{% else %}{{ item.media_asset.name }}{% endif %}
                             </p>
                             <p class="text-sm text-gray-500">
-                                {{ item.get_item_type_display }} &middot; {{ item.duration_seconds }}s duration
+                                {{ item.get_item_type_display }} &middot; {% if item.duration_seconds == 0 %}Auto (all pages){% else %}{{ item.duration_seconds }}s duration{% endif %}
                             </p>
                         </div>
                         <input type="hidden" name="items[]" value="{{ item.item_type }}:{% if item.item_type == 'screen' %}{{ item.screen_id }}{% else %}{{ item.media_asset_id }}{% endif %}:{{ item.duration_seconds }}">
@@ -145,13 +145,13 @@
             {% if available_designs %}
                 {% for design in available_designs %}
                 <div class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors"
-                     onclick="selectItem('screen', '{{ design.id }}', '{{ design.name|escapejs }}', '')">
+                     onclick="selectItem('screen', '{{ design.id }}', '{{ design.name|escapejs }}', '', {{ design.page_duration|default:'0' }})">
                     <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(10, 10, 12, 0.05);">
                         <span class="material-symbols-outlined" style="color: #0a0a0c;">web</span>
                     </div>
                     <div>
                         <p class="font-medium text-gray-900">{{ design.name }}</p>
-                        <p class="text-sm text-gray-500">{{ design.slug }}</p>
+                        <p class="text-sm text-gray-500">{{ design.slug }}{% if design.page_duration %} &middot; {{ design.page_duration }}s/page{% endif %}</p>
                     </div>
                 </div>
                 {% endfor %}
@@ -194,11 +194,32 @@
                     <p class="text-sm text-gray-500" id="selectedItemType">Type</p>
                 </div>
             </div>
-            <div class="mb-4">
+
+            <!-- Duration mode toggle (shown for multi-page screen designs) -->
+            <div id="durationModeSection" class="hidden mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Duration Mode</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" onclick="setDurationMode('auto')" id="btnModeAuto"
+                            class="px-3 py-2.5 rounded-lg border-2 border-gray-900 bg-gray-900 text-white text-sm font-medium transition-colors">
+                        <span class="material-symbols-outlined align-middle mr-1" style="font-size: 1rem;">autoplay</span>
+                        Auto
+                    </button>
+                    <button type="button" onclick="setDurationMode('fixed')" id="btnModeFixed"
+                            class="px-3 py-2.5 rounded-lg border-2 border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors">
+                        <span class="material-symbols-outlined align-middle mr-1" style="font-size: 1rem;">timer</span>
+                        Fixed Timer
+                    </button>
+                </div>
+                <p id="durationModeHint" class="text-xs text-gray-500 mt-1.5">Advances after all pages have been shown once</p>
+            </div>
+
+            <!-- Fixed duration input (always shown for media, shown for screens in fixed mode) -->
+            <div id="fixedDurationSection" class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Duration (seconds)</label>
                 <input type="number" id="itemDuration" value="10" min="1" max="3600"
                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900">
             </div>
+
             <div class="flex gap-3">
                 <button type="button" onclick="cancelItemSelection()"
                         class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
@@ -219,6 +240,8 @@ let selectedItemType = null;
 let selectedItemId = null;
 let selectedItemName = null;
 let selectedItemThumb = null;
+let selectedPageDuration = 0;
+let durationMode = 'fixed'; // 'auto' or 'fixed'
 
 function showItemTab(tab) {
     const screensTab = document.getElementById('tabScreens');
@@ -246,19 +269,49 @@ function showItemTab(tab) {
     document.getElementById('durationSection').classList.add('hidden');
 }
 
-function selectItem(type, id, name, thumbUrl) {
+function selectItem(type, id, name, thumbUrl, pageDuration) {
     selectedItemType = type;
     selectedItemId = id;
     selectedItemName = name;
     selectedItemThumb = thumbUrl || '';
+    selectedPageDuration = pageDuration || 0;
 
     document.getElementById('selectedItemName').textContent = name;
     document.getElementById('selectedItemType').textContent = type === 'screen' ? 'Screen Design' : 'Media Asset';
     document.getElementById('durationSection').classList.remove('hidden');
 
+    // Show/hide duration mode toggle based on whether this is a multi-page design
+    if (type === 'screen' && selectedPageDuration > 0) {
+        document.getElementById('durationModeSection').classList.remove('hidden');
+        setDurationMode('auto');
+    } else {
+        document.getElementById('durationModeSection').classList.add('hidden');
+        setDurationMode('fixed');
+    }
+
     // Hide the lists
     document.getElementById('screensList').classList.add('hidden');
     document.getElementById('mediaList').classList.add('hidden');
+}
+
+function setDurationMode(mode) {
+    durationMode = mode;
+    var btnAuto = document.getElementById('btnModeAuto');
+    var btnFixed = document.getElementById('btnModeFixed');
+    var fixedSection = document.getElementById('fixedDurationSection');
+    var hint = document.getElementById('durationModeHint');
+
+    if (mode === 'auto') {
+        btnAuto.className = 'px-3 py-2.5 rounded-lg border-2 border-gray-900 bg-gray-900 text-white text-sm font-medium transition-colors';
+        btnFixed.className = 'px-3 py-2.5 rounded-lg border-2 border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors';
+        fixedSection.classList.add('hidden');
+        hint.textContent = 'Advances after all pages have been shown once (' + selectedPageDuration + 's per page)';
+    } else {
+        btnFixed.className = 'px-3 py-2.5 rounded-lg border-2 border-gray-900 bg-gray-900 text-white text-sm font-medium transition-colors';
+        btnAuto.className = 'px-3 py-2.5 rounded-lg border-2 border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors';
+        fixedSection.classList.remove('hidden');
+        hint.textContent = 'Will advance after this many seconds regardless of page progress';
+    }
 }
 
 function cancelItemSelection() {
@@ -266,6 +319,8 @@ function cancelItemSelection() {
     selectedItemId = null;
     selectedItemName = null;
     selectedItemThumb = null;
+    selectedPageDuration = 0;
+    durationMode = 'fixed';
 
     document.getElementById('durationSection').classList.add('hidden');
 
@@ -278,7 +333,8 @@ function cancelItemSelection() {
 }
 
 function confirmAddItem() {
-    const duration = document.getElementById('itemDuration').value;
+    var duration = durationMode === 'auto' ? 0 : document.getElementById('itemDuration').value;
+    var durationLabel = durationMode === 'auto' ? 'Auto (all pages)' : duration + 's duration';
 
     // Hide empty state if it exists
     const emptyState = document.getElementById('emptyItemsState');
@@ -307,7 +363,7 @@ function confirmAddItem() {
             <div class="flex-1">
                 <p class="font-medium text-gray-900">${selectedItemName}</p>
                 <p class="text-sm text-gray-500">
-                    ${selectedItemType === 'screen' ? 'Screen Design' : 'Media Asset'} &middot; ${duration}s duration
+                    ${selectedItemType === 'screen' ? 'Screen Design' : 'Media Asset'} &middot; ${durationLabel}
                 </p>
             </div>
             <input type="hidden" name="items[]" value="${selectedItemType}:${selectedItemId}:${duration}">

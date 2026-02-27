@@ -133,7 +133,7 @@ STAFF_KPI_CSS = r"""
     width: 1920px;
     height: 1080px;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: linear-gradient(135deg, var(--brand-dark) 0%, #0a2a26 30%, #1a1a2e 60%, #2d1b3d 100%);
+    background: linear-gradient(135deg, #2a9d8f 0%, #1a6b63 15%, #1a4a5e 35%, #1c2e4a 55%, #2d1b3d 80%, #1a1a2e 100%);
     color: var(--text-primary);
     display: flex;
     flex-direction: column;
@@ -141,23 +141,28 @@ STAFF_KPI_CSS = r"""
     position: relative;
 }
 
-/* Subtle animated gradient overlay */
+/* Pink/magenta glow in bottom-right corner matching brand background */
 .staff-kpi-screen::before {
     content: '';
     position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(ellipse at 20% 50%, rgba(0, 170, 144, 0.08) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 20%, rgba(200, 80, 192, 0.06) 0%, transparent 50%);
-    animation: ambientShift 20s ease-in-out infinite;
+    bottom: -15%;
+    right: -10%;
+    width: 45%;
+    height: 50%;
+    background: radial-gradient(ellipse at center, rgba(214, 51, 132, 0.6) 0%, rgba(255, 140, 0, 0.3) 30%, transparent 70%);
     pointer-events: none;
 }
 
-@keyframes ambientShift {
-    0%, 100% { transform: translate(0, 0); }
-    50% { transform: translate(-5%, 3%); }
+/* Subtle teal glow in top-left */
+.staff-kpi-screen::after {
+    content: '';
+    position: absolute;
+    top: -10%;
+    left: -10%;
+    width: 50%;
+    height: 50%;
+    background: radial-gradient(ellipse at center, rgba(42, 157, 143, 0.2) 0%, transparent 60%);
+    pointer-events: none;
 }
 
 /* Header */
@@ -726,11 +731,36 @@ STORE_LEADERBOARD_CSS = r"""
     width: 1920px;
     height: 1080px;
     font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, var(--brand-dark) 0%, #0a2a26 30%, #1a1a2e 60%, #2d1b3d 100%);
+    background: linear-gradient(135deg, #2a9d8f 0%, #1a6b63 15%, #1a4a5e 35%, #1c2e4a 55%, #2d1b3d 80%, #1a1a2e 100%);
     color: #fff;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    position: relative;
+}
+
+/* Pink/magenta glow in bottom-right corner matching brand background */
+.leaderboard-screen::before {
+    content: '';
+    position: absolute;
+    bottom: -15%;
+    right: -10%;
+    width: 45%;
+    height: 50%;
+    background: radial-gradient(ellipse at center, rgba(214, 51, 132, 0.6) 0%, rgba(255, 140, 0, 0.3) 30%, transparent 70%);
+    pointer-events: none;
+}
+
+/* Subtle teal glow in top-left */
+.leaderboard-screen::after {
+    content: '';
+    position: absolute;
+    top: -10%;
+    left: -10%;
+    width: 50%;
+    height: 50%;
+    background: radial-gradient(ellipse at center, rgba(42, 157, 143, 0.2) 0%, transparent 60%);
+    pointer-events: none;
 }
 
 .header {
@@ -738,6 +768,8 @@ STORE_LEADERBOARD_CSS = r"""
     align-items: center;
     justify-content: space-between;
     padding: 28px 50px 20px;
+    position: relative;
+    z-index: 1;
 }
 
 .logo { height: 44px; opacity: 0.9; }
@@ -780,6 +812,8 @@ STORE_LEADERBOARD_CSS = r"""
     gap: 6px;
     opacity: 1;
     transition: opacity 0.4s ease;
+    position: relative;
+    z-index: 1;
 }
 
 .board-container.fade-out { opacity: 0; }
@@ -860,6 +894,8 @@ STORE_LEADERBOARD_CSS = r"""
     display: flex;
     justify-content: space-between;
     padding: 12px 50px 24px;
+    position: relative;
+    z-index: 1;
 }
 
 .page-indicator, .last-updated {
@@ -988,6 +1024,1088 @@ STORE_LEADERBOARD_JS = r"""
 
 
 # =============================================================================
+# STORE TOP PERFORMERS TEMPLATE
+# =============================================================================
+
+STORE_TOP_PERFORMERS_HTML = r"""
+<div class="top-performers-screen">
+    <div class="header">
+        <img src="/static/signage/img/jump-logo-white.png" class="logo" alt="Jump.ca"
+             onerror="this.style.display='none'">
+        <div class="header-center">
+            <div class="title" id="storeName">STORE TOP PERFORMERS</div>
+            <div class="subtitle" id="dateDisplay"></div>
+        </div>
+        <div class="header-right">
+            <div class="last-updated" id="lastUpdated"></div>
+        </div>
+    </div>
+
+    <div class="grid-container" id="gridContainer">
+        <!-- Column Headers -->
+        <div class="grid-header">
+            <div class="col-category">CATEGORY</div>
+            <div class="col-employee">TOP PERFORMER</div>
+            <div class="col-staff">STAFF</div>
+            <div class="col-store">STORE</div>
+        </div>
+
+        <!-- Row 1: Last Year Month -->
+        <div class="grid-row" id="rowLY">
+            <div class="col-category">
+                <div class="category-icon"><span class="material-icons">history</span></div>
+                <div class="category-label">LAST YEAR<br>MONTH TOTAL</div>
+            </div>
+            <div class="col-employee">
+                <div class="emp-avatar" id="lyAvatar">-</div>
+                <div class="emp-name" id="lyName">--</div>
+            </div>
+            <div class="col-staff">
+                <div class="metric-value" id="lyStaffValue">$0</div>
+            </div>
+            <div class="col-store">
+                <div class="metric-value store-value" id="lyStoreValue">$0</div>
+            </div>
+        </div>
+
+        <!-- Row 2: MTD -->
+        <div class="grid-row" id="rowMTD">
+            <div class="col-category">
+                <div class="category-icon mtd"><span class="material-icons">trending_up</span></div>
+                <div class="category-label">MONTH<br>TO DATE</div>
+            </div>
+            <div class="col-employee">
+                <div class="emp-avatar" id="mtdAvatar">-</div>
+                <div class="emp-name" id="mtdName">--</div>
+            </div>
+            <div class="col-staff">
+                <div class="metric-value" id="mtdStaffValue">$0</div>
+            </div>
+            <div class="col-store">
+                <div class="metric-value store-value" id="mtdStoreValue">$0</div>
+            </div>
+        </div>
+
+        <!-- Row 3: Target -->
+        <div class="grid-row" id="rowTarget">
+            <div class="col-category">
+                <div class="category-icon target"><span class="material-icons">flag</span></div>
+                <div class="category-label">PROFIT<br>TARGET</div>
+            </div>
+            <div class="col-employee">
+                <div class="emp-avatar" id="targetAvatar">-</div>
+                <div class="emp-name" id="targetName">--</div>
+            </div>
+            <div class="col-staff">
+                <div class="metric-value" id="targetStaffValue">$0</div>
+                <div class="metric-sub" id="targetStaffPct"></div>
+            </div>
+            <div class="col-store">
+                <div class="metric-value store-value" id="targetStoreValue">$0</div>
+                <div class="metric-sub" id="targetStorePct"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="employee-count" id="employeeCount"></div>
+        <div class="last-updated" id="lastUpdated2"></div>
+    </div>
+</div>
+"""
+
+STORE_TOP_PERFORMERS_CSS = r"""
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+
+:root {
+    --brand-primary: #00aa90;
+    --brand-dark: #003d36;
+    --brand-accent: #c850c0;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+.top-performers-screen {
+    width: 1920px;
+    height: 1080px;
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #2a9d8f 0%, #1a6b63 15%, #1a4a5e 35%, #1c2e4a 55%, #2d1b3d 80%, #1a1a2e 100%);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+.top-performers-screen::before {
+    content: '';
+    position: absolute;
+    bottom: -15%;
+    right: -10%;
+    width: 45%;
+    height: 50%;
+    background: radial-gradient(ellipse at center, rgba(214, 51, 132, 0.6) 0%, rgba(255, 140, 0, 0.3) 30%, transparent 70%);
+    pointer-events: none;
+}
+
+.top-performers-screen::after {
+    content: '';
+    position: absolute;
+    top: -10%;
+    left: -10%;
+    width: 50%;
+    height: 50%;
+    background: radial-gradient(ellipse at center, rgba(42, 157, 143, 0.2) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 30px 50px 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.logo { height: 44px; opacity: 0.9; }
+
+.header-center { text-align: center; }
+
+.title {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 3px;
+}
+
+.subtitle {
+    font-size: 15px;
+    color: rgba(255,255,255,0.6);
+    margin-top: 4px;
+}
+
+.header-right { text-align: right; }
+
+.last-updated {
+    font-size: 13px;
+    color: rgba(255,255,255,0.4);
+}
+
+/* Grid Container */
+.grid-container {
+    flex: 1;
+    padding: 20px 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.grid-header {
+    display: grid;
+    grid-template-columns: 280px 1fr 1fr 1fr;
+    gap: 20px;
+    padding: 0 20px 16px;
+}
+
+.grid-header > div {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.4);
+}
+
+.grid-header .col-staff,
+.grid-header .col-store {
+    text-align: center;
+}
+
+.grid-row {
+    display: grid;
+    grid-template-columns: 280px 1fr 1fr 1fr;
+    gap: 20px;
+    align-items: center;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 36px 30px;
+    margin-bottom: 16px;
+    transition: transform 0.3s ease;
+}
+
+/* Category column */
+.col-category {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.category-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: rgba(0, 170, 144, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.category-icon .material-icons {
+    font-size: 32px;
+    color: var(--brand-primary);
+}
+
+.category-icon.mtd {
+    background: rgba(100, 180, 255, 0.2);
+}
+
+.category-icon.mtd .material-icons {
+    color: #64b4ff;
+}
+
+.category-icon.target {
+    background: rgba(200, 80, 192, 0.2);
+}
+
+.category-icon.target .material-icons {
+    color: var(--brand-accent);
+}
+
+.category-label {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    line-height: 1.3;
+    color: rgba(255,255,255,0.8);
+}
+
+/* Employee column */
+.col-employee {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding-left: 10px;
+}
+
+.emp-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+.emp-name {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+/* Value columns */
+.col-staff,
+.col-store {
+    text-align: center;
+}
+
+.metric-value {
+    font-size: 48px;
+    font-weight: 800;
+    color: var(--brand-primary);
+}
+
+.metric-value.store-value {
+    color: rgba(255,255,255,0.7);
+}
+
+.metric-sub {
+    font-size: 18px;
+    font-weight: 600;
+    margin-top: 4px;
+    color: rgba(255,255,255,0.4);
+}
+
+.metric-sub.ahead { color: var(--brand-primary); }
+.metric-sub.behind { color: #ff6b6b; }
+
+/* Footer */
+.footer {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 60px 28px;
+    position: relative;
+    z-index: 1;
+}
+
+.employee-count {
+    font-size: 14px;
+    color: rgba(255,255,255,0.3);
+}
+"""
+
+STORE_TOP_PERFORMERS_JS = r"""
+(function() {
+    var dataLoaded = false;
+
+    ['https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap',
+     'https://fonts.googleapis.com/icon?family=Material+Icons'].forEach(function(url) {
+        var link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = url;
+        document.head.appendChild(link);
+    });
+
+    window.addEventListener('signageDataLoaded', function() {
+        updateHeader();
+    });
+
+    window.addEventListener('employeeDataLoaded', function() {
+        dataLoaded = true;
+        populateGrid();
+    });
+
+    setTimeout(function() {
+        if (!dataLoaded) showNoData();
+    }, 10000);
+
+    function showNoData() {
+        var el = document.getElementById('mtdName');
+        if (el) el.textContent = 'No data available';
+    }
+
+    function updateHeader() {
+        var sales = window.signageData;
+        if (!sales) return;
+
+        var storeName = '';
+        if (sales.store && sales.store.store_name) {
+            storeName = sales.store.store_name.toUpperCase() + ' TOP PERFORMERS';
+        } else {
+            storeName = 'STORE TOP PERFORMERS';
+        }
+        setText('storeName', storeName);
+
+        if (sales.meta && sales.meta.current_day_date) {
+            var d = new Date(sales.meta.current_day_date + 'T00:00:00');
+            setText('dateDisplay', d.toLocaleDateString('en-US', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            }));
+        }
+
+        if (sales.meta && sales.meta.last_updated) {
+            var ts = new Date(sales.meta.last_updated);
+            var timeStr = 'Updated ' + ts.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+            setText('lastUpdated', timeStr);
+            setText('lastUpdated2', timeStr);
+        }
+    }
+
+    function populateGrid() {
+        var data = window.employeeData;
+        if (!data || !data.employees || data.employees.length === 0) {
+            showNoData();
+            return;
+        }
+
+        var employees = data.employees;
+
+        // Find top employee by LY month profit
+        var topLY = employees.slice().sort(function(a, b) {
+            return (b.prior_year.profit_raw || 0) - (a.prior_year.profit_raw || 0);
+        })[0];
+
+        // Find top employee by MTD profit
+        var topMTD = employees.slice().sort(function(a, b) {
+            return (b.mtd.profit_raw || 0) - (a.mtd.profit_raw || 0);
+        })[0];
+
+        // Target row uses the top MTD employee
+        var topTarget = topMTD;
+
+        // Calculate store totals
+        var storeLY = 0, storeMTD = 0, storeTarget = 0;
+        employees.forEach(function(emp) {
+            storeLY += (emp.prior_year.profit_raw || 0);
+            storeMTD += (emp.mtd.profit_raw || 0);
+            storeTarget += (emp.targets.profit_target_raw || 0);
+        });
+
+        // Populate LY row
+        setText('lyName', topLY.employee_name || 'Unknown');
+        setAvatar('lyAvatar', topLY.employee_name);
+        setText('lyStaffValue', formatCurrency(topLY.prior_year.profit_raw || 0));
+        setText('lyStoreValue', formatCurrency(storeLY));
+
+        // Populate MTD row
+        setText('mtdName', topMTD.employee_name || 'Unknown');
+        setAvatar('mtdAvatar', topMTD.employee_name);
+        setText('mtdStaffValue', formatCurrency(topMTD.mtd.profit_raw || 0));
+        setText('mtdStoreValue', formatCurrency(storeMTD));
+
+        // Populate Target row
+        setText('targetName', topTarget.employee_name || 'Unknown');
+        setAvatar('targetAvatar', topTarget.employee_name);
+        setText('targetStaffValue', formatCurrency(topTarget.targets.profit_target_raw || 0));
+        setText('targetStoreValue', formatCurrency(storeTarget));
+
+        // Show % of target achieved
+        var staffPct = topTarget.targets.profit_pct_of_target_raw || 0;
+        var staffPctEl = document.getElementById('targetStaffPct');
+        if (staffPctEl) {
+            staffPctEl.textContent = staffPct.toFixed(0) + '% achieved';
+            staffPctEl.className = 'metric-sub ' + (staffPct >= 100 ? 'ahead' : 'behind');
+        }
+
+        if (storeTarget > 0) {
+            var storePct = (storeMTD / storeTarget) * 100;
+            var storePctEl = document.getElementById('targetStorePct');
+            if (storePctEl) {
+                storePctEl.textContent = storePct.toFixed(0) + '% achieved';
+                storePctEl.className = 'metric-sub ' + (storePct >= 100 ? 'ahead' : 'behind');
+            }
+        }
+
+        // Employee count
+        setText('employeeCount', employees.length + ' employees');
+    }
+
+    function formatCurrency(value) {
+        if (value >= 1000) {
+            return '$' + (value / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+        }
+        return '$' + Math.round(value).toLocaleString();
+    }
+
+    function setAvatar(id, name) {
+        var el = document.getElementById(id);
+        if (el && name) {
+            el.textContent = name.charAt(0).toUpperCase();
+        }
+    }
+
+    function setText(id, value) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = value;
+    }
+})();
+"""
+
+
+# =============================================================================
+# STORE PERFORMANCE SNAPSHOT TEMPLATE
+# =============================================================================
+
+STORE_SNAPSHOT_HTML = r"""
+<div class="snapshot-screen">
+    <div class="header">
+        <img src="/static/signage/img/jump-logo-white.png" class="logo" alt="Jump.ca"
+             onerror="this.style.display='none'">
+        <div class="header-center">
+            <div class="title" id="storeName">PERFORMANCE SNAPSHOT</div>
+            <div class="subtitle" id="dateDisplay"></div>
+        </div>
+        <div class="header-right">
+            <div class="last-updated" id="lastUpdated"></div>
+        </div>
+    </div>
+
+    <div class="cards-row" id="cardsRow">
+        <!-- Card 1: Last Year Comparison -->
+        <div class="perf-card">
+            <div class="card-header">
+                <div class="card-icon ly"><span class="material-icons">history</span></div>
+                <div class="card-title">VS LAST YEAR</div>
+            </div>
+            <div class="spotlight">
+                <div class="spotlight-avatar" id="lyAvatar2">-</div>
+                <div class="spotlight-info">
+                    <div class="spotlight-label">TOP PERFORMER</div>
+                    <div class="spotlight-name" id="lyName2">--</div>
+                </div>
+            </div>
+            <div class="big-number" id="lyStaffBig">$0</div>
+            <div class="comparison-bar">
+                <div class="bar-track">
+                    <div class="bar-fill staff-fill" id="lyBarStaff"></div>
+                </div>
+                <div class="bar-labels">
+                    <span class="bar-label-staff">Staff</span>
+                    <span class="bar-label-store">Store <span id="lyStoreBig">$0</span></span>
+                </div>
+            </div>
+            <div class="card-stat">
+                <span class="material-icons stat-icon">group</span>
+                <span id="lyContrib">0%</span> of store total
+            </div>
+        </div>
+
+        <!-- Card 2: Month to Date -->
+        <div class="perf-card featured">
+            <div class="card-header">
+                <div class="card-icon mtd"><span class="material-icons">trending_up</span></div>
+                <div class="card-title">MONTH TO DATE</div>
+            </div>
+            <div class="spotlight">
+                <div class="spotlight-avatar" id="mtdAvatar2">-</div>
+                <div class="spotlight-info">
+                    <div class="spotlight-label">TOP PERFORMER</div>
+                    <div class="spotlight-name" id="mtdName2">--</div>
+                </div>
+            </div>
+            <div class="big-number" id="mtdStaffBig">$0</div>
+            <div class="comparison-bar">
+                <div class="bar-track">
+                    <div class="bar-fill staff-fill" id="mtdBarStaff"></div>
+                </div>
+                <div class="bar-labels">
+                    <span class="bar-label-staff">Staff</span>
+                    <span class="bar-label-store">Store <span id="mtdStoreBig">$0</span></span>
+                </div>
+            </div>
+            <div class="card-stat">
+                <span class="material-icons stat-icon">group</span>
+                <span id="mtdContrib">0%</span> of store total
+            </div>
+        </div>
+
+        <!-- Card 3: Target -->
+        <div class="perf-card">
+            <div class="card-header">
+                <div class="card-icon target"><span class="material-icons">flag</span></div>
+                <div class="card-title">PROFIT TARGET</div>
+            </div>
+            <div class="spotlight">
+                <div class="spotlight-avatar" id="targetAvatar2">-</div>
+                <div class="spotlight-info">
+                    <div class="spotlight-label">TOP PERFORMER</div>
+                    <div class="spotlight-name" id="targetName2">--</div>
+                </div>
+            </div>
+            <div class="big-number" id="targetStaffBig">$0</div>
+            <div class="target-progress">
+                <div class="target-ring" id="targetRing">
+                    <svg viewBox="0 0 120 120">
+                        <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+                        <circle class="ring-fill" cx="60" cy="60" r="52" id="ringFill"></circle>
+                    </svg>
+                    <div class="ring-text" id="ringText">0%</div>
+                </div>
+                <div class="target-details">
+                    <div class="target-detail-row">
+                        <span class="target-detail-label">Staff % of Target</span>
+                        <span class="target-detail-value" id="staffTargetPct">0%</span>
+                    </div>
+                    <div class="target-detail-row">
+                        <span class="target-detail-label">Store % of Target</span>
+                        <span class="target-detail-value" id="storeTargetPct">0%</span>
+                    </div>
+                    <div class="target-detail-row">
+                        <span class="target-detail-label">Store Target</span>
+                        <span class="target-detail-value" id="storeTargetVal">$0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="employee-count" id="employeeCount2"></div>
+        <div class="last-updated" id="lastUpdated2"></div>
+    </div>
+</div>
+"""
+
+STORE_SNAPSHOT_CSS = r"""
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+
+:root {
+    --brand-primary: #00aa90;
+    --brand-accent: #c850c0;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+.snapshot-screen {
+    width: 1920px;
+    height: 1080px;
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #2a9d8f 0%, #1a6b63 15%, #1a4a5e 35%, #1c2e4a 55%, #2d1b3d 80%, #1a1a2e 100%);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+.snapshot-screen::before {
+    content: '';
+    position: absolute;
+    bottom: -15%;
+    right: -10%;
+    width: 45%;
+    height: 50%;
+    background: radial-gradient(ellipse at center, rgba(214, 51, 132, 0.6) 0%, rgba(255, 140, 0, 0.3) 30%, transparent 70%);
+    pointer-events: none;
+}
+
+.snapshot-screen::after {
+    content: '';
+    position: absolute;
+    top: -10%;
+    left: -10%;
+    width: 50%;
+    height: 50%;
+    background: radial-gradient(ellipse at center, rgba(42, 157, 143, 0.2) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 30px 50px 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.logo { height: 44px; opacity: 0.9; }
+.header-center { text-align: center; }
+
+.title {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 3px;
+}
+
+.subtitle {
+    font-size: 15px;
+    color: rgba(255,255,255,0.6);
+    margin-top: 4px;
+}
+
+.header-right { text-align: right; }
+
+.last-updated {
+    font-size: 13px;
+    color: rgba(255,255,255,0.4);
+}
+
+/* Cards Row */
+.cards-row {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 24px;
+    padding: 10px 50px 10px;
+    position: relative;
+    z-index: 1;
+}
+
+.perf-card {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 24px;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+.perf-card.featured {
+    background: rgba(255,255,255,0.12);
+    border-color: rgba(0, 170, 144, 0.3);
+    box-shadow: 0 0 40px rgba(0, 170, 144, 0.1);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+}
+
+.card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: rgba(0, 170, 144, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-icon .material-icons {
+    font-size: 26px;
+    color: var(--brand-primary);
+}
+
+.card-icon.ly { background: rgba(0, 170, 144, 0.2); }
+.card-icon.ly .material-icons { color: var(--brand-primary); }
+.card-icon.mtd { background: rgba(100, 180, 255, 0.2); }
+.card-icon.mtd .material-icons { color: #64b4ff; }
+.card-icon.target { background: rgba(200, 80, 192, 0.2); }
+.card-icon.target .material-icons { color: var(--brand-accent); }
+
+.card-title {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,0.5);
+}
+
+/* Spotlight (employee) */
+.spotlight {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.spotlight-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+.spotlight-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.4);
+}
+
+.spotlight-name {
+    font-size: 24px;
+    font-weight: 700;
+    margin-top: 2px;
+}
+
+.big-number {
+    font-size: 56px;
+    font-weight: 800;
+    color: var(--brand-primary);
+    margin-bottom: 24px;
+    line-height: 1;
+}
+
+/* Comparison Bar */
+.comparison-bar {
+    margin-bottom: 20px;
+}
+
+.bar-track {
+    height: 12px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 1s ease;
+}
+
+.bar-fill.staff-fill {
+    background: linear-gradient(90deg, var(--brand-primary), var(--brand-accent));
+}
+
+.bar-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+}
+
+.bar-label-staff {
+    color: var(--brand-primary);
+    font-weight: 600;
+}
+
+.bar-label-store {
+    color: rgba(255,255,255,0.5);
+}
+
+.bar-label-store span {
+    font-weight: 700;
+    color: rgba(255,255,255,0.7);
+}
+
+.card-stat {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    color: rgba(255,255,255,0.5);
+    margin-top: auto;
+}
+
+.card-stat span:first-child {
+    font-weight: 700;
+    color: var(--brand-primary);
+}
+
+.stat-icon {
+    font-size: 20px !important;
+    color: rgba(255,255,255,0.3) !important;
+}
+
+/* Target Ring */
+.target-progress {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 16px;
+}
+
+.target-ring {
+    width: 120px;
+    height: 120px;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.target-ring svg {
+    transform: rotate(-90deg);
+    width: 100%;
+    height: 100%;
+}
+
+.ring-bg {
+    fill: none;
+    stroke: rgba(255,255,255,0.1);
+    stroke-width: 8;
+}
+
+.ring-fill {
+    fill: none;
+    stroke: var(--brand-primary);
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 327;
+    stroke-dashoffset: 327;
+    transition: stroke-dashoffset 1.5s ease;
+}
+
+.ring-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--brand-primary);
+}
+
+.target-details {
+    flex: 1;
+}
+
+.target-detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.target-detail-row:last-child {
+    border-bottom: none;
+}
+
+.target-detail-label {
+    font-size: 14px;
+    color: rgba(255,255,255,0.5);
+}
+
+.target-detail-value {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+/* Footer */
+.footer {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 50px 24px;
+    position: relative;
+    z-index: 1;
+}
+
+.employee-count {
+    font-size: 14px;
+    color: rgba(255,255,255,0.3);
+}
+"""
+
+STORE_SNAPSHOT_JS = r"""
+(function() {
+    var dataLoaded = false;
+
+    ['https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap',
+     'https://fonts.googleapis.com/icon?family=Material+Icons'].forEach(function(url) {
+        var link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = url;
+        document.head.appendChild(link);
+    });
+
+    window.addEventListener('signageDataLoaded', function() {
+        updateHeader();
+    });
+
+    window.addEventListener('employeeDataLoaded', function() {
+        dataLoaded = true;
+        populateCards();
+    });
+
+    setTimeout(function() {
+        if (!dataLoaded) {
+            var el = document.getElementById('mtdName2');
+            if (el) el.textContent = 'No data available';
+        }
+    }, 10000);
+
+    function updateHeader() {
+        var sales = window.signageData;
+        if (!sales) return;
+
+        var storeName = '';
+        if (sales.store && sales.store.store_name) {
+            storeName = sales.store.store_name.toUpperCase() + ' SNAPSHOT';
+        } else {
+            storeName = 'PERFORMANCE SNAPSHOT';
+        }
+        setText('storeName', storeName);
+
+        if (sales.meta && sales.meta.current_day_date) {
+            var d = new Date(sales.meta.current_day_date + 'T00:00:00');
+            setText('dateDisplay', d.toLocaleDateString('en-US', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            }));
+        }
+
+        if (sales.meta && sales.meta.last_updated) {
+            var ts = new Date(sales.meta.last_updated);
+            var timeStr = 'Updated ' + ts.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+            setText('lastUpdated', timeStr);
+            setText('lastUpdated2', timeStr);
+        }
+    }
+
+    function populateCards() {
+        var data = window.employeeData;
+        if (!data || !data.employees || data.employees.length === 0) return;
+
+        var employees = data.employees;
+
+        // Find top employees
+        var topLY = employees.slice().sort(function(a, b) {
+            return (b.prior_year.profit_raw || 0) - (a.prior_year.profit_raw || 0);
+        })[0];
+
+        var topMTD = employees.slice().sort(function(a, b) {
+            return (b.mtd.profit_raw || 0) - (a.mtd.profit_raw || 0);
+        })[0];
+
+        var topTarget = topMTD;
+
+        // Store totals
+        var storeLY = 0, storeMTD = 0, storeTarget = 0;
+        employees.forEach(function(emp) {
+            storeLY += (emp.prior_year.profit_raw || 0);
+            storeMTD += (emp.mtd.profit_raw || 0);
+            storeTarget += (emp.targets.profit_target_raw || 0);
+        });
+
+        // Card 1: LY
+        setText('lyName2', topLY.employee_name || 'Unknown');
+        setAvatar('lyAvatar2', topLY.employee_name);
+        setText('lyStaffBig', formatCurrency(topLY.prior_year.profit_raw || 0));
+        setText('lyStoreBig', formatCurrency(storeLY));
+        setBar('lyBarStaff', topLY.prior_year.profit_raw || 0, storeLY);
+        var lyContrib = storeLY > 0 ? ((topLY.prior_year.profit_raw || 0) / storeLY * 100).toFixed(0) + '%' : '0%';
+        setText('lyContrib', lyContrib);
+
+        // Card 2: MTD
+        setText('mtdName2', topMTD.employee_name || 'Unknown');
+        setAvatar('mtdAvatar2', topMTD.employee_name);
+        setText('mtdStaffBig', formatCurrency(topMTD.mtd.profit_raw || 0));
+        setText('mtdStoreBig', formatCurrency(storeMTD));
+        setBar('mtdBarStaff', topMTD.mtd.profit_raw || 0, storeMTD);
+        var mtdContrib = storeMTD > 0 ? ((topMTD.mtd.profit_raw || 0) / storeMTD * 100).toFixed(0) + '%' : '0%';
+        setText('mtdContrib', mtdContrib);
+
+        // Card 3: Target
+        setText('targetName2', topTarget.employee_name || 'Unknown');
+        setAvatar('targetAvatar2', topTarget.employee_name);
+        setText('targetStaffBig', formatCurrency(topTarget.targets.profit_target_raw || 0));
+
+        // Target ring - staff % of target
+        var staffPct = topTarget.targets.profit_pct_of_target_raw || 0;
+        setText('ringText', Math.round(staffPct) + '%');
+        var ring = document.getElementById('ringFill');
+        if (ring) {
+            var circumference = 2 * Math.PI * 52; // ~327
+            var offset = circumference - (Math.min(staffPct, 100) / 100) * circumference;
+            setTimeout(function() { ring.style.strokeDashoffset = offset; }, 100);
+            if (staffPct >= 100) ring.style.stroke = 'var(--brand-primary)';
+            else if (staffPct >= 70) ring.style.stroke = '#f0ad4e';
+            else ring.style.stroke = '#ff6b6b';
+        }
+
+        setText('staffTargetPct', staffPct.toFixed(0) + '%');
+        var storePct = storeTarget > 0 ? (storeMTD / storeTarget * 100) : 0;
+        setText('storeTargetPct', storePct.toFixed(0) + '%');
+        setText('storeTargetVal', formatCurrency(storeTarget));
+
+        setText('employeeCount2', employees.length + ' employees');
+    }
+
+    function formatCurrency(value) {
+        if (value >= 1000) {
+            return '$' + (value / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+        }
+        return '$' + Math.round(value).toLocaleString();
+    }
+
+    function setBar(id, staffVal, storeVal) {
+        var el = document.getElementById(id);
+        if (el && storeVal > 0) {
+            var pct = Math.min((staffVal / storeVal) * 100, 100);
+            el.style.width = pct + '%';
+        }
+    }
+
+    function setAvatar(id, name) {
+        var el = document.getElementById(id);
+        if (el && name) el.textContent = name.charAt(0).toUpperCase();
+    }
+
+    function setText(id, value) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = value;
+    }
+})();
+"""
+
+
+# =============================================================================
 # COMMAND
 # =============================================================================
 
@@ -1016,6 +2134,38 @@ TEMPLATES = [
         'html_code': STORE_LEADERBOARD_HTML,
         'css_code': STORE_LEADERBOARD_CSS,
         'js_code': STORE_LEADERBOARD_JS,
+        'is_featured': True,
+        'branding_config': {
+            'primary_color': '#00aa90',
+            'secondary_color': '#003d36',
+            'accent_color': '#c850c0',
+            'text_color': '#ffffff',
+        },
+    },
+    {
+        'name': 'Store Top Performers',
+        'slug': 'store-top-performers',
+        'description': 'Shows the top employee in each key category (Last Year, MTD, Target) compared to store totals. A quick at-a-glance view of who is leading in each metric. Set a store filter to show a specific store.',
+        'template_type': 'kpi_dashboard',
+        'html_code': STORE_TOP_PERFORMERS_HTML,
+        'css_code': STORE_TOP_PERFORMERS_CSS,
+        'js_code': STORE_TOP_PERFORMERS_JS,
+        'is_featured': True,
+        'branding_config': {
+            'primary_color': '#00aa90',
+            'secondary_color': '#003d36',
+            'accent_color': '#c850c0',
+            'text_color': '#ffffff',
+        },
+    },
+    {
+        'name': 'Store Performance Snapshot',
+        'slug': 'store-performance-snapshot',
+        'description': 'Visual performance dashboard with three cards showing the top performer in Last Year profit, MTD profit, and Target achievement. Includes contribution bars and a target ring chart. Set a store filter for store-specific data.',
+        'template_type': 'kpi_dashboard',
+        'html_code': STORE_SNAPSHOT_HTML,
+        'css_code': STORE_SNAPSHOT_CSS,
+        'js_code': STORE_SNAPSHOT_JS,
         'is_featured': True,
         'branding_config': {
             'primary_color': '#00aa90',
