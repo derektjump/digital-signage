@@ -133,36 +133,12 @@ STAFF_KPI_CSS = r"""
     width: 1920px;
     height: 1080px;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: linear-gradient(135deg, #2a9d8f 0%, #1a6b63 15%, #1a4a5e 35%, #1c2e4a 55%, #2d1b3d 80%, #1a1a2e 100%);
+    background: url('/static/signage/img/brand-bg.png') center/cover no-repeat, #1a1a2e;
     color: var(--text-primary);
     display: flex;
     flex-direction: column;
     overflow: hidden;
     position: relative;
-}
-
-/* Pink/magenta glow in bottom-right corner matching brand background */
-.staff-kpi-screen::before {
-    content: '';
-    position: absolute;
-    bottom: -15%;
-    right: -10%;
-    width: 45%;
-    height: 50%;
-    background: radial-gradient(ellipse at center, rgba(214, 51, 132, 0.6) 0%, rgba(255, 140, 0, 0.3) 30%, transparent 70%);
-    pointer-events: none;
-}
-
-/* Subtle teal glow in top-left */
-.staff-kpi-screen::after {
-    content: '';
-    position: absolute;
-    top: -10%;
-    left: -10%;
-    width: 50%;
-    height: 50%;
-    background: radial-gradient(ellipse at center, rgba(42, 157, 143, 0.2) 0%, transparent 60%);
-    pointer-events: none;
 }
 
 /* Header */
@@ -731,36 +707,12 @@ STORE_LEADERBOARD_CSS = r"""
     width: 1920px;
     height: 1080px;
     font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, #2a9d8f 0%, #1a6b63 15%, #1a4a5e 35%, #1c2e4a 55%, #2d1b3d 80%, #1a1a2e 100%);
+    background: url('/static/signage/img/brand-bg.png') center/cover no-repeat, #1a1a2e;
     color: #fff;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     position: relative;
-}
-
-/* Pink/magenta glow in bottom-right corner matching brand background */
-.leaderboard-screen::before {
-    content: '';
-    position: absolute;
-    bottom: -15%;
-    right: -10%;
-    width: 45%;
-    height: 50%;
-    background: radial-gradient(ellipse at center, rgba(214, 51, 132, 0.6) 0%, rgba(255, 140, 0, 0.3) 30%, transparent 70%);
-    pointer-events: none;
-}
-
-/* Subtle teal glow in top-left */
-.leaderboard-screen::after {
-    content: '';
-    position: absolute;
-    top: -10%;
-    left: -10%;
-    width: 50%;
-    height: 50%;
-    background: radial-gradient(ellipse at center, rgba(42, 157, 143, 0.2) 0%, transparent 60%);
-    pointer-events: none;
 }
 
 .header {
@@ -1130,34 +1082,12 @@ STORE_TOP_PERFORMERS_CSS = r"""
     width: 1920px;
     height: 1080px;
     font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, #2a9d8f 0%, #1a6b63 15%, #1a4a5e 35%, #1c2e4a 55%, #2d1b3d 80%, #1a1a2e 100%);
+    background: url('/static/signage/img/brand-bg.png') center/cover no-repeat, #1a1a2e;
     color: #fff;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     position: relative;
-}
-
-.top-performers-screen::before {
-    content: '';
-    position: absolute;
-    bottom: -15%;
-    right: -10%;
-    width: 45%;
-    height: 50%;
-    background: radial-gradient(ellipse at center, rgba(214, 51, 132, 0.6) 0%, rgba(255, 140, 0, 0.3) 30%, transparent 70%);
-    pointer-events: none;
-}
-
-.top-performers-screen::after {
-    content: '';
-    position: absolute;
-    top: -10%;
-    left: -10%;
-    width: 50%;
-    height: 50%;
-    background: radial-gradient(ellipse at center, rgba(42, 157, 143, 0.2) 0%, transparent 60%);
-    pointer-events: none;
 }
 
 .header {
@@ -1637,34 +1567,12 @@ STORE_SNAPSHOT_CSS = r"""
     width: 1920px;
     height: 1080px;
     font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, #2a9d8f 0%, #1a6b63 15%, #1a4a5e 35%, #1c2e4a 55%, #2d1b3d 80%, #1a1a2e 100%);
+    background: url('/static/signage/img/brand-bg.png') center/cover no-repeat, #1a1a2e;
     color: #fff;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     position: relative;
-}
-
-.snapshot-screen::before {
-    content: '';
-    position: absolute;
-    bottom: -15%;
-    right: -10%;
-    width: 45%;
-    height: 50%;
-    background: radial-gradient(ellipse at center, rgba(214, 51, 132, 0.6) 0%, rgba(255, 140, 0, 0.3) 30%, transparent 70%);
-    pointer-events: none;
-}
-
-.snapshot-screen::after {
-    content: '';
-    position: absolute;
-    top: -10%;
-    left: -10%;
-    width: 50%;
-    height: 50%;
-    background: radial-gradient(ellipse at center, rgba(42, 157, 143, 0.2) 0%, transparent 60%);
-    pointer-events: none;
 }
 
 .header {
