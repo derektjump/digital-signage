@@ -1,0 +1,776 @@
+/*
+ * Glow in the Grid family look (signage/new_look.py).
+ *
+ * A copy of the shared parts of the Grid's family.css (customer-lifecycle
+ * lifecycle/static/lifecycle/css/family.css, by way of Flux's copy): tokens,
+ * type, the sidebar, buttons, pill bars, titles and tables. The Grid's menu
+ * reads `nav.fx-nav` here. Glow's own pages come last, under "Glow's pages".
+ *
+ * Loaded only for people who turned the new look on, and every rule is
+ * scoped under html.look-family, so with it off nothing here applies.
+ */
+
+html.look-family {
+    --fam-ink: #14212b;
+    --fam-ink-2: #3d4c57;
+    --fam-quiet: #5b6b77;
+    --fam-line: #e4e7ea;
+    --fam-line-soft: #eceef0;
+    --fam-teal: #0d8178;
+    --fam-violet: #6d5bd0;
+    --fam-pink: #b8327f;
+    --fam-font: Inter, system-ui, -apple-system, sans-serif;
+
+    --color-primary: #0d8178;
+    --color-primary-hover: #0a6b63;
+    --color-primary-light: rgba(13, 129, 120, 0.10);
+    --color-primary-brand: #0d8178;
+    --color-btn: #14212b;
+    --color-btn-hover: #2a2e34;
+    --color-btn-secondary-border: #d9dde1;
+    --color-text-primary: #14212b;
+    --color-text-secondary: #4a5260;
+    --color-text-muted: #7a828c;
+    --brand-gradient: linear-gradient(90deg, #00aa90 0%, #de4295 60%, #f39237 100%); /* Pulse's */
+    --color-bg-page: #f7f8fb; /* Pulse's ground */
+    --color-bg-hover: #f4f5f6;
+    --color-border: #e9ebee;
+    --color-border-light: #f2f3f5;
+    --color-border-strong: #cfd4d9;
+    --color-border-card: #e4e7ea;
+    --radius-sm: 10px;
+    --radius: 16px;
+    --radius-lg: 20px;
+    --shadow-sm: 0 1px 2px rgba(21, 23, 26, .04), 0 6px 18px rgba(21, 23, 26, .05);
+    --shadow: 0 2px 4px rgba(21, 23, 26, .04), 0 12px 30px rgba(21, 23, 26, .08);
+    --shadow-lg: 0 18px 48px rgba(21, 23, 26, .14);
+    --grid-badge-accent: #0d8178;
+}
+
+/* ---------- Type: one family everywhere but icons and code ---------- */
+html.look-family body {
+    font-family: var(--fam-font) !important;
+    -webkit-font-smoothing: antialiased;
+    background: #f7f8fb !important;
+    color: var(--fam-ink) !important;
+}
+html.look-family body *:not(.material-symbols-outlined):not(.material-icons):not(code):not(pre):not(kbd):not(samp):not(.font-mono):not(.fa):not(.fas):not(.far):not(.fab):not([class*="fa-"]) {
+    font-family: var(--fam-font) !important;
+}
+
+/* The thin top line, full width like Pulse. */
+html.look-family body::before {
+    content: '';
+    position: fixed;
+    left: 0; right: 0; top: 0;
+    height: 3px;
+    background: var(--brand-gradient);
+    z-index: 60;
+    pointer-events: none;
+}
+
+/* Pulse's top: no white bar, just a frosted wash of the brand colours
+   fading down from the top line. */
+html.look-family main {
+    background:
+        radial-gradient(ellipse 620px 190px at 12% 0%, rgba(13, 129, 120, 0.13) 0%, rgba(13, 129, 120, 0) 72%),
+        radial-gradient(ellipse 560px 180px at 52% 0%, rgba(184, 50, 127, 0.09) 0%, rgba(184, 50, 127, 0) 72%),
+        radial-gradient(ellipse 480px 170px at 96% 0%, rgba(109, 91, 208, 0.09) 0%, rgba(109, 91, 208, 0) 72%),
+        var(--color-bg-page) !important;
+}
+/* The page bar only stays where it leads back (a campaign, a customer), as
+   a quiet line of text; top-level pages name themselves. */
+html.look-family .page-bar {
+    position: relative; height: auto; padding-top: 22px; padding-bottom: 0;
+    background: transparent; border: 0;
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+html.look-family .page-bar::before { display: none; }
+html.look-family .page-bar:not(.has-link) { display: none; }
+/* ~ not +: a page's hidden csrf input can sit between the bar and its
+   content, which left Campaigns, Customers and Agents 16px lower than
+   the Dashboard (Derek, 2026-11-08). */
+html.look-family .page-bar + div > .p-6,
+html.look-family .page-bar ~ .p-6 { padding-top: 1rem; }
+
+/* ---------- Sidebar ---------- */
+html.look-family nav.fx-nav {
+    background: rgba(255, 255, 255, 0.78) !important;
+    border-right: 1px solid var(--fam-line);
+    -webkit-backdrop-filter: saturate(160%) blur(12px);
+    backdrop-filter: saturate(160%) blur(12px);
+}
+html.look-family .navbar-grid-container { display: none; }
+html.look-family .nav-section {
+    color: var(--fam-quiet);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+}
+html.look-family .nav-divider { background: var(--fam-line-soft); }
+html.look-family .main-nav-link {
+    color: var(--fam-ink-2) !important;
+    border-radius: 12px;
+}
+html.look-family .main-nav-link .material-symbols-outlined { color: #6b7380 !important; }
+html.look-family .main-nav-link .nav-text-light {
+    font-weight: 500 !important;
+    letter-spacing: 0;
+}
+html.look-family .main-nav-link:hover,
+html.look-family .main-nav-link:focus-visible {
+    color: var(--fam-ink) !important;
+    background: rgba(21, 23, 26, 0.04);
+}
+html.look-family .main-nav-link::after { display: none; }
+html.look-family .main-nav-link.is-active {
+    background: #ffffff;
+    color: var(--fam-ink) !important;
+    box-shadow: 0 4px 14px rgba(21, 23, 26, 0.07), 0 0 0 1px var(--fam-line-soft);
+}
+html.look-family .main-nav-link.is-active::before { display: none; }
+html.look-family .main-nav-link.is-active .material-symbols-outlined { color: var(--fam-ink) !important; }
+html.look-family .main-nav-link.is-active .nav-text-light { font-weight: 700 !important; }
+
+html.look-family .collapse-expand-btn {
+    background: #ffffff !important;
+    border: 1px solid var(--fam-line) !important;
+    box-shadow: 0 6px 18px rgba(21, 23, 26, 0.10) !important;
+}
+html.look-family .collapse-expand-btn .material-symbols-outlined { color: var(--fam-ink) !important; }
+html.look-family body > button.fixed,
+html.look-family nav.fx-nav > button.absolute {
+    background: #ffffff !important;
+    border: 1px solid var(--fam-line) !important;
+    box-shadow: 0 6px 18px rgba(21, 23, 26, 0.12);
+}
+html.look-family body > button.fixed .material-symbols-outlined,
+html.look-family nav.fx-nav > button.absolute .material-symbols-outlined { color: var(--fam-ink) !important; }
+
+/* User menu at the foot of the sidebar. */
+html.look-family nav.fx-nav .text-white { color: var(--fam-ink) !important; }
+html.look-family nav.fx-nav .border-gray-500 { border-color: var(--fam-line) !important; }
+html.look-family nav.fx-nav .relative > .absolute.bottom-full {
+    background: #ffffff !important;
+    border: 1px solid var(--fam-line) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 18px 44px rgba(21, 23, 26, 0.14) !important;
+    padding: 6px !important;
+}
+html.look-family nav.fx-nav .relative > .absolute.bottom-full a,
+html.look-family nav.fx-nav .relative > .absolute.bottom-full button {
+    color: var(--fam-ink-2) !important;
+    border-radius: 10px;
+}
+html.look-family nav.fx-nav .relative > .absolute.bottom-full a:hover,
+html.look-family nav.fx-nav .relative > .absolute.bottom-full button:hover { background: var(--color-bg-hover) !important; }
+html.look-family nav.fx-nav .relative > .absolute.bottom-full hr { border-color: var(--fam-line-soft) !important; }
+html.look-family nav.fx-nav .relative > .absolute.bottom-full .text-red-400 { color: #b42335 !important; }
+
+/* ---------- App marks (fam-mark), used by the launcher ---------- */
+html.look-family .fam-badge {
+    background: #ffffff;
+    border: 1px solid var(--fam-line);
+    border-radius: 16px;
+    padding: 10px;
+    box-shadow: 0 4px 14px rgba(21, 23, 26, 0.05);
+}
+html.look-family .fam-badge:hover { background: #ffffff; border-color: var(--color-border-strong); }
+html.look-family .fam-badge:focus-visible { outline: 2px solid var(--fam-teal); outline-offset: 2px; }
+.fam-badge__row { display: flex; align-items: center; gap: 12px; }
+.fam-mark {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    background: #14212b;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.fam-mark svg { width: 24px; height: 24px; overflow: visible; }
+.fam-mark--sm { width: 32px; height: 32px; border-radius: 10px; }
+.fam-mark--sm svg { width: 20px; height: 20px; }
+.fam-badge__text { display: flex; flex-direction: column; min-width: 0; flex: 1; text-align: left; }
+.fam-badge__app { font-size: 15px; font-weight: 600; color: #14212b; line-height: 1.2; }
+.fam-badge__full { font-size: 12px; color: #5b6470; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fam-badge__chev { font-size: 18px !important; color: #6b7380; }
+html.look-family .grid-badge--collapsed.fam-badge { padding: 6px; border-radius: 14px; }
+html.look-family .grid-badge--collapsed .fam-badge__text,
+html.look-family .grid-badge--collapsed .fam-badge__chev { display: none; }
+
+html.look-family .fam-menu {
+    background: #ffffff;
+    border: 1px solid var(--fam-line);
+    border-radius: 16px;
+    box-shadow: 0 18px 44px rgba(21, 23, 26, 0.14);
+    padding: 8px;
+    width: 260px;
+    max-width: none;
+}
+.fam-menu__head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 8px 10px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid #eceef0;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase;
+    color: #14212b;
+}
+html.look-family .fam-menu .fam-menu__item {
+    padding: 8px;
+    gap: 12px;
+    border-radius: 12px;
+    color: #14212b;
+}
+html.look-family .fam-menu .fam-menu__item::before { display: none; }
+html.look-family .fam-menu .grid-badge__menu-item:hover:not(.grid-badge__menu-item--disabled),
+html.look-family .fam-menu .grid-badge__menu-item--current:hover { background: #f4f5f6; color: #14212b; }
+html.look-family .fam-menu .grid-badge__menu-item--current { background: #eef6f5; }
+.fam-menu__names { display: flex; flex-direction: column; line-height: 1.25; }
+.fam-menu__names b { font-size: 14px; font-weight: 600; }
+.fam-menu__names span { font-size: 12px; color: #5b6470; }
+
+/* Marks rest still; they move only while something is happening (the menu is
+   open, or the pointer is on them), and never for people who turn motion off. */
+.m-grid .r1 { transform: translate(14px, 14px); }
+.m-grid .r2 { transform: translate(28px, 28px); }
+@keyframes fam-gr0 {
+    0% { transform: translate(0, 0); opacity: 0 } 3%, 21% { transform: translate(0, 0); opacity: 1 } 24% { transform: translate(0, 0); opacity: 0 }
+    25% { transform: translate(0, 14px); opacity: 0 } 28%, 46% { transform: translate(0, 14px); opacity: 1 } 49% { transform: translate(0, 14px); opacity: 0 }
+    50% { transform: translate(0, 28px); opacity: 0 } 53%, 71% { transform: translate(0, 28px); opacity: 1 } 74% { transform: translate(0, 28px); opacity: 0 }
+    75% { transform: translate(0, 28px); opacity: 0 } 78%, 96% { transform: translate(0, 28px); opacity: 1 } 99%, 100% { transform: translate(0, 28px); opacity: 0 }
+}
+@keyframes fam-gr1 {
+    0% { transform: translate(14px, 14px); opacity: 0 } 3%, 21% { transform: translate(14px, 14px); opacity: 1 } 24% { transform: translate(14px, 14px); opacity: 0 }
+    25% { transform: translate(14px, 14px); opacity: 0 } 28%, 46% { transform: translate(14px, 14px); opacity: 1 } 49% { transform: translate(14px, 14px); opacity: 0 }
+    50% { transform: translate(14px, 14px); opacity: 0 } 53%, 71% { transform: translate(14px, 14px); opacity: 1 } 74% { transform: translate(14px, 14px); opacity: 0 }
+    75% { transform: translate(0, 0); opacity: 0 } 78%, 96% { transform: translate(0, 0); opacity: 1 } 99%, 100% { transform: translate(0, 0); opacity: 0 }
+}
+@keyframes fam-gr2 {
+    0% { transform: translate(28px, 28px); opacity: 0 } 3%, 21% { transform: translate(28px, 28px); opacity: 1 } 24% { transform: translate(28px, 28px); opacity: 0 }
+    25% { transform: translate(28px, 14px); opacity: 0 } 28%, 46% { transform: translate(28px, 14px); opacity: 1 } 49% { transform: translate(28px, 14px); opacity: 0 }
+    50% { transform: translate(28px, 0); opacity: 0 } 53%, 71% { transform: translate(28px, 0); opacity: 1 } 74% { transform: translate(28px, 0); opacity: 0 }
+    75% { transform: translate(28px, 0); opacity: 0 } 78%, 96% { transform: translate(28px, 0); opacity: 1 } 99%, 100% { transform: translate(28px, 0); opacity: 0 }
+}
+@keyframes fam-draw { 0% { stroke-dashoffset: 90 } 55%, 100% { stroke-dashoffset: 0 } }
+@keyframes fam-breathe { 0%, 100% { transform: scale(.82); opacity: .7 } 50% { transform: scale(1); opacity: 1 } }
+@keyframes fam-flow { 0% { stroke-dashoffset: 60 } 100% { stroke-dashoffset: 0 } }
+.m-breathe { transform-box: fill-box; transform-origin: center; }
+
+@media (prefers-reduced-motion: no-preference) {
+    .grid-badge--open .m-grid .r0 { animation: fam-gr0 10s ease-in-out infinite; }
+    .grid-badge--open .m-grid .r1 { animation: fam-gr1 10s ease-in-out .15s infinite; }
+    .grid-badge--open .m-grid .r2 { animation: fam-gr2 10s ease-in-out .3s infinite; }
+    .fam-badge:hover .fam-badge__row .m-breathe,
+    .fam-menu__item:hover .m-breathe { animation: fam-breathe 2.6s ease-in-out infinite; }
+    .fam-badge:hover .fam-badge__row .m-flow,
+    .fam-menu__item:hover .m-flow { stroke-dasharray: 14 6; animation: fam-flow 1.6s linear infinite; }
+    .fam-menu__item:hover .m-draw,
+    .gl-tile:hover .m-draw { stroke-dasharray: 90; animation: fam-draw 2.4s ease-in-out infinite; }
+}
+
+
+/* ---------- Page bar ---------- */
+html.look-family .page-bar {
+    background: rgba(255, 255, 255, 0.78);
+    border-bottom-color: var(--fam-line-soft);
+}
+html.look-family .page-bar::before { display: none; }
+html.look-family .page-bar-title { font-weight: 700; }
+
+/* ---------- Shared pieces from base.html ---------- */
+html.look-family .card { border-radius: var(--radius-lg); }
+html.look-family .btn-primary,
+html.look-family .btn-secondary,
+html.look-family .btn-accent,
+html.look-family .btn-success,
+html.look-family .btn-danger { border-radius: 999px; }
+html.look-family .btn-primary { font-weight: 700; }
+/* Pulse keeps colour off buttons: the accent becomes the same near-black pill. */
+html.look-family .btn-accent {
+    background: #14212b;
+    color: #f3f4f5 !important;
+    box-shadow: 0 6px 16px rgba(21, 23, 26, 0.16);
+    font-weight: 700;
+}
+html.look-family .btn-accent:hover {
+    background: #2a2e34;
+    box-shadow: 0 8px 20px rgba(21, 23, 26, 0.20);
+    transform: none;
+}
+html.look-family .btn-secondary { font-weight: 600; }
+
+/* ---------- Pulse's gradient edges and words ---------- */
+/* The brand gradient as a 1.5px edge: icon tiles, Gem's pill, suggestion
+   chips and the one main card on a page. Teal to pink, like Pulse. */
+.fam-ico,
+html.look-family .icon-tile:not(.neutral):not(.sm) {
+    width: 44px; height: 44px; flex: none; border-radius: 14px;
+    display: inline-grid; place-items: center; color: #14212b !important;
+    background: linear-gradient(#f9fafb, #f9fafb) padding-box,
+                linear-gradient(135deg, #2fd3b5, #f06aae) border-box !important;
+    border: 1.5px solid transparent !important;
+}
+html.look-family .icon-tile { width: 36px; height: 36px; border-radius: 11px; }
+html.look-family .icon-tile .material-symbols-outlined { color: #14212b !important; font-size: 19px; }
+/* Only a page's section heads (My board, Overview) get the gradient edge.
+   Every other tile (KPI figures, cards, small heads) is a plain white tile
+   with a hairline, as Pulse's are. */
+html.look-family .icon-tile.neutral:not(.sm) {
+    background: #ffffff !important; border: 1px solid var(--fam-line) !important;
+    box-shadow: 0 1px 2px rgba(20, 33, 43, .04);
+}
+html.look-family .icon-tile.neutral .material-symbols-outlined { color: var(--fam-ink-2) !important; }
+/* Small tiles (in cards, beside figures) keep a plain hairline, as Pulse's
+   do; the gradient is for the main ones. */
+html.look-family .icon-tile.sm {
+    width: 30px; height: 30px; border-radius: 9px;
+    background: #ffffff !important; border: 1px solid var(--fam-line) !important;
+}
+html.look-family .icon-tile.sm .material-symbols-outlined { font-size: 16px; color: #4a5260 !important; }
+.fam-next-main .fam-ico { position: relative; align-self: flex-start; }
+.fam-next-copy { flex-basis: 300px; }
+.fam-gt {
+    background: linear-gradient(90deg, #00917b 0%, #c93d8a 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+html.look-family .hero-gem,
+html.look-family .gem-launch,
+html.look-family .gem-suggest {
+    background: linear-gradient(#ffffff, #ffffff) padding-box,
+                linear-gradient(90deg, rgba(13,129,120,.55), rgba(184,50,127,.5)) border-box !important;
+    border: 1.5px solid transparent !important;
+}
+html.look-family .gem-suggest { color: var(--fam-ink); border-radius: 999px; }
+html.look-family .gem-suggest:hover {
+    background: linear-gradient(#f6faf9, #f6faf9) padding-box,
+                linear-gradient(90deg, #0d8178, #b8327f) border-box !important;
+}
+
+/* ---------- Collapse the menu: a quiet row above the user, like Pulse's
+   "Alert sound on"; just the icon when the menu is narrow. ---------- */
+html.look-family .collapse-expand-btn { display: none !important; }
+html.look-family .fam-collapse { display: none !important; }
+@media (min-width: 768px) {
+    html.look-family .fam-collapse {
+        display: flex !important; align-items: center; gap: 10px; width: 100%;
+        padding: 8px 12px; margin-bottom: 8px; border: 0; border-radius: 12px;
+        background: none; cursor: pointer; font-size: 13px; color: var(--fam-quiet); text-align: left;
+    }
+    html.look-family nav.w-20 .fam-collapse { justify-content: center; padding: 8px 0; }
+}
+html.look-family .fam-collapse:hover { background: rgba(255,255,255,.8); color: var(--fam-ink); }
+html.look-family .fam-collapse:focus-visible { outline: 2px solid #00917b; outline-offset: 2px; }
+html.look-family .fam-install[hidden] { display: none !important; }
+html.look-family .fam-collapse .material-symbols-outlined { font-size: 19px; font-variation-settings: 'wght' 300, 'opsz' 20; }
+/* With no bar, give every page a little air under the top line. */
+html.look-family main { padding-top: 12px; }
+
+
+/* ---------- Matching Pulse exactly (2026-11-03 review) ---------- */
+/* Pulse's frosted wash under the top line: teal, pink, orange. It sits on
+   the whole page, behind the floating menu too, as Pulse's does, so there is
+   no edge where the page area starts. The page area itself is clear. */
+html.look-family main { background: transparent !important; }
+html.look-family body {
+    background:
+        radial-gradient(ellipse 620px 210px at calc(4% + 260px) -30px, rgba(0,170,144,.17) 0%, rgba(0,170,144,0) 70%),
+        radial-gradient(ellipse 560px 200px at calc(42% + 230px) -30px, rgba(222,66,149,.11) 0%, rgba(222,66,149,0) 70%),
+        radial-gradient(ellipse 460px 190px at calc(100% - 100px) -30px, rgba(243,146,55,.10) 0%, rgba(243,146,55,0) 70%),
+        #f7f8fb !important;
+}
+
+/* The menu as Pulse's rounded floating panel, not a full-height slab. */
+@media (min-width: 768px) {
+    html.look-family nav.fx-nav {
+        top: 17px !important; left: 14px !important; height: calc(100vh - 34px) !important;
+        border-radius: 22px; border: 1px solid rgba(20,33,43,.07) !important;
+        background: rgba(255,255,255,.66) !important;
+        box-shadow: 0 10px 30px rgba(20,33,43,.05);
+    }
+    html.look-family main.ml-64 { margin-left: calc(16rem + 14px) !important; }
+    html.look-family main.ml-20 { margin-left: calc(5rem + 14px) !important; }
+}
+/* Pulse's menu type: 14px regular, the current page 600 on white. */
+html.look-family .nav-section { font-size: 11px; font-weight: 500; letter-spacing: .12em; color: var(--fam-quiet); }
+html.look-family .main-nav-link { min-height: 42px; font-size: 14px; }
+html.look-family .main-nav-link .nav-text-light { font-size: 14px; font-weight: 400 !important; }
+html.look-family .main-nav-link.is-active .nav-text-light { font-weight: 600 !important; }
+html.look-family .main-nav-link.is-active {
+    box-shadow: 0 1px 2px rgba(20,33,43,.05), 0 6px 16px rgba(20,33,43,.06);
+}
+/* Material icons drawn at Pulse's line weight and size. */
+html.look-family .main-nav-link .material-symbols-outlined {
+    font-size: 19px !important; color: var(--fam-ink-2) !important;
+    font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 20 !important;
+}
+html.look-family .main-nav-link.is-active .material-symbols-outlined { color: var(--fam-ink) !important; }
+
+/* The user at the foot, as Pulse's: hairline above, gradient ring, white disc. */
+html.look-family nav.fx-nav .mt-auto { border-top: 1px solid rgba(20,33,43,.07); padding-top: 12px !important; }
+html.look-family .um-ring {
+    border: 0 !important; width: 36px !important; height: 36px !important; padding: 1.5px;
+    background: linear-gradient(135deg, #00aa90, #de4295, #f39237);
+}
+html.look-family .um-disc {
+    width: 100% !important; height: 100% !important; background: #ffffff !important; box-shadow: none !important;
+    color: var(--fam-ink) !important; font-size: 12px !important; font-weight: 600 !important; letter-spacing: 0 !important;
+}
+html.look-family .um-name { font-size: 13.5px !important; font-weight: 600 !important; color: var(--fam-ink) !important; }
+
+/* Thin greeting, 600 for the name and the figures, as Pulse sets them. */
+html.look-family .hero-title {
+    font-size: clamp(1.9rem, 3.4vw, 2.4rem); font-weight: 300; letter-spacing: -0.02em; color: var(--fam-ink-2);
+}
+html.look-family .hero-title .hero-name { font-weight: 600; color: var(--fam-ink); }
+html.look-family .fam-summary { font-size: 14.5px; font-weight: 300; }
+html.look-family .fam-summary b { font-weight: 600; }
+.fam-next-title { color: var(--fam-ink-2); }
+.fam-next-title b { color: #14212b; }
+/* The dot field runs from the top line down (family_tiles.html places it). */
+html.look-family .hero { overflow: visible; }
+@media (prefers-reduced-motion: reduce) { html.look-family .hero canvas { display: block; } }
+/* A short window scrolls the menu inside its rounded panel. */
+html.look-family nav.fx-nav ul.flex-1 { overflow-y: auto; min-height: 0; }
+/* Gem's panel and the Campaigns drawer sit just off the right edge when shut; their wide shadows showed
+   as a grey strip down every page. No shadow until it opens. */
+html.look-family .gem-panel:not(.on),
+html.look-family .cx-drawer:not(.open) { box-shadow: none; }
+/* Before Alpine starts, the menu and page have no width classes yet; base.html
+   holds them in place. The family look adds its 14px inset. */
+@media (min-width: 768px) {
+    html.look-family main.min-h-screen:not(.ml-0):not(.ml-20):not(.ml-64) { margin-left: calc(16rem + 14px); }
+    html.look-family.nav-mini main.min-h-screen:not(.ml-0):not(.ml-20):not(.ml-64) { margin-left: calc(5rem + 14px); }
+}
+
+
+/* Buttons: Pulse's 38px pills. Main = the dark ink pill with a soft top
+   highlight; secondary = the frosted ghost pill. */
+html.look-family .btn-primary,
+html.look-family .btn-accent {
+    height: 38px; padding: 0 18px !important; border-radius: 999px !important; border: 0;
+    background: linear-gradient(180deg, #2b3640 0%, #14212b 100%) !important;
+    color: #ffffff !important; font-weight: 600 !important; font-size: 13.5px !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 4px 12px rgba(20,33,43,.16) !important;
+    transform: none !important;
+}
+html.look-family .btn-primary:hover,
+html.look-family .btn-accent:hover {
+    background: linear-gradient(180deg, #34414c 0%, #1b2a36 100%) !important;
+}
+html.look-family .btn-secondary {
+    height: 38px; padding: 0 16px !important; border-radius: 999px !important;
+    background: rgba(255,255,255,.7) !important; border: 1px solid rgba(20,33,43,.12) !important;
+    color: var(--fam-ink-2) !important; font-weight: 500 !important; font-size: 13.5px !important;
+}
+html.look-family .btn-secondary:hover { background: #ffffff !important; color: var(--fam-ink) !important; }
+html.look-family .btn-sm,
+html.look-family .btn-primary.btn-sm,
+html.look-family .btn-secondary.btn-sm,
+html.look-family .ctl-btn,
+html.look-family .btn-primary.ctl-btn,
+html.look-family .btn-secondary.ctl-btn { height: 32px; padding: 0 13px !important; font-size: 12.5px !important; border-radius: 999px !important; }
+html.look-family .btn-primary .material-symbols-outlined,
+html.look-family .btn-secondary .material-symbols-outlined { font-size: 17px; }
+
+/* Gem's badge matches Pulse's Assist: a dark ink disc with a soft teal glow,
+   Gem's facet in the brand gradient whose facet lines draw themselves in
+   one by one, a small spark, then fade and redraw; and a slow ring. */
+html.look-family .gem-orb {
+    position: relative; overflow: visible;
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232fd3b5'/%3E%3Cstop offset='1' stop-color='%23f06aae'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cstyle%3E.l%7Bstroke-dasharray:1%3Bstroke-dashoffset:1%3Banimation:d 4.2s ease-in-out infinite%7D.b%7Banimation-delay:.35s%7D.c%7Banimation-delay:.7s%7D.e%7Banimation-delay:1.05s%7D.s%7Btransform-box:fill-box%3Btransform-origin:center%3Btransform:scale%280%29%3Banimation:s 4.2s ease-out infinite%7D%40keyframes d%7B0%25%7Bstroke-dashoffset:1%3Bopacity:1%7D22%25%7Bstroke-dashoffset:0%7D78%25%7Bstroke-dashoffset:0%3Bopacity:1%7D100%25%7Bstroke-dashoffset:0%3Bopacity:0%7D%7D%40keyframes s%7B0%25,40%25%7Btransform:scale%280%29 rotate%280%29%7D52%25%7Btransform:scale%281%29 rotate%2845deg%29%7D66%25,100%25%7Btransform:scale%280%29 rotate%2890deg%29%7D%7D%40media %28prefers-reduced-motion:reduce%29%7B.l%7Banimation:none%3Bstroke-dashoffset:0%7D.s%7Banimation:none%7D%7D%3C/style%3E%3Cpath d='M9 7H23L28 13L16 27L4 13Z' fill='none' stroke='url%28%23g%29' stroke-width='2.2' stroke-linejoin='round'/%3E%3Cg fill='none' stroke='url%28%23g%29' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath class='l' pathLength='1' d='M4 13H28'/%3E%3Cpath class='l b' pathLength='1' d='M9 7L12 13L16 7L20 13L23 7'/%3E%3Cpath class='l c' pathLength='1' d='M12 13L16 27'/%3E%3Cpath class='l e' pathLength='1' d='M20 13L16 27'/%3E%3C/g%3E%3Cpath class='s' d='M27 1.5L27.9 4.1L30.5 5L27.9 5.9L27 8.5L26.1 5.9L23.5 5L26.1 4.1Z' fill='%23fff'/%3E%3C/svg%3E") center / 60% no-repeat,
+        radial-gradient(circle at 50% 30%, #2a3f50 0%, #14212b 70%) !important;
+    box-shadow: 0 6px 18px rgba(0,145,123,.28), inset 0 0 0 1px rgba(255,255,255,.10) !important;
+}
+html.look-family .gem-orb::after {
+    content: ''; position: absolute; inset: 0; border-radius: 50%;
+    border: 1.5px solid rgba(0,170,144,.6); animation: fam-ping 2.4s ease-out infinite;
+    pointer-events: none;
+}
+
+@keyframes fam-ping { 0% { transform: scale(1); opacity: .8; } 100% { transform: scale(1.55); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { html.look-family .gem-orb::after { animation: none; opacity: 0; } }
+
+/* Figure tiles: Pulse's numbers, thin label, no tech face. */
+html.look-family .kpi { border-radius: 18px; }
+html.look-family .kpi-tag { font-size: 11px; font-weight: 500; letter-spacing: .12em; color: var(--fam-quiet); }
+html.look-family .kpi-num { font-size: 1.7rem; font-weight: 600 !important; letter-spacing: -.02em; color: var(--fam-ink); }
+html.look-family .kpi-label { font-size: 13px; color: var(--fam-ink-2); }
+html.look-family .kpi-note { font-size: 12px; color: var(--fam-quiet); border-top-color: rgba(20,33,43,.07); }
+
+
+/* ---------- Customers and the customer page (step 6) ---------- */
+/* A page title like Pulse's: thin name, one line under it. */
+html.look-family .fam-head { margin: 4px 0 22px; }
+html.look-family .fam-head h1 {
+    margin: 0; color: var(--fam-ink); font-weight: 300; letter-spacing: -0.03em;
+    font-size: clamp(1.75rem, 3.2vw, 2.4rem); line-height: 1.15;
+}
+html.look-family .fam-head h1 b { font-weight: 600; }
+html.look-family .fam-head p { margin: 6px 0 0; color: var(--fam-ink-2); font-size: 14.5px; }
+/* A name stays on one line, with the number under it. */
+html.look-family .fam-who p { white-space: nowrap; }
+/* The customer page's name reads like Pulse's customer page. */
+html.look-family .cd-head h1 { font-size: 1.6rem !important; font-weight: 600 !important; letter-spacing: -0.02em; }
+/* Tailwind's reds, oranges and ambers become the brand's state hues on
+   every Grid page: risk and ended deep pink, warnings orange. */
+html.look-family main .text-red-500, html.look-family main .text-red-600, html.look-family main .text-red-700 { color: #9b2560 !important; }
+html.look-family main .text-orange-500, html.look-family main .text-orange-600, html.look-family main .text-orange-700,
+html.look-family main .text-amber-500, html.look-family main .text-amber-600, html.look-family main .text-amber-700 { color: #b0651c !important; }
+html.look-family main .bg-red-50, html.look-family main .bg-red-100 { background-color: #fde8f2 !important; }
+html.look-family main .bg-orange-50, html.look-family main .bg-orange-100,
+html.look-family main .bg-amber-50, html.look-family main .bg-amber-100 { background-color: #fdecdc !important; }
+
+
+/* Pages that keep their own title (Store Desk, Luna lab, People, Messages,
+   Analytics) mark it .fam-title, drawn like .fam-head; the line under it too. */
+html.look-family h1.fam-title {
+    font-family: inherit !important; color: var(--fam-ink) !important; font-weight: 300 !important;
+    letter-spacing: -0.03em; font-size: clamp(1.75rem, 3.2vw, 2.4rem) !important; line-height: 1.15;
+}
+html.look-family h1.fam-title + p { color: var(--fam-ink-2) !important; font-size: 14.5px !important; margin-top: 6px !important; }
+html.look-family .pp-head { background: none; border: 0; box-shadow: none; padding: 0 !important; }
+
+
+/* Pill bars like Campaigns, and the dot field on every page (Derek,
+   2026-11-05). Every switcher (.ctl-seg, Analytics' tabs, Gem's library)
+   is Campaigns' pill bar: a white pill with a soft shadow, the current one
+   in ink. Selects, chips and control buttons beside them are white pills
+   of the same height. The Dashboard's dot field sits behind the top right
+   of every page; pages that draw their own (the Dashboard) keep theirs. */
+html.look-family .ctl-seg,
+html.look-family .exa .exa-tabs,
+html.look-family .glib-tabs {
+    gap: 4px; padding: 4px; border-radius: 999px; background: #fff; border: 1px solid #e4e7ea;
+    box-shadow: 0 1px 2px rgba(20,33,43,.04), 0 10px 28px rgba(20,33,43,.05);
+}
+html.look-family .ctl-seg button,
+html.look-family .exa .tab-btn,
+html.look-family .glib-tabs button {
+    height: 34px; padding: 0 15px; border-radius: 999px; font-size: 13.5px; font-weight: 600; color: #5b6672 !important;
+    display: inline-flex; align-items: center; gap: 6px;
+}
+html.look-family .ctl-seg button:hover,
+html.look-family .exa .tab-btn:hover,
+html.look-family .glib-tabs button:hover { color: var(--fam-ink) !important; background: #f4f5f7 !important; }
+html.look-family .ctl-seg button.on,
+html.look-family .exa .tab-btn.active,
+html.look-family .glib-tabs button.on { background: var(--fam-ink) !important; color: #fff !important; box-shadow: none; }
+html.look-family .glib-tabs button.on .glib-count { background: rgba(255,255,255,.18); color: #fff; }
+html.look-family .ctl-select,
+html.look-family .ctl-chip {
+    height: 44px; border-radius: 999px; border: 1px solid #e4e7ea; background-color: #fff; font-size: 13.5px; color: #3d4c57;
+    box-shadow: 0 1px 2px rgba(20,33,43,.04), 0 10px 28px rgba(20,33,43,.05);
+}
+html.look-family .ctl-select { padding-left: 16px; padding-right: 2.2rem; font-weight: 600; color: var(--fam-ink); }
+html.look-family .ctl-chip { padding: 0 16px; }
+html.look-family .ctl-btn,
+html.look-family .btn-primary.ctl-btn,
+html.look-family .btn-secondary.ctl-btn { height: 44px; padding: 0 18px !important; font-size: 13.5px !important; }
+html.look-family .btn-secondary.ctl-btn { background: #fff !important; border-color: #e4e7ea !important;
+    box-shadow: 0 1px 2px rgba(20,33,43,.04), 0 10px 28px rgba(20,33,43,.05); }
+html.look-family .hub-hero .ctl-seg { box-shadow: none; }
+
+/* The dot field hangs off the page, not <main>. An isolated <main>
+   trapped the pages' pop-ups (z-index 1000 and up) under the menu (z 30). */
+html.look-family body::after {
+    content: ""; position: absolute; top: 0; right: 0; width: 62%; height: 300px; pointer-events: none; z-index: -1;
+    background-image: radial-gradient(circle, rgba(74, 82, 96, .5) 1.25px, transparent 1.6px);
+    background-size: 14px 14px; background-position: right 8px top 8px;
+    -webkit-mask-image: linear-gradient(to bottom, #000, transparent), linear-gradient(to left, #000 35%, transparent);
+    -webkit-mask-composite: source-in;
+    mask-image: linear-gradient(to bottom, #000, transparent), linear-gradient(to left, #000 35%, transparent);
+    mask-composite: intersect;
+}
+html.look-family body:has(.fk-dots)::after { display: none; }
+@media (max-width: 900px) {
+    html.look-family body::after { width: 100%; height: 200px; opacity: .6; }
+}
+
+/* Titles at the Dashboard greeting's size (Derek, 2026-11-05): the name
+   46px light, the line under it 16px so it doesn't get lost. */
+html.look-family .fam-head h1,
+html.look-family h1.fam-title { font-size: clamp(2.1rem, 3.6vw, 2.875rem) !important; letter-spacing: -.035em; line-height: 1.1; }
+html.look-family .fam-head p,
+html.look-family h1.fam-title + p { font-size: 16px !important; color: #5b6672 !important; margin-top: 10px !important; }
+html.look-family .fam-head { margin-bottom: 26px; }
+html.look-family .fam-head .fam-ask { margin-top: 20px; }
+@media (max-width: 767px) {
+    html.look-family .fam-head h1, html.look-family h1.fam-title { font-size: 34px !important; }
+    html.look-family .fam-head p, html.look-family h1.fam-title + p { font-size: 15px !important; }
+}
+
+
+/* ---------- Tables, row actions and risk colours (2026-11-06) ----------
+   Every .data-table reads like the kit's .fk-table: no grey header bar,
+   sentence-case headers, quiet rules, numbers a shade lighter than names,
+   zeros quieter still. Row actions (.link-action in a cell) become small
+   pills; data-ico="name" adds a Material icon, .is-danger turns red only on
+   hover. */
+html.look-family .data-table { font-size: 13.5px; color: var(--fam-ink); }
+html.look-family .data-table th { background: transparent; text-transform: none; letter-spacing: 0; font-size: 12px; font-weight: 500; color: #5b6672;
+    padding: 14px 12px 10px; border-bottom: 1px solid #e4e7ea; }
+html.look-family .data-table td { padding: 14px 12px; border-bottom-color: #eef0f3; }
+html.look-family .data-table th:first-of-type, html.look-family .data-table td:first-of-type { padding-left: 24px; }
+html.look-family .data-table th:last-of-type, html.look-family .data-table td:last-of-type { padding-right: 24px; }
+html.look-family .data-table tbody tr:hover { background: #f8f9fb; }
+html.look-family .data-table td.num { font-weight: 500; color: #3d4853; font-variant-numeric: tabular-nums; }
+html.look-family .data-table td.num.is-zero { color: #a3abb4; font-weight: 400; }
+html.look-family .card:has(> .data-table, > .overflow-x-auto > .data-table) { border-radius: 24px; border-color: #e4e7ea; }
+html.look-family .data-table td .link-action { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 13px; border-radius: 999px;
+    border: 1px solid #e4e7ea; background: #fff; font-size: 13px; font-weight: 600; color: var(--fam-ink); text-decoration: none; cursor: pointer;
+    transition: border-color .15s ease, background .15s ease, color .15s ease; }
+html.look-family .data-table td .link-action:hover { border-color: #cfd5da; background: #f4f5f7; color: var(--fam-ink); }
+html.look-family .data-table td .link-action.ml-3 { margin-left: 6px; }
+html.look-family .data-table td .link-action[data-ico]::before { content: attr(data-ico); font-family: 'Material Symbols Outlined'; font-weight: 400; font-size: 17px;
+    line-height: 1; font-feature-settings: 'liga'; -webkit-font-feature-settings: 'liga'; color: #6b7580; }
+html.look-family .data-table td .link-action.is-danger { color: #5b6672; }
+html.look-family .data-table td .link-action.is-danger:hover { color: #b42318; border-color: #f1c4bf; background: #fdf3f2; }
+html.look-family .data-table td .link-action.is-danger:hover::before { color: #b42318; }
+
+
+/* ======================================================================
+   Glow's pages (2026-11-18)
+   Glow's pages are Tailwind utilities with no shared classes, so these
+   rules follow its patterns: every page opens with a header row (h1 with
+   .fam-title, a line under it, top buttons), figure tiles (now the run,
+   in the templates), white rounded-xl cards, and rounded-lg buttons whose
+   main one is inline #0a0a0c.
+   ====================================================================== */
+html.look-family main > .p-6 { padding: 32px; color: var(--fam-ink); }
+@media (max-width: 767px) { html.look-family main > .p-6 { padding: 72px 16px 32px; } }
+@media (min-width: 768px) {
+    html.look-family main > .p-6 > :not(:has(h1.fam-title)):not(.fixed) { margin-left: 40px; margin-right: 40px; }
+}
+
+/* The title like every Grid page's: 46px light, the line under it 16px. */
+html.look-family main div:has(> div > h1.fam-title),
+html.look-family main div:has(> div > div > h1.fam-title) { align-items: flex-start !important; gap: 16px 24px; margin-bottom: 26px !important; }
+html.look-family main h1.fam-title { color: var(--fam-ink) !important; font-weight: 300 !important; margin: 0; }
+html.look-family main h1.fam-title + p { line-height: 1.45; max-width: 760px; }
+html.look-family main div:has(> div > h1.fam-title) > div:last-child:not(:has(h1)) { padding-top: 6px; flex-wrap: wrap; }
+
+/* Sub-pages: base.html moves the page's back arrow above the title as the
+   small "← Section" trail, as on every Grid page. */
+html.look-family .fx-trail {
+    display: inline-flex; align-items: center; gap: 6px; margin: 0 0 10px; font-size: 13.5px; font-weight: 600;
+    color: #5b6672 !important; text-decoration: none;
+}
+html.look-family .fx-trail::before { content: 'arrow_back'; font-family: 'Material Symbols Outlined'; font-size: 17px; font-weight: 400; line-height: 1;
+    font-feature-settings: 'liga'; -webkit-font-feature-settings: 'liga'; }
+html.look-family .fx-trail:hover { color: var(--fam-ink) !important; }
+html.look-family .gl-trail-row { display: block !important; }
+
+/* The run sits where the figure tiles were. */
+html.look-family .gl-run { margin-bottom: 28px; }
+
+/* Cards: kit corners and lines. */
+html.look-family main .bg-white.rounded-xl,
+html.look-family main .bg-white.rounded-2xl {
+    border-radius: 24px !important; border: 1px solid #e4e7ea !important;
+    box-shadow: 0 1px 2px rgba(20,33,43,.04), 0 10px 28px rgba(20,33,43,.05) !important;
+}
+html.look-family main .bg-white.rounded-xl h2,
+html.look-family main .bg-white.rounded-xl h3.text-lg { color: var(--fam-ink); font-weight: 650; letter-spacing: -.01em; }
+/* Rows inside a card (recent designs, device status): quiet grey wells. */
+html.look-family main .bg-gray-50.rounded-lg { background: #f6f7f9 !important; border-radius: 16px !important; }
+
+/* Buttons: the kit's 38px pills. The main one (inline #0a0a0c) is the ink pill;
+   bordered ones the white pill; grey ones a quiet pill. */
+html.look-family main :is(a, button).rounded-lg.inline-flex,
+html.look-family main :is(a, button).rounded-lg.px-4.py-2,
+html.look-family main :is(a, button).rounded-lg.px-3.py-2 { border-radius: 999px !important; font-weight: 600; font-size: 13.5px; }
+html.look-family main :is(a, button).rounded-lg.inline-flex,
+html.look-family main :is(a, button).rounded-lg.px-4.py-2 { min-height: 38px; padding-left: 18px; padding-right: 18px; }
+html.look-family main :is(a, button)[style*="#0a0a0c"],
+html.look-family main :is(a, button).bg-gray-900.rounded-lg {
+    background: linear-gradient(180deg, #2b3640 0%, #14212b 100%) !important; color: #fff !important; border: 0 !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 4px 12px rgba(20,33,43,.16) !important;
+}
+html.look-family main :is(a, button)[style*="#0a0a0c"]:hover { background: linear-gradient(180deg, #34414c 0%, #1b2a36 100%) !important; }
+html.look-family main :is(a, button).rounded-lg.border-gray-200 { background: #fff; border-color: #e4e7ea !important; color: var(--fam-ink) !important; }
+html.look-family main :is(a, button).rounded-lg.border-gray-200:hover { background: #f4f5f7; }
+/* Delete buttons: grey until pointed at, then red, as the Grid's row actions. */
+html.look-family main :is(a, button).border-red-200 { border-color: #e4e7ea !important; color: #6b7580 !important; background: #fff; border-radius: 999px !important; }
+html.look-family main :is(a, button).border-red-200:hover { border-color: #f1c4bf !important; color: #b42318 !important; background: #fdf3f2 !important; }
+/* Icon-only buttons on cards (save as template, settings): round. */
+html.look-family main .bg-white :is(a, button).p-2.rounded-lg { border-radius: 999px !important; }
+
+/* Filters (Status, Folder, Type) as Campaigns' pills: white, the chosen one ink. */
+html.look-family main a.rounded-lg.px-3.py-1,
+html.look-family main button.rounded-lg.px-3.py-1 {
+    border-radius: 999px !important; height: 34px; display: inline-flex; align-items: center; gap: 6px; padding: 0 15px !important;
+    font-weight: 600; font-size: 13.5px;
+}
+html.look-family main a.rounded-lg.px-3.py-1.bg-gray-100,
+html.look-family main button.rounded-lg.px-3.py-1.bg-gray-100 { background: #fff !important; border: 1px solid #e4e7ea; color: #5b6672 !important; }
+html.look-family main a.rounded-lg.px-3.py-1.bg-gray-100:hover,
+html.look-family main button.rounded-lg.px-3.py-1.bg-gray-100:hover { background: #f4f5f7 !important; color: var(--fam-ink) !important; }
+html.look-family main .bg-gray-900 { background-color: var(--fam-ink) !important; }
+
+/* Fields: kit corners, light edge, ink focus. */
+html.look-family main :is(input[type="text"], input[type="number"], input[type="search"], input[type="url"], input:not([type]), select, textarea) {
+    border-radius: 12px !important; border-color: #e4e7ea !important;
+}
+html.look-family main :is(input, select, textarea):focus { border-color: #9aa3ab !important; box-shadow: 0 0 0 3px rgba(20,33,43,.08) !important; outline: none; --tw-ring-color: transparent !important; }
+
+/* Icon tiles in cards: a white tile with a light grey edge, grey icon (the
+   kit's .fk-ico), not a tinted square in Tailwind's colours. */
+html.look-family main .rounded-lg.w-10.h-10:has(> .material-symbols-outlined),
+html.look-family main .rounded-lg.w-8.h-8:has(> .material-symbols-outlined),
+html.look-family main .rounded-full.w-16.h-16:has(> .material-symbols-outlined) {
+    background: #fff !important; border: 1px solid #e4e7ea;
+}
+html.look-family main .rounded-lg.w-10.h-10 > .material-symbols-outlined,
+html.look-family main .rounded-lg.w-8.h-8 > .material-symbols-outlined,
+html.look-family main .rounded-full.w-16.h-16 > .material-symbols-outlined { color: #6b7580 !important; }
+
+/* State in the brand's hues: on / online teal, recent orange, off / offline
+   pink, everything else grey. Tailwind's greens, purples and blues go. */
+html.look-family main :is(.text-green-500, .text-green-600, .text-green-700, .text-emerald-600) { color: #0d8178 !important; }
+html.look-family main :is(.bg-green-50, .bg-green-100, .bg-emerald-100) { background-color: #e6f4f1 !important; }
+html.look-family main :is(.bg-green-500, .bg-emerald-500) { background-color: #00aa90 !important; }
+html.look-family main :is(.text-yellow-500, .text-yellow-600, .text-yellow-700) { color: #b0651c !important; }
+html.look-family main :is(.bg-yellow-50, .bg-yellow-100, .bg-amber-100) { background-color: #fdf0e3 !important; }
+html.look-family main :is(.bg-yellow-500, .bg-amber-500) { background-color: #f39237 !important; }
+html.look-family main :is(.bg-red-500) { background-color: #c93d8a !important; }
+html.look-family main :is(.text-purple-500, .text-purple-600, .text-purple-700, .text-blue-500, .text-blue-600, .text-blue-700, .text-indigo-600) { color: var(--fam-ink-2) !important; }
+html.look-family main :is(.bg-purple-50, .bg-purple-100, .bg-blue-50, .bg-blue-100, .bg-indigo-50) { background-color: #f1f3f5 !important; }
+html.look-family main :is(.bg-blue-500, .bg-blue-600, .bg-purple-500, .bg-purple-600) { background-color: var(--fam-ink) !important; }
+html.look-family main [style*="#22c55e"], html.look-family main [style*="#a855f7"], html.look-family main [style*="#3b82f6"] { color: #6b7580 !important; }
+/* Status pills: rounded, a dot, 600 weight, as the kit's .fk-pill. */
+html.look-family main span.rounded-full.text-xs:is(.bg-green-100, .bg-gray-100, .bg-yellow-100, .bg-red-100) { font-weight: 600; padding: 3px 10px; }
+
+/* Links in Glow's words: ink, underlined on hover, not Tailwind blue. */
+html.look-family main a.text-gray-500:hover, html.look-family main a.text-gray-600:hover { color: var(--fam-ink) !important; }
+
+/* Pop-ups: kit corners. */
+html.look-family .fixed.inset-0 .bg-white.rounded-xl,
+html.look-family .fixed.inset-0 .bg-white.rounded-2xl { border-radius: 24px !important; box-shadow: 0 18px 48px rgba(21,23,26,.18) !important; }
+html.look-family .fixed.inset-0.bg-black\/50, html.look-family .fixed.inset-0.bg-black.bg-opacity-50 { background: rgba(20,33,43,.35) !important; backdrop-filter: blur(2px); }
+
+/* Mobile: the menu button sits top left like Flux's and the Grid's. */
+html.look-family body > button.fixed.bottom-4.left-4 {
+    top: 14px; bottom: auto; background: #fff !important; border: 1px solid #e4e7ea !important;
+    box-shadow: 0 1px 2px rgba(20,33,43,.04), 0 10px 28px rgba(20,33,43,.08);
+}
+html.look-family body > button.fixed.bottom-4.left-4 .material-symbols-outlined { color: var(--fam-ink) !important; }
+
+/* Every text button is a pill, whatever its padding (Save, Use Template). */
+html.look-family main :is(a, button).rounded-lg[class*="px-"][class*="py-"]:not(:has(> .material-symbols-outlined:only-child)) { border-radius: 999px !important; font-weight: 600; }
+html.look-family main :is(a, button)[style*="#0a0a0c"] { border-radius: 999px !important; }
+/* Badges on pictures (Featured): the brand's orange, kit pill weight. */
+html.look-family main .bg-amber-500, html.look-family main .bg-yellow-500.rounded-full { background-color: #f39237 !important; font-weight: 600; }
+
+/* Selects: white pill-cornered fields with the Grid's chevron. */
+html.look-family main select:not([multiple]):not([size]) {
+    -webkit-appearance: none; appearance: none; background-color: #fff !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235b6672' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center; background-size: 16px; padding-right: 2.6rem !important;
+}
+
+/* Pages that sat in a narrow centred column (a template, Save as template)
+   start at the left like every other page; the icon beside a sub-page's
+   title goes, as Grid sub-pages have none. */
+html.look-family main > .p-6.mx-auto:is(.max-w-4xl, .max-w-5xl) { max-width: none; margin-left: 0; margin-right: 0; }
+html.look-family main div:has(> div > h1.fam-title) > .w-12.h-12.rounded-xl { display: none; }
+html.look-family main button[type="submit"].rounded-lg { font-size: 13.5px !important; }
+html.look-family main input[type="checkbox"], html.look-family main input[type="radio"] { accent-color: var(--fam-ink); }

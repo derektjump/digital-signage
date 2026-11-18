@@ -1,4 +1,5 @@
 {% extends 'signage/base.html' %}
+{% load kit_tags %}
 
 {% block title %}Designs | {{ app_name }}{% endblock %}
 
@@ -7,7 +8,7 @@
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
         <div>
-            <h1 class="text-2xl font-semibold text-gray-900" style="font-family: 'Oxanium', sans-serif;">Screen Designs</h1>
+            <h1 class="fam-title text-2xl font-semibold text-gray-900" style="font-family: 'Oxanium', sans-serif;">Screen Designs</h1>
             <p class="text-gray-500 mt-1">Create and manage your signage content</p>
         </div>
         <div class="mt-4 md:mt-0 flex items-center gap-2">
@@ -26,7 +27,9 @@
     </div>
 
     <!-- Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+    {% if new_look %}{% fk_figs total_count 'Designs' active_count 'Active' total_count|fk_minus:active_count 'Inactive' as figs %}
+    <div class="gl-run">{% include 'signage/partials/kit/_run.html' %}</div>
+    {% else %}<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(10, 10, 12, 0.05);">
@@ -55,12 +58,12 @@
                     <span class="material-symbols-outlined" style="color: #6b7280;">pause_circle</span>
                 </div>
                 <div>
-                    <p class="text-2xl font-semibold text-gray-900">{{ total_count|add:"-"|add:active_count }}</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ total_count|fk_minus:active_count }}</p>
                     <p class="text-sm text-gray-500">Inactive</p>
                 </div>
             </div>
         </div>
-    </div>
+    </div>{% endif %}
 
     <!-- Filters -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">

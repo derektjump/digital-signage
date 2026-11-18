@@ -1,0 +1,45 @@
+{% comment %}
+The Grid family look's app header, copied from the Grid
+(customer-lifecycle lifecycle/templates/lifecycle/partials/_grid_switcher.html)
+so Glow's sidebar matches every other Grid app: The Grid on its tile at the
+top (part='home', opens the launcher on the-grid.digital) and Glow's card at
+the bottom (part='app'), whose menu switches app. Links to the other apps go
+to the Grid, which checks access there. Styles in signage/css/grid-switcher.css.
+{% endcomment %}
+<div class="gs{% if part %} gs--{{ part }}{% endif %}"{% if part != 'home' %} data-gs{% endif %}>
+    {% if part != 'home' %}<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><linearGradient id="fam-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2dd4bf"/><stop offset="1" stop-color="#f472b6"/></linearGradient></defs></svg>{% endif %}
+    {% if part != 'app' %}<a class="gs-home" href="{{ grid_url }}/apps/" title="The Grid: every Jump.ca app">
+        <span class="gs-tile gs-tile--grid">{% include 'signage/partials/_family_mark.html' with which='grid' %}</span>
+        <span class="gs-word">THE GRID</span>
+    </a>{% endif %}
+    {% if part != 'home' %}<button type="button" class="gs-app" aria-expanded="false" aria-haspopup="true" data-gs-toggle>
+        <span class="gs-mark">{% include 'signage/partials/_family_mark.html' with which='glow' %}</span>
+        <span class="gs-names"><b>Glow</b><small>Digital Signage</small></span>
+        <svg class="gs-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"/></svg>
+    </button>
+    <nav class="gs-menu" aria-label="Switch app" hidden data-gs-menu>
+        <div class="gs-label">Switch app</div>
+        {% for a in grid_switch_apps %}
+        <a class="gs-item{% if a.key == 'glow' %} gs-item--on{% endif %}" href="{{ a.url }}"{% if a.key == 'glow' %} aria-current="page"{% endif %}>
+            <span class="gs-tile">{% include 'signage/partials/_family_mark.html' with which=a.key %}</span>
+            <span class="gs-names"><b>{{ a.name }}</b><small>{{ a.full }}</small></span>
+        </a>
+        {% endfor %}
+        <a class="gs-all" href="{{ grid_url }}/apps/">
+            <span class="gs-tile gs-tile--sm gs-tile--grid">{% include 'signage/partials/_family_mark.html' with which='grid' %}</span>
+            <span>All Grid Apps</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+        </a>
+    </nav>{% endif %}
+</div>
+{% if part != 'home' %}<script>
+(function () {
+    var root = document.currentScript.previousElementSibling;
+    if (!root || !root.matches('[data-gs]')) return;
+    var btn = root.querySelector('[data-gs-toggle]'), menu = root.querySelector('[data-gs-menu]');
+    function set(open) { menu.hidden = !open; btn.setAttribute('aria-expanded', String(open)); root.classList.toggle('gs--open', open); }
+    btn.addEventListener('click', function (e) { e.stopPropagation(); set(menu.hidden); });
+    document.addEventListener('click', function (e) { if (!root.contains(e.target)) set(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !menu.hidden) { set(false); btn.focus(); } });
+})();
+</script>{% endif %}
