@@ -1,0 +1,88 @@
+/* The family look's app header (partials/_grid_switcher.html), shared by the
+   Grid's sidebar and Pulse's. Self-contained so Pulse, which has its own page
+   styles and no family.css, looks the same. */
+.gs { position: relative; display: flex; flex-direction: column; gap: 10px; font-family: 'Inter', system-ui, sans-serif; color: #14212b; }
+.gs svg { overflow: visible; }
+.gs-home { display: flex; align-items: center; gap: 9px; padding: 3px 6px; margin: 0 -6px; border-radius: 10px; text-decoration: none; color: #4a5260; }
+.gs-home:hover { background: rgba(20, 33, 43, .05); color: #14212b; }
+.gs-home:focus-visible, .gs-app:focus-visible, .gs-menu a:focus-visible { outline: 2px solid #00aa90; outline-offset: 2px; }
+.gs-word { font-size: 10.5px; font-weight: 700; letter-spacing: .24em; }
+.gs-tile { width: 32px; height: 32px; border-radius: 10px; background: #14212b; display: flex; align-items: center; justify-content: center; flex: none; }
+.gs-tile svg { width: 20px; height: 20px; }
+.gs-home .gs-tile { width: 26px; height: 26px; border-radius: 8px; background: none; }
+.gs-home .gs-tile svg { width: 24px; height: 24px; }
+/* Layout A (2026-11-04): The Grid on its black tile tops the sidebar, and the
+   app card sits at the bottom (gs-foot) with its menu opening upward. */
+.gs--home .gs-home { gap: 11px; color: #14212b; }
+.gs--home .gs-home .gs-tile { width: 34px; height: 34px; border-radius: 10px; background: #14212b; }
+.gs--home .gs-home .gs-tile svg { width: 21px; height: 21px; }
+.gs--home .gs-word { font-size: 12px; letter-spacing: .26em; }
+.gs--home .gs-tile .m-grid g { stroke: #5d6873; }
+.gs--app .gs-menu { top: auto; bottom: calc(100% + 6px); }
+.gs-foot { margin: 0 0 8px; }
+.gs-foot .gs-app { gap: 10px; padding: 9px 10px; }
+.gs-foot .gs-names small { font-size: 11.5px; }
+.side-inner .gs-foot { margin: auto 0 0; padding-top: 10px; }
+.side-inner .gs-foot + .app-tools { margin-top: 4px; }
+.gs-tile--sm { width: 26px; height: 26px; border-radius: 8px; }
+.gs-tile--sm svg { width: 16px; height: 16px; }
+.gs-app { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border: 1px solid #e4e7ea; border-radius: 16px;
+          background: #ffffff; box-shadow: 0 4px 14px rgba(21, 23, 26, .05); cursor: pointer; text-align: left; font: inherit; color: inherit; }
+.gs-app:hover, .gs--open .gs-app { border-color: #cfd5da; }
+.gs-mark { width: 36px; height: 36px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 11px; background: #14212b; }
+.gs-mark svg { width: 22px; height: 22px; }
+.gs-names { display: flex; flex-direction: column; min-width: 0; flex: 1; line-height: 1.25; }
+.gs-names b { font-size: 15px; font-weight: 600; }
+.gs-names small { font-size: 12px; color: #5b6470; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gs-chev { color: #6b7380; flex: none; }
+.gs-menu { position: absolute; left: 0; top: calc(100% + 6px); z-index: 60; width: max(100%, 272px); box-sizing: border-box; background: #ffffff;
+           border: 1px solid #e4e7ea; border-radius: 16px; box-shadow: 0 18px 44px rgba(21, 23, 26, .14); padding: 8px; }
+.gs-menu[hidden] { display: none; }
+.gs-label { font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: #6b7480; padding: 6px 8px; }
+.gs-item { display: flex; align-items: center; gap: 11px; padding: 7px 8px; border-radius: 12px; text-decoration: none; color: #14212b; }
+.gs-item:hover { background: #f4f5f6; }
+.gs-item--on, .gs-item--on:hover { background: #eef6f5; }
+.gs-all { display: flex; align-items: center; gap: 10px; margin-top: 4px; padding: 10px 8px 6px; border-top: 1px solid #eceef0;
+          font-size: 13px; font-weight: 600; color: #14212b; text-decoration: none; border-radius: 0 0 10px 10px; white-space: nowrap; }
+.gs-all > svg:last-child { margin-left: auto; color: #007a68; }
+.gs-all:hover { background: #f8f9fa; }
+/* The tiles move all the time on the Grid line, as in the launcher; the
+   other marks move while pointed at (family.css keyframes, copied below for Pulse). */
+.gs .m-grid .r1 { transform: translate(14px, 14px); }
+.gs .m-grid .r2 { transform: translate(28px, 28px); }
+@media (prefers-reduced-motion: no-preference) {
+    .gs-tile--grid .m-grid .r0 { animation: gs-gr0 10s ease-in-out infinite; }
+    .gs-tile--grid .m-grid .r1 { animation: gs-gr1 10s ease-in-out .15s infinite; }
+    .gs-tile--grid .m-grid .r2 { animation: gs-gr2 10s ease-in-out .3s infinite; }
+    .gs-app:hover .m-breathe, .gs-item:hover .m-breathe { transform-box: fill-box; transform-origin: center; animation: gs-breathe 2.6s ease-in-out infinite; }
+    .gs-app:hover .m-flow, .gs-item:hover .m-flow { stroke-dasharray: 14 6; animation: gs-flow 1.6s linear infinite; }
+    .gs-app:hover .m-draw, .gs-item:hover .m-draw { stroke-dasharray: 90; animation: gs-draw 2.4s ease-in-out infinite; }
+}
+@keyframes gs-breathe { 0%, 100% { transform: scale(.86); } 50% { transform: scale(1); } }
+@keyframes gs-flow { 0% { stroke-dashoffset: 60; } 100% { stroke-dashoffset: 0; } }
+@keyframes gs-draw { 0% { stroke-dashoffset: 90; } 55%, 100% { stroke-dashoffset: 0; } }
+/* The Grid's narrow menu shows only the marks (gs-mini follows the collapse
+   button; html.nav-mini holds it before the page's script starts). */
+html.nav-mini .gs-wrap:not([data-on]) .gs-word, html.nav-mini .gs-wrap:not([data-on]) .gs-app .gs-names, html.nav-mini .gs-wrap:not([data-on]) .gs-chev,
+.gs-mini .gs-word, .gs-mini .gs-app .gs-names, .gs-mini .gs-chev { display: none; }
+html.nav-mini .gs-wrap:not([data-on]) .gs-app, .gs-mini .gs-app { padding: 8px; justify-content: center; }
+html.nav-mini .gs-wrap:not([data-on]) .gs-home, .gs-mini .gs-home { justify-content: center; }
+html.nav-mini .gs-wrap:not([data-on]) .gs-menu, .gs-mini .gs-menu { width: 272px; }
+@keyframes gs-gr0 {
+    0% { transform: translate(0, 0); opacity: 0 } 3%, 21% { transform: translate(0, 0); opacity: 1 } 24% { transform: translate(0, 0); opacity: 0 }
+    25% { transform: translate(0, 14px); opacity: 0 } 28%, 46% { transform: translate(0, 14px); opacity: 1 } 49% { transform: translate(0, 14px); opacity: 0 }
+    50% { transform: translate(0, 28px); opacity: 0 } 53%, 71% { transform: translate(0, 28px); opacity: 1 } 74% { transform: translate(0, 28px); opacity: 0 }
+    75% { transform: translate(0, 28px); opacity: 0 } 78%, 96% { transform: translate(0, 28px); opacity: 1 } 99%, 100% { transform: translate(0, 28px); opacity: 0 }
+}
+@keyframes gs-gr1 {
+    0% { transform: translate(14px, 14px); opacity: 0 } 3%, 21% { transform: translate(14px, 14px); opacity: 1 } 24% { transform: translate(14px, 14px); opacity: 0 }
+    25% { transform: translate(14px, 14px); opacity: 0 } 28%, 46% { transform: translate(14px, 14px); opacity: 1 } 49% { transform: translate(14px, 14px); opacity: 0 }
+    50% { transform: translate(14px, 14px); opacity: 0 } 53%, 71% { transform: translate(14px, 14px); opacity: 1 } 74% { transform: translate(14px, 14px); opacity: 0 }
+    75% { transform: translate(0, 0); opacity: 0 } 78%, 96% { transform: translate(0, 0); opacity: 1 } 99%, 100% { transform: translate(0, 0); opacity: 0 }
+}
+@keyframes gs-gr2 {
+    0% { transform: translate(28px, 28px); opacity: 0 } 3%, 21% { transform: translate(28px, 28px); opacity: 1 } 24% { transform: translate(28px, 28px); opacity: 0 }
+    25% { transform: translate(28px, 14px); opacity: 0 } 28%, 46% { transform: translate(28px, 14px); opacity: 1 } 49% { transform: translate(28px, 14px); opacity: 0 }
+    50% { transform: translate(28px, 0); opacity: 0 } 53%, 71% { transform: translate(28px, 0); opacity: 1 } 74% { transform: translate(28px, 0); opacity: 0 }
+    75% { transform: translate(28px, 0); opacity: 0 } 78%, 96% { transform: translate(28px, 0); opacity: 1 } 99%, 100% { transform: translate(28px, 0); opacity: 0 }
+}

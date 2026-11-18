@@ -13,11 +13,11 @@
               style="width: 38px; height: 38px; min-width: 38px; min-height: 38px;">
 
             <!-- Outer Ring (gray border, transparent fill) -->
-            <span class="flex items-center justify-center rounded-full border border-gray-500"
+            <span class="um-ring flex items-center justify-center rounded-full border border-gray-500"
                   style="width: 38px; height: 38px;">
 
                 <!-- Inner Circle (cyan fill with initial) -->
-                <span class="flex items-center justify-center rounded-full"
+                <span class="um-disc flex items-center justify-center rounded-full"
                       style="width: 28px; height: 28px; min-width: 28px; min-height: 28px;
                              font-size: 14px; font-weight: 300; color: #131315;
                              font-family: 'Oxanium', sans-serif; background: #01ffff;">
@@ -35,7 +35,7 @@
               class="flex items-center space-x-2">
 
             <!-- Display Name (NOT email) -->
-            <span class="truncate font-medium text-white"
+            <span class="um-name truncate font-medium text-white"
                   style="max-width: 120px; font-size: 14px; font-weight: 300;
                          font-family: 'Oxanium', sans-serif;">
                 {{ user.get_full_name|default:user.username }}
@@ -69,6 +69,17 @@
             <span class="material-symbols-outlined" style="font-size: 1.1rem;">settings</span>
             Settings
         </a>
+        {% if can_try_new_look %}
+        {# The family look switch (signage/new_look.py), superusers only for now. #}
+        <form method="post" action="{% url 'signage:new_look_toggle' %}" class="m-0">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button type="submit" class="new-look-toggle flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-300 hover:bg-white/5 text-left">
+                <span class="material-symbols-outlined" style="font-size: 1.1rem;">{% if new_look %}undo{% else %}auto_awesome{% endif %}</span>
+                {% if new_look %}Back to the current look{% else %}Try the new look{% endif %}
+            </button>
+        </form>
+        {% endif %}
         <hr class="my-1 border-white/10">
         <a href="{% url 'signage:auth_logout' %}" class="flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-white/5">
             <span class="material-symbols-outlined" style="font-size: 1.1rem;">logout</span>

@@ -1,4 +1,5 @@
 {% extends 'signage/base.html' %}
+{% load kit_tags %}
 
 {% block title %}Dashboard | {{ app_name }}{% endblock %}
 
@@ -7,7 +8,7 @@
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
         <div>
-            <h1 class="text-2xl font-semibold text-gray-900" style="font-family: 'Oxanium', sans-serif;">Dashboard</h1>
+            <h1 class="fam-title text-2xl font-semibold text-gray-900" style="font-family: 'Oxanium', sans-serif;">Dashboard</h1>
             <p class="text-gray-500 mt-1">Manage your screens, devices, and playlists</p>
         </div>
         <a href="{% url 'signage:screen_design_create' %}"
@@ -19,7 +20,9 @@
     </div>
 
     <!-- Stats Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    {% if new_look %}{% fk_figs stats.total_designs 'Active designs' stats.devices_online 'Screens online' stats.total_playlists 'Active playlists' media_stats.total 'Media files' as figs %}
+    <div class="gl-run">{% include 'signage/partials/kit/_run.html' %}</div>
+    {% else %}<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(10, 10, 12, 0.05);">
@@ -69,7 +72,7 @@
             </div>
             <p class="text-xs text-gray-400 mt-2">{{ media_stats.images }} images &middot; {{ media_stats.videos }} videos</p>
         </div>
-    </div>
+    </div>{% endif %}
 
     <!-- Quick Actions -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-8">

@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en"{% if new_look %} class="look-family"{% endif %}>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -80,7 +80,16 @@
     <link rel="stylesheet" href="{% static 'signage/css/navbar-grid.css' %}">
     <link rel="stylesheet" href="{% static 'signage/css/grid-badge.css' %}">
 
+    {% if new_look %}
+    {# The Grid family look (signage/new_look.py), only for people who turned it on. #}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'signage/css/kit.css' %}">
+    <link rel="stylesheet" href="{% static 'signage/css/grid-switcher.css' %}">
+    {% endif %}
+
     {% block extra_css %}{% endblock %}
+    {% if new_look %}{# After the pages' own styles, so the new look wins. #}
+    <link rel="stylesheet" href="{% static 'signage/css/family.css' %}">{% endif %}
 </head>
 <body class="bg-[#0a0a0b] text-[#e4e8ec]" style="font-family: 'Onest', sans-serif;">
 
@@ -102,7 +111,7 @@
              'w-20': !isMobile && miniNav,
              'w-64': isMobile || !miniNav
          }"
-         class="fixed top-0 left-0 h-screen z-30 transform transition-all duration-300 ease-in-out"
+         class="fx-nav fixed top-0 left-0 h-screen z-30 transform transition-all duration-300 ease-in-out"
          style="background: #0a0a0c;">
 
         <!-- Interactive Grid Background -->
@@ -121,7 +130,7 @@
 
             <!-- Grid App Badge -->
             <div class="px-4 pt-5" :class="miniNav ? 'px-3 flex justify-center' : 'px-4'">
-                {% include 'signage/partials/_grid_badge.html' %}
+                {% if new_look %}<div class="gs-wrap" x-init="$el.dataset.on = '1'" :class="miniNav && !isMobile ? 'gs-mini' : ''">{% include 'signage/partials/_grid_switcher.html' with part='home' %}</div>{% else %}{% include 'signage/partials/_grid_badge.html' %}{% endif %}
             </div>
 
             <!-- Collapse/Expand Button - Vertically Centered -->
@@ -138,62 +147,69 @@
                     <a href="{% url 'signage:overview' %}" class="main-nav-link flex items-center px-3 py-2 rounded-lg transition-colors text-white {% if request.resolver_match.url_name == 'overview' %}nav-active{% endif %}"
                        :class="miniNav ? 'flex-col justify-center' : ''">
                         <span class="material-symbols-outlined ultra-thin-icon text-slate-300" :class="miniNav ? 'text-2xl mb-1' : 'mr-3 text-xl'">dashboard</span>
-                        <span x-show="!miniNav && showNavText" x-transition:enter="transition-opacity duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="nav-text-light" style="font-family: 'Oxanium', sans-serif !important; font-weight: 200 !important; font-size: 14px; letter-spacing: 0.05em; line-height: 1.5;">Dashboard</span>
+                        <span x-show="!miniNav && showNavText" x-transition:enter="transition-opacity duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="nav-text-light"{% if not new_look %} style="font-family: 'Oxanium', sans-serif !important; font-weight: 200 !important; font-size: 14px; letter-spacing: 0.05em; line-height: 1.5;"{% endif %}>Dashboard</span>
                     </a>
                 </li>
                 <li>
                     <a href="{% url 'signage:screen_design_list' %}" class="main-nav-link flex items-center px-3 py-2 rounded-lg transition-colors text-white {% if 'design' in request.resolver_match.url_name and 'template' not in request.resolver_match.url_name %}nav-active{% endif %}"
                        :class="miniNav ? 'flex-col justify-center' : ''">
                         <span class="material-symbols-outlined ultra-thin-icon text-slate-300" :class="miniNav ? 'text-2xl mb-1' : 'mr-3 text-xl'">web</span>
-                        <span x-show="!miniNav && showNavText" x-transition:enter="transition-opacity duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="nav-text-light" style="font-family: 'Oxanium', sans-serif !important; font-weight: 200 !important; font-size: 14px; letter-spacing: 0.05em; line-height: 1.5;">Designs</span>
+                        <span x-show="!miniNav && showNavText" x-transition:enter="transition-opacity duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="nav-text-light"{% if not new_look %} style="font-family: 'Oxanium', sans-serif !important; font-weight: 200 !important; font-size: 14px; letter-spacing: 0.05em; line-height: 1.5;"{% endif %}>Designs</span>
                     </a>
                 </li>
                 <li>
                     <a href="{% url 'signage:template_gallery' %}" class="main-nav-link flex items-center px-3 py-2 rounded-lg transition-colors text-white {% if 'template' in request.resolver_match.url_name %}nav-active{% endif %}"
                        :class="miniNav ? 'flex-col justify-center' : ''">
                         <span class="material-symbols-outlined ultra-thin-icon text-slate-300" :class="miniNav ? 'text-2xl mb-1' : 'mr-3 text-xl'">auto_awesome</span>
-                        <span x-show="!miniNav && showNavText" x-transition:enter="transition-opacity duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="nav-text-light" style="font-family: 'Oxanium', sans-serif !important; font-weight: 200 !important; font-size: 14px; letter-spacing: 0.05em; line-height: 1.5;">Templates</span>
+                        <span x-show="!miniNav && showNavText" x-transition:enter="transition-opacity duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="nav-text-light"{% if not new_look %} style="font-family: 'Oxanium', sans-serif !important; font-weight: 200 !important; font-size: 14px; letter-spacing: 0.05em; line-height: 1.5;"{% endif %}>Templates</span>
                     </a>
                 </li>
                 <li>
                     <a href="{% url 'signage:playlist_list' %}" class="main-nav-link flex items-center px-3 py-2 rounded-lg transition-colors text-white {% if 'playlist' in request.resolver_match.url_name %}nav-active{% endif %}"
                        :class="miniNav ? 'flex-col justify-center' : ''">
                         <span class="material-symbols-outlined ultra-thin-icon text-slate-300" :class="miniNav ? 'text-2xl mb-1' : 'mr-3 text-xl'">playlist_play</span>
-                        <span x-show="!miniNav && showNavText" x-transition:enter="transition-opacity duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="nav-text-light" style="font-family: 'Oxanium', sans-serif !important; font-weight: 200 !important; font-size: 14px; letter-spacing: 0.05em; line-height: 1.5;">Playlists</span>
+                        <span x-show="!miniNav && showNavText" x-transition:enter="transition-opacity duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="nav-text-light"{% if not new_look %} style="font-family: 'Oxanium', sans-serif !important; font-weight: 200 !important; font-size: 14px; letter-spacing: 0.05em; line-height: 1.5;"{% endif %}>Playlists</span>
                     </a>
                 </li>
                 <li>
                     <a href="{% url 'signage:device_list' %}" class="main-nav-link flex items-center px-3 py-2 rounded-lg transition-colors text-white {% if 'device' in request.resolver_match.url_name %}nav-active{% endif %}"
                        :class="miniNav ? 'flex-col justify-center' : ''">
                         <span class="material-symbols-outlined ultra-thin-icon text-slate-300" :class="miniNav ? 'text-2xl mb-1' : 'mr-3 text-xl'">tv</span>
-                        <span x-show="!miniNav && showNavText" x-transition:enter="transition-opacity duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="nav-text-light" style="font-family: 'Oxanium', sans-serif !important; font-weight: 200 !important; font-size: 14px; letter-spacing: 0.05em; line-height: 1.5;">Devices</span>
+                        <span x-show="!miniNav && showNavText" x-transition:enter="transition-opacity duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="nav-text-light"{% if not new_look %} style="font-family: 'Oxanium', sans-serif !important; font-weight: 200 !important; font-size: 14px; letter-spacing: 0.05em; line-height: 1.5;"{% endif %}>Devices</span>
                     </a>
                 </li>
                 <li>
                     <a href="{% url 'signage:media_list' %}" class="main-nav-link flex items-center px-3 py-2 rounded-lg transition-colors text-white {% if 'media' in request.resolver_match.url_name %}nav-active{% endif %}"
                        :class="miniNav ? 'flex-col justify-center' : ''">
                         <span class="material-symbols-outlined ultra-thin-icon text-slate-300" :class="miniNav ? 'text-2xl mb-1' : 'mr-3 text-xl'">perm_media</span>
-                        <span x-show="!miniNav && showNavText" x-transition:enter="transition-opacity duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="nav-text-light" style="font-family: 'Oxanium', sans-serif !important; font-weight: 200 !important; font-size: 14px; letter-spacing: 0.05em; line-height: 1.5;">Media Library</span>
+                        <span x-show="!miniNav && showNavText" x-transition:enter="transition-opacity duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="nav-text-light"{% if not new_look %} style="font-family: 'Oxanium', sans-serif !important; font-weight: 200 !important; font-size: 14px; letter-spacing: 0.05em; line-height: 1.5;"{% endif %}>Media Library</span>
                     </a>
                 </li>
                 <li>
                     <a href="{% url 'signage:firetv_download' %}" class="main-nav-link flex items-center px-3 py-2 rounded-lg transition-colors text-white {% if 'firetv' in request.resolver_match.url_name %}nav-active{% endif %}"
                        :class="miniNav ? 'flex-col justify-center' : ''">
                         <span class="material-symbols-outlined ultra-thin-icon text-slate-300" :class="miniNav ? 'text-2xl mb-1' : 'mr-3 text-xl'">cast</span>
-                        <span x-show="!miniNav && showNavText" x-transition:enter="transition-opacity duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="nav-text-light" style="font-family: 'Oxanium', sans-serif !important; font-weight: 200 !important; font-size: 14px; letter-spacing: 0.05em; line-height: 1.5;">Fire TV App</span>
+                        <span x-show="!miniNav && showNavText" x-transition:enter="transition-opacity duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="nav-text-light"{% if not new_look %} style="font-family: 'Oxanium', sans-serif !important; font-weight: 200 !important; font-size: 14px; letter-spacing: 0.05em; line-height: 1.5;"{% endif %}>Fire TV App</span>
                     </a>
                 </li>
                 <li>
                     <a href="#" class="main-nav-link flex items-center px-3 py-2 rounded-lg transition-colors text-white"
                        :class="miniNav ? 'flex-col justify-center' : ''">
                         <span class="material-symbols-outlined ultra-thin-icon text-slate-300" :class="miniNav ? 'text-2xl mb-1' : 'mr-3 text-xl'">settings</span>
-                        <span x-show="!miniNav && showNavText" x-transition:enter="transition-opacity duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="nav-text-light" style="font-family: 'Oxanium', sans-serif !important; font-weight: 200 !important; font-size: 14px; letter-spacing: 0.05em; line-height: 1.5;">Settings</span>
+                        <span x-show="!miniNav && showNavText" x-transition:enter="transition-opacity duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="nav-text-light"{% if not new_look %} style="font-family: 'Oxanium', sans-serif !important; font-weight: 200 !important; font-size: 14px; letter-spacing: 0.05em; line-height: 1.5;"{% endif %}>Settings</span>
                     </a>
                 </li>
             </ul>
 
             <!-- User Menu (bottom of nav) -->
             <div class="mt-auto p-4">
+                {% if new_look %}<div class="gs-wrap gs-foot" x-init="$el.dataset.on = '1'" :class="miniNav && !isMobile ? 'gs-mini' : ''">{% include 'signage/partials/_grid_switcher.html' with part='app' %}</div>
+                <button type="button" class="fam-collapse" style="display:none" @click="miniNav = !miniNav"
+                        :aria-label="miniNav ? 'Expand the menu' : 'Collapse the menu'"
+                        :title="miniNav ? 'Expand the menu' : 'Collapse the menu'">
+                    <span class="material-symbols-outlined" aria-hidden="true" x-text="miniNav ? 'left_panel_open' : 'left_panel_close'">left_panel_close</span>
+                    <span class="fam-collapse-label" x-show="!miniNav">Collapse menu</span>
+                </button>{% endif %}
                 {% include 'signage/partials/_user_menu.html' %}
             </div>
 
@@ -220,8 +236,45 @@
     </main>
 
     <!-- Scripts -->
-    <script src="{% static 'signage/js/navbar-grid.js' %}"></script>
+    {% if not new_look %}<script src="{% static 'signage/js/navbar-grid.js' %}"></script>{% endif %}
     <script src="{% static 'signage/js/grid-badge.js' %}"></script>
+    {% if new_look %}<script>
+    // The new look marks the menu link for this page (longest matching path wins;
+    // the Dashboard at / only for / itself).
+    (function () {
+        var path = location.pathname, best = null, bestLen = -1;
+        document.querySelectorAll('nav.fx-nav .main-nav-link').forEach(function (a) {
+            var href = a.getAttribute('href') || '';
+            if (!href || href === '#') return;
+            var hit = href === '/' ? path === '/' : path.indexOf(href) === 0;
+            if (hit && href.length > bestLen) { best = a; bestLen = href.length; }
+        });
+        if (best) { best.classList.add('is-active'); best.setAttribute('aria-current', 'page'); }
+    })();
+    // A page's own back arrow ("Back to Playlists", or the bare arrow beside a
+    // device's name) becomes the small trail above its title, as on every Grid
+    // page, so the title row keeps only actions.
+    (function () {
+        var h1 = document.querySelector('main h1.fam-title');
+        if (!h1) return;
+        var head = h1.closest('main > .p-6 > *') || h1.parentNode;
+        head.querySelectorAll('a').forEach(function (a) {
+            var ico = a.querySelector('.material-symbols-outlined');
+            if (!ico || ico.textContent.trim() !== 'arrow_back') return;
+            // The link itself moves (its href stays). Named after the menu item it
+            // leads to, else the button's own words.
+            var label = a.textContent.replace('arrow_back', '').trim().replace(/^Back to\s+/i, '');
+            var dest = (a.getAttribute('href') || '').split('?')[0];
+            document.querySelectorAll('nav.fx-nav .main-nav-link').forEach(function (n) {
+                if (dest && n.getAttribute('href') === dest) label = (n.querySelector('.nav-text-light') || n).textContent.trim();
+            });
+            if (!label) label = 'Back';
+            label = label.charAt(0).toUpperCase() + label.slice(1);
+            a.className = 'fx-trail'; a.textContent = label;
+            h1.parentNode.insertBefore(a, h1);
+        });
+    })();
+    </script>{% endif %}
     {% block extra_js %}{% endblock %}
 
 </body>

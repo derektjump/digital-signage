@@ -1,0 +1,27 @@
+{% comment %}The run: a page's summary as a row of figure tiles with the
+light trail weaving through them (kit.css .fk-run, signage/kit.py RUNS). Pass figs as a
+list of (value, label), up to four; title, sub and an optional pill
+(text, tone). run names one of signage/kit.py RUNS; left out, the page's address picks
+one, so each page keeps its own path. tid keeps two runs on a page apart.
+With live, each value is an Alpine expression, filled in by the page's script,
+and an optional third item is an expression for a small note under the label.{% endcomment %}
+{% load kit_tags %}
+{% with t=tid|default:'fkRun' n=figs|length %}
+{% fk_run_path n run as d %}
+<section class="fk-run-block">
+    {% if title %}<div class="fk-run-head"><div><h2>{{ title }}</h2>{% if sub %}<p>{{ sub }}</p>{% endif %}</div>{% if pill %}<span class="fk-pill fk-pill--{{ pill.1|default:'grey' }}"><i aria-hidden="true"></i>{{ pill.0 }}</span>{% endif %}</div>{% endif %}
+    <div class="fk-run">
+        <svg class="fk-run-trail" viewBox="0 0 1000 140" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+                <linearGradient id="{{ t }}" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1000" y2="0"><stop offset="0" stop-color="#00aa90" stop-opacity="0"/><stop offset=".12" stop-color="#00aa90"/><stop offset=".5" stop-color="#2dd4bf"/><stop offset=".8" stop-color="#a78bfa"/><stop offset="1" stop-color="#f472b6" stop-opacity="0"/></linearGradient>
+                <filter id="{{ t }}Glow" x="-10%" y="-50%" width="120%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>
+            </defs>
+            <path class="fk-draw" pathLength="100" d="{{ d }}" fill="none" stroke="url(#{{ t }})" stroke-width="6" opacity=".4" filter="url(#{{ t }}Glow)" vector-effect="non-scaling-stroke"/>
+            <path class="fk-draw" pathLength="100" d="{{ d }}" fill="none" stroke="url(#{{ t }})" stroke-width="2" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+        </svg>
+        <div class="fk-run-tiles" style="--n:{{ n }}">
+            {% for f in figs %}<div class="fk-run-tile">{% if live %}<b x-text="{{ f.0 }}"></b>{% else %}<b>{{ f.0 }}</b>{% endif %}<span>{{ f.1 }}</span>{% if live and f.2 %}<small x-text="{{ f.2 }}"></small>{% endif %}</div>{% endfor %}
+        </div>
+    </div>
+</section>
+{% endwith %}

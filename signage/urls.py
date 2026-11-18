@@ -3,7 +3,7 @@ URL configuration for Digital Signage application.
 """
 
 from django.urls import path
-from . import views, auth_views
+from . import views, auth_views, new_look
 
 app_name = 'signage'
 
@@ -13,6 +13,7 @@ urlpatterns = [
     # =========================================================================
     path('', views.OverviewView.as_view(), name='overview'),
     path('test/', views.test, name='test'),
+    path('new-look/', new_look.toggle, name='new_look_toggle'),
 
     # =========================================================================
     # AUTHENTICATION

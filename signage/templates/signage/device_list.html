@@ -1,4 +1,5 @@
 {% extends 'signage/base.html' %}
+{% load kit_tags %}
 
 {% block title %}Devices | {{ app_name }}{% endblock %}
 
@@ -7,7 +8,7 @@
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
         <div>
-            <h1 class="text-2xl font-semibold text-gray-900" style="font-family: 'Oxanium', sans-serif;">Devices</h1>
+            <h1 class="fam-title text-2xl font-semibold text-gray-900" style="font-family: 'Oxanium', sans-serif;">Devices</h1>
             <p class="text-gray-500 mt-1">Manage your digital signage displays</p>
         </div>
         <div class="mt-4 md:mt-0 flex items-center gap-3">
@@ -26,7 +27,9 @@
     </div>
 
     <!-- Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    {% if new_look %}{% fk_figs total_count 'Screens' online_count 'Online' registered_count 'Registered' total_count|fk_minus:online_count 'Not online' as figs %}
+    <div class="gl-run">{% include 'signage/partials/kit/_run.html' %}</div>
+    {% else %}<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(10, 10, 12, 0.05);">
@@ -66,12 +69,12 @@
                     <span class="material-symbols-outlined" style="color: #ef4444;">wifi_off</span>
                 </div>
                 <div>
-                    <p class="text-2xl font-semibold text-gray-900">{{ total_count|add:"-"|add:online_count }}</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ total_count|fk_minus:online_count }}</p>
                     <p class="text-sm text-gray-500">Offline</p>
                 </div>
             </div>
         </div>
-    </div>
+    </div>{% endif %}
 
     <!-- Device Grid -->
     {% if devices %}
